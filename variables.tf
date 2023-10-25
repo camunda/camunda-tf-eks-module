@@ -35,6 +35,7 @@ variable "np_desired_node_count" {
 variable "np_instance_types" {
   type        = list(string)
   description = "Allow passing a list of instance types for the auto scaler to select from when scaling the default node pool"
+  default     = ["m5.xlarge"]
 }
 
 variable "np_disk_size" {
@@ -44,8 +45,9 @@ variable "np_disk_size" {
 }
 
 variable "np_ami_type" {
-  type    = string
-  default = "AL2_x86_64"
+  description = "Amazon Machine Image"
+  type        = string
+  default     = "AL2_x86_64"
 }
 
 variable "np_capacity_type" {
@@ -55,14 +57,17 @@ variable "np_capacity_type" {
 }
 
 variable "cluster_service_ipv4_cidr" {
-  type = string
+  description = "The CIDR block to assign Kubernetes service IP addresses from. Between /24 and /12."
+  type        = string
 }
 
 variable "cluster_node_ipv4_cidr" {
-  type = string
+  description = "The CIDR block for public and private subnets of loadbalancers and nodes. Between /28 and /16."
+  type        = string
 }
 
 variable "aws_auth_roles" {
+  description = "List of objects, allowing to map IAM roles to K8s roles. Further information can be found on aws: https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html"
   type = list(object({
     rolearn  = string
     username = string
@@ -72,6 +77,7 @@ variable "aws_auth_roles" {
 }
 
 variable "aws_auth_users" {
+  description = "List of objects, allowing to map IAM users to K8s roles. Further information can be found on aws: https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html"
   type = list(object({
     userarn  = string
     username = string
