@@ -85,3 +85,21 @@ variable "aws_auth_users" {
   }))
   default = []
 }
+
+variable "postgresql_username" {
+  type        = string
+  description = "The username for the postgres admin user. Important: secret value!"
+  sensitive   = true
+}
+
+variable "postgresql_password" {
+  type        = string
+  description = "The password for the postgres admin user. Important: secret value!"
+  sensitive   = true
+}
+
+variable "postgresql_engine_version" {
+  type        = string
+  default     = "15.4"
+  description = "The DB engine version for Postgres to use."
+}
