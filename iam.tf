@@ -50,6 +50,25 @@ module "cert_manager_role" {
   }
 
   role_policy_arns = {
-    policy = aws.aws_iam_policy.cert_manager_policy.arn
+    policy = aws_iam_policy.cert_manager_policy.arn
+  }
+}
+
+# Following role allows external-dns to adjust values in hosted zones
+module "external_dns_role" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.30.0"
+
+  role_name = "${var.name}-external-dns-role"
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["external-dns:external-dns"]
+    }
+  }
+
+  role_policy_arns = {
+    policy = aws_iam_policy.external_dns_policy.arn
   }
 }

@@ -50,12 +50,17 @@ output "cluster_iam_role_arn" {
 # example:
 # eks.amazonaws.com/role-arn: arn:aws:iam::831074465991:role/irsa-${RANDOM}
 # This allows the SA, if mapping was defined properly, to impersonate the role
+
+output "cert_manager_arn" {
+  value = module.cert_manager_role.iam_role_arn
+}
+
 output "ebs_cs_arn" {
   value = module.ebs_cs_role.iam_role_arn
 }
 
-output "cert_manager_arn" {
-  value = module.cert_manager_role.arn
+output "external_dns_arn" {
+  value = module.external_dns_role.iam_role_arn
 }
 
 ################################################################################

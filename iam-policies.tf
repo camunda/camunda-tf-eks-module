@@ -241,3 +241,34 @@ resource "aws_iam_policy" "cert_manager_policy" {
     ]
   })
 }
+
+# External DNS policy to allow it changing route53 records
+resource "aws_iam_policy" "external_dns_policy" {
+  name = "${var.name}-external-dns-policy"
+
+  policy = jsonencode({
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "route53:ChangeResourceRecordSets"
+        ],
+        "Resource" : [
+          "arn:aws:route53:::hostedzone/*"
+        ]
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "route53:ListHostedZones",
+          "route53:ListResourceRecordSets",
+          "route53:ListTagsForResource"
+        ],
+        "Resource" : [
+          "*"
+        ]
+      }
+    ]
+  })
+}
