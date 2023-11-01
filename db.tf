@@ -8,11 +8,11 @@ module "postgresql" {
 
   username         = var.postgresql_username
   password         = var.postgresql_password
-  vpc_id           = module.eks.vpc_id
-  subnet_ids       = module.eks.private_subnet_ids
-  cidr_blocks      = concat(module.eks.private_vpc_cidr_blocks, module.eks.public_vpc_cidr_blocks)
+  vpc_id           = module.vpc.vpc_id
+  subnet_ids       = module.vpc.private_subnets
+  cidr_blocks      = concat(module.vpc.private_subnets_cidr_blocks, module.vpc.public_subnets_cidr_blocks)
   instance_class   = "db.t3.medium"
   iam_auth_enabled = true
 
-  depends_on = [module.eks]
+  depends_on = [module.vpc]
 }
