@@ -8,7 +8,9 @@ variable "engine" {
 }
 
 variable "engine_version" {
-  description = "The version of the previously defined engine"
+  type        = string
+  default     = "15.4"
+  description = "The DB engine version for Postgres to use."
 }
 
 variable "auto_minor_version_upgrade" {
@@ -32,9 +34,15 @@ variable "num_instances" {
 }
 
 variable "username" {
+  type        = string
+  description = "The username for the postgres admin user. Important: secret value!"
+  sensitive   = true
 }
 
 variable "password" {
+  type        = string
+  description = "The password for the postgres admin user. Important: secret value!"
+  sensitive   = true
 }
 
 variable "tags" {
