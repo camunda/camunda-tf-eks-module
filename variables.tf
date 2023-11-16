@@ -29,7 +29,7 @@ variable "np_max_node_count" {
 variable "np_desired_node_count" {
   type        = number
   description = "Actual number of nodes for the default node pool. Min-Max will be used for autoscaling"
-  default     = 1
+  default     = 4
 }
 
 variable "np_instance_types" {

@@ -76,3 +76,9 @@ variable "ca_cert_identifier" {
   default = "rds-ca-2019"
   type    = string
 }
+
+variable "default_database_name" {
+  type = string
+  default = "camunda"
+  description = "The name for the automatically created database on cluster creation"
+}

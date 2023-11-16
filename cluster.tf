@@ -7,16 +7,20 @@ Additionally the kubernetes provider is required to configure the aws-auth confi
 data "aws_eks_cluster" "eks" {
   name = module.eks.cluster_name
 
+  # depend on something of the eks module but nothing that would ever change
+  # workaround to only pull data on a later stage during initial creation
   depends_on = [
-    module.eks.eks_managed_node_groups
+    module.eks.cluster_name
   ]
 }
 
 data "aws_eks_cluster_auth" "eks" {
   name = module.eks.cluster_name
 
+  # depend on something of the eks module but nothing that would ever change
+  # workaround to only pull data on a later stage during initial creation
   depends_on = [
-    module.eks.eks_managed_node_groups
+    module.eks.cluster_name
   ]
 }
 

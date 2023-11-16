@@ -9,6 +9,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   engine_version  = var.engine_version
   master_password = var.password
   master_username = var.username
+  database_name   = var.default_database_name
 
   # New: Enable IAM auth + assign iam roles
   iam_database_authentication_enabled = var.iam_auth_enabled
