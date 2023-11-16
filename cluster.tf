@@ -6,10 +6,18 @@ Additionally the kubernetes provider is required to configure the aws-auth confi
 
 data "aws_eks_cluster" "eks" {
   name = module.eks.cluster_name
+
+  depends_on = [
+    module.eks.eks_managed_node_groups
+  ]
 }
 
 data "aws_eks_cluster_auth" "eks" {
   name = module.eks.cluster_name
+
+  depends_on = [
+    module.eks.eks_managed_node_groups
+  ]
 }
 
 provider "kubernetes" {
@@ -21,7 +29,7 @@ provider "kubernetes" {
 # https://github.com/terraform-aws-modules/terraform-aws-eks
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "19.17.2"
+  version = "19.20.0"
 
   cluster_name                    = var.name
   cluster_version                 = var.kubernetes_version
