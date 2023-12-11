@@ -35,7 +35,7 @@ variable "np_desired_node_count" {
 variable "np_instance_types" {
   type        = list(string)
   description = "Allow passing a list of instance types for the auto scaler to select from when scaling the default node pool"
-  default     = ["m5.xlarge"]
+  default     = ["m6i.xlarge"]
 }
 
 variable "np_disk_size" {
