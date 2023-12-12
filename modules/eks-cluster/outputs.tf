@@ -31,16 +31,6 @@ output "cluster_iam_role_arn" {
   value       = module.eks.cluster_iam_role_arn
 }
 
-# output "eks_admin_iam_role_name" {
-#   description = "EKS admin IAM Role name"
-#   value       = aws_iam_role.eks_admin_role.name
-# }
-
-# output "eks_admin_iam_role_arn" {
-#   description = "EKS admin IAM Role arn"
-#   value       = aws_iam_role.eks_admin_role.arn
-# }
-
 ################################################################################
 # IRSA
 ################################################################################
@@ -52,15 +42,18 @@ output "cluster_iam_role_arn" {
 # This allows the SA, if mapping was defined properly, to impersonate the role
 
 output "cert_manager_arn" {
-  value = module.cert_manager_role.iam_role_arn
+  value       = module.cert_manager_role.iam_role_arn
+  description = "Amazon Resource Name of the cert-manager IAM role used for IAM Roles to Service Accounts mappings"
 }
 
 output "ebs_cs_arn" {
-  value = module.ebs_cs_role.iam_role_arn
+  value       = module.ebs_cs_role.iam_role_arn
+  description = "Amazon Resource Name of the ebs-csi IAM role used for IAM Roles to Service Accounts mappings"
 }
 
 output "external_dns_arn" {
-  value = module.external_dns_role.iam_role_arn
+  value       = module.external_dns_role.iam_role_arn
+  description = "Amazon Resource Name of the external-dns IAM role used for IAM Roles to Service Accounts mappings"
 }
 
 ################################################################################
@@ -73,13 +66,16 @@ output "vpc_id" {
 }
 
 output "private_vpc_cidr_blocks" {
-  value = module.vpc.private_subnets_cidr_blocks
+  value       = module.vpc.private_subnets_cidr_blocks
+  description = "Private VPC CIDR blocks"
 }
 
 output "public_vpc_cidr_blocks" {
-  value = module.vpc.public_subnets_cidr_blocks
+  value       = module.vpc.public_subnets_cidr_blocks
+  description = "Public VPC CIDR blocks"
 }
 
 output "private_subnet_ids" {
-  value = module.vpc.private_subnets
+  value       = module.vpc.private_subnets
+  description = "Private subnet IDs"
 }

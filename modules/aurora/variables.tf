@@ -21,11 +21,12 @@ variable "auto_minor_version_upgrade" {
 variable "availability_zones" {
   type        = list(string)
   default     = ["eu-central-1a", "eu-central-1b", "eu-central-1c"]
-  description = "Array of zones"
+  description = "Array of availability zones to use for the Aurora cluster"
 }
 
 variable "instance_class" {
-  default = "db.r5.large"
+  default     = "db.t3.medium"
+  description = "The instance type of the Aurora instances"
 }
 
 variable "num_instances" {
@@ -46,39 +47,46 @@ variable "password" {
 }
 
 variable "tags" {
-  default = {}
+  default     = {}
+  description = "Additional tags to add to the resources"
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type        = list(string)
+  description = "The subnet IDs to create the cluster in. For easier usage we are passing through the subnet IDs from the AWS EKS Cluster module."
 }
 
 variable "cidr_blocks" {
-  type = list(string)
+  type        = list(string)
+  description = "The CIDR blocks to allow acces from and to."
 }
 
 # pass through from root
 variable "vpc_id" {
+  description = "The VPC ID to create the cluster in. For easier usage we are passing through the VPC ID from the AWS EKS Cluster module."
 }
 
 # Allows adding additional iam roles to grant access from Aurora to e.g. S3
 variable "iam_roles" {
-  default = []
+  default     = []
+  description = "Allows propagating additional IAM roles to the Aurora cluster to allow e.g. access to S3"
 }
 
 # Allows defining whether IAM auth should be activated for IRSA usage
 variable "iam_auth_enabled" {
-  default = false
-  type    = bool
+  default     = false
+  type        = bool
+  description = "Determines whether IAM auth should be activated for IRSA usage"
 }
 
 variable "ca_cert_identifier" {
-  default = "rds-ca-2019"
-  type    = string
+  default     = "rds-ca-2019"
+  type        = string
+  description = "Specifies the identifier of the CA certificate for the DB instance"
 }
 
 variable "default_database_name" {
   type        = string
   default     = "camunda"
-  description = "The name for the automatically created database on cluster creation"
+  description = "The name for the automatically created database on cluster creation."
 }

@@ -1,16 +1,3 @@
-# TODO: rethink assuming policy stuff
-# resource "aws_iam_role" "eks_admin_role" {
-#   name = "${var.name}-eks-admin-role"
-
-#   assume_role_policy = jsonencode({
-
-#   })
-# }
-
-# resource "aws_iam_role_policy_attachment" "github_infra_core_admin_eks_access" {
-#   policy_arn = aws_iam_policy.eks_admin_policy.policy
-#   role       = aws_iam_role.eks_admin_role.name
-# }
 
 ################################################################################
 # IRSA
@@ -18,7 +5,7 @@
 
 module "ebs_cs_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.30.0"
+  version = "5.32.1"
 
   role_name = "${var.name}-ebs-cs-role"
 
@@ -38,7 +25,7 @@ module "ebs_cs_role" {
 # Following role allows cert-manager to do the DNS01 challenge
 module "cert_manager_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.30.0"
+  version = "5.32.1"
 
   role_name = "${var.name}-cert-manager-role"
 
@@ -57,7 +44,7 @@ module "cert_manager_role" {
 # Following role allows external-dns to adjust values in hosted zones
 module "external_dns_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.30.0"
+  version = "5.32.1"
 
   role_name = "${var.name}-external-dns-role"
 
