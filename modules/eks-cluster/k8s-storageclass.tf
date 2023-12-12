@@ -1,6 +1,6 @@
 
 # gp3 storage class
-resource "kubernetes_storage_class_v1" "ebs-sc" {
+resource "kubernetes_storage_class_v1" "ebs_sc" {
   metadata {
     name = "ebs-sc"
     annotations = {
@@ -16,7 +16,7 @@ resource "kubernetes_storage_class_v1" "ebs-sc" {
 }
 
 # remove default storage class of gp2
-resource "kubernetes_annotations" "default-storageclass" {
+resource "kubernetes_annotations" "default_storageclass" {
   api_version = "storage.k8s.io/v1"
   kind        = "StorageClass"
   force       = "true"

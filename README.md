@@ -1,23 +1,21 @@
-# Camunda TF EKS Module
+# Camunda Terraform EKS Modules
 
 Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8.
 
-> [!WARNING]  
-> Do not use for production purposes.
-
 ## Documentation
 
-TODO: Link to external docs - docs.camunda.io
+The related [guide](https://docs.camunda.io/docs/next/self-managed/platform-deployment/helm-kubernetes/platforms/amazon-eks/eks-terraform/) describing a more detailed usage.
+Consider installing Camunda 8 via [following guide](https://docs.camunda.io/docs/next/self-managed/platform-deployment/helm-kubernetes/platforms/amazon-eks/eks-helm/) after having deployed the AWS EKS cluster.
 
 ## Usage
 
 Following is a simple example configuration and should be adjusted as required.
 
-See [inputs](#inputs) for further configuration options and how they affect the cluster creation.
+See [AWS EKS Cluster inputs](./modules/eks-cluster/README.md#inputs) and [AWS Aurora RDS inputs](./modules/aurora/README.md#inputs) for further configuration options and how they affect the cluster creation.
 
 ```hcl
 module "eks_cluster" {
-  source = "github.com/camunda/camunda-tf-eks-module"
+  source = "github.com/camunda/camunda-tf-eks-module/modules/eks-cluster"
 
   region             = "eu-central-1"
   name               = "cluster-name"
@@ -45,7 +43,3 @@ module "postgresql" {
   depends_on = [module.eks_cluster]
 }
 ```
-
-### Inputs
-
-TODO: generate something with tf docs

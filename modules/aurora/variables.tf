@@ -78,7 +78,7 @@ variable "ca_cert_identifier" {
 }
 
 variable "default_database_name" {
-  type = string
-  default = "camunda"
+  type        = string
+  default     = "camunda"
   description = "The name for the automatically created database on cluster creation"
 }
