@@ -1,0 +1,9 @@
+pre-commit 3.6.0
+
+terraform 1.6.5
+
+terraform-docs v0.16.0
+
+tflint 0.49.0
+
+tfsec 1.28.4
