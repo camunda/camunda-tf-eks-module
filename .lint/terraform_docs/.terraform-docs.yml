@@ -1,7 +1,7 @@
 ---
 # Configuration documentation https://terraform-docs.io/user-guide/configuration/
 formatter: "markdown table"  # Required
-version: "0.16"
+version: "0.17"
 
 header-from: main.tf
 footer-from: ""

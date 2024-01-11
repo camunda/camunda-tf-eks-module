@@ -17,6 +17,12 @@ output "cluster_security_group_arn" {
   value       = module.eks.cluster_security_group_arn
 }
 
+output "cluster_primary_security_group_id" {
+  description = "Cluster primary security group that was created by Amazon EKS for the cluster. Managed node groups use this security group for control-plane-to-data-plane communication. Referred to as 'Cluster security group' in the EKS console"
+  value       = module.eks.cluster_primary_security_group_id
+
+}
+
 ################################################################################
 # IAM Role
 ################################################################################
@@ -78,4 +84,19 @@ output "public_vpc_cidr_blocks" {
 output "private_subnet_ids" {
   value       = module.vpc.private_subnets
   description = "Private subnet IDs"
+}
+
+output "default_security_group_id" {
+  value       = module.vpc.default_security_group_id
+  description = "The ID of the security group created by default on VPC creation"
+}
+
+output "vpc_main_route_table_id" {
+  value       = module.vpc.vpc_main_route_table_id
+  description = "The ID of the main route table associated with this VPC"
+}
+
+output "private_route_table_ids" {
+  value       = module.vpc.private_route_table_ids
+  description = "The IDs of the private route tables associated with this VPC"
 }
