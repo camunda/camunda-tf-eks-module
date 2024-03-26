@@ -23,5 +23,14 @@ test with
 go test -v -timeout 120m
 ```
 
+### Troubleshooting
+
+```bash
+# make sure you don't have test clusters running since a while
+
+eksctl get clusters 
+```
+
 # TODO: https://github.com/gruntwork-io/cloud-nuke every weekend
 # => we should have a dedicated tenant for CI
+# => sometimes, EKS deletion fails with error: DeleteCluster ResourceInUseException: Cluster has nodegroups attached terraform
