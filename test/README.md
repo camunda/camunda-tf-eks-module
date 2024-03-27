@@ -9,7 +9,7 @@ Make sure you have awscli installed and configured
 Make sure you have an AWS profile setup and a region:
 ```bash
 # install aws cli
-asdf global awscli "yourversion"
+brew install awscli
 
 # sso login
 aws sso login --profile SystemAdministrator-***
@@ -20,7 +20,7 @@ export AWS_REGION=eu-central-1
 
 test with 
 ```bash
-go test -v -timeout 120m
+make test
 ```
 
 ### Troubleshooting
