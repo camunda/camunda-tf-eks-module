@@ -1,80 +1,67 @@
 package test
 
-// adapted from https://github.com/cloudposse/terraform-aws-eks-cluster/blob/main/test/src/examples_complete_test.go
-
 import (
-	"encoding/base64"
+	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/eks"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/service/kms"
-	"github.com/gruntwork-io/terratest/modules/random"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/camunda/camunda-tf-eks-module/utils"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"sigs.k8s.io/aws-iam-authenticator/pkg/token"
-	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 )
 
-func newClientSet(cluster *eks.Cluster) (*kubernetes.Clientset, error) {
-	gen, err := token.NewGenerator(true, false)
-	if err != nil {
-		return nil, err
-	}
-	opts := &token.GetTokenOptions{
-		ClusterID: aws.StringValue(cluster.Name),
-	}
-	tok, err := gen.GetWithOptions(opts)
-	if err != nil {
-		return nil, err
-	}
-	ca, err := base64.StdEncoding.DecodeString(aws.StringValue(cluster.CertificateAuthority.Data))
-	if err != nil {
-		return nil, err
-	}
-	clientSet, err := kubernetes.NewForConfig(
-		&rest.Config{
-			Host:        aws.StringValue(cluster.Endpoint),
-			BearerToken: tok.Token,
-			TLSClientConfig: rest.TLSClientConfig{
-				CAData: ca,
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return clientSet, nil
-}
+func TestTearsUp(t *testing.T) {
+	// log
+	logger := zaptest.NewLogger(t)
+	sugar := logger.Sugar()
 
-// Function to check a specific VPC attribute
-func checkVpcAttribute(ec2Svc *ec2.EC2, vpcID, attributeName string) (*ec2.DescribeVpcAttributeOutput, error) {
-	input := &ec2.DescribeVpcAttributeInput{
-		VpcId:     aws.String(vpcID),
-		Attribute: aws.String(attributeName),
-	}
-
-	return ec2Svc.DescribeVpcAttribute(input)
-}
-
-// Test the Terraform module in modules/eks-cluster.
-func TestModulesEKSCluster(t *testing.T) {
-
-	randId := strings.ToLower(random.UniqueId())
+	//randId := strings.ToLower(random.UniqueId())
+	randId := "leo"
 	clusterName := fmt.Sprintf("cluster-%s", randId)
 	region := "eu-central-1"
+	sugar.Infow("Creating EKS cluster...")
+
+	terraformOptions := TearsUpEKS(t, sugar, clusterName, region, "")
+
+	// test suite
+	testEksCluster(t, sugar, terraformOptions)
+
+	// At the end of the test, run `terraform destroy` to clean up any resources that were created
+	/*	defer terraform.Destroy(t, terraformOptions)
+
+		// If Go runtime crushes, run `terraform destroy` to clean up any resources that were created
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(t, terraformOptions)
+		})*/
+
+	TearsDown(t, sugar)
+}
+
+// TearsUpEKS spawns a new EKS Cluster with a random name from a fixture file
+func TearsUpEKS(t *testing.T, sugar *zap.SugaredLogger, clusterName, region, kubernetesVersion string) *terraform.Options {
+	varsConfig := map[string]interface{}{
+		"name":   clusterName,
+		"region": region,
+	}
+
+	if kubernetesVersion != "" {
+		varsConfig["kubernetes_version"] = kubernetesVersion
+	}
+
+	sugar.Infow("TF vars", varsConfig)
 
 	terraformOptions := &terraform.Options{
 		// The path to where our Terraform code is located
@@ -82,24 +69,23 @@ func TestModulesEKSCluster(t *testing.T) {
 		Upgrade:      false,
 		// Variables to pass to our Terraform code using -var-file options
 		VarFiles: []string{"../../test/src/fixtures/fixtures.eu-central-1.eks.tfvars"},
-		Vars: map[string]interface{}{
-			"name":   clusterName,
-			"region": region,
-		},
+		Vars:     varsConfig,
 	}
-
-	// At the end of the test, run `terraform destroy` to clean up any resources that were created
-	defer terraform.Destroy(t, terraformOptions)
-
-	// If Go runtime crushes, run `terraform destroy` to clean up any resources that were created
-	defer runtime.HandleCrash(func(i interface{}) {
-		terraform.Destroy(t, terraformOptions)
-	})
 
 	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
 	// then it will re-run apply to make sure that out tf is idempotent
-	_, errTfApply := terraform.InitAndApplyAndIdempotentE(t, terraformOptions)
-	assert.NoError(t, errTfApply)
+	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
+	return terraformOptions
+}
+
+func TearsDown(t *testing.T, sugar *zap.SugaredLogger) {
+	sugar.Infow("Tests completed")
+}
+
+// Test the Terraform module in modules/eks-cluster.
+func testEksCluster(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *terraform.Options) {
+	clusterName := terraformOptions.Vars["name"].(string)
+	sugar.Infow("Testing status of the EKS cluster", clusterName)
 
 	// Do some basic not empty tests on outputs
 	assert.NotEmpty(t, terraform.Output(t, terraformOptions, "cluster_endpoint"))
@@ -119,12 +105,12 @@ func TestModulesEKSCluster(t *testing.T) {
 	assert.Equal(t, fmt.Sprintf("%s-eks-iam-role", clusterName), terraform.Output(t, terraformOptions, "cluster_iam_role_name"))
 
 	// this is a split(6)[0..2] of the base cluster_node_ipv4_cidr    = "10.192.0.0/16"
-	expectedPrivateVpcCidrBlocks := []string([]string{"10.192.0.0/19", "10.192.32.0/19", "10.192.64.0/19"})
-	assert.Equal(t, terraform.Output(t, terraformOptions, "private_vpc_cidr_blocks"), expectedPrivateVpcCidrBlocks)
+	expectedPrivateVpcCidrBlocks := "[10.192.0.0/19 10.192.32.0/19 10.192.64.0/19]"
+	assert.Equal(t, expectedPrivateVpcCidrBlocks, terraform.Output(t, terraformOptions, "private_vpc_cidr_blocks"))
 
 	// this is a split(6)[3..5] of the base cluster_node_ipv4_cidr    = "10.192.0.0/16"
-	expectedPublicVpcCidrBlocks := []string([]string{"10.192.96.0/19", "10.192.128.0/19", "10.192.160.0/19"})
-	assert.Equal(t, terraform.Output(t, terraformOptions, "public_vpc_cidr_blocks"), expectedPublicVpcCidrBlocks)
+	expectedPublicVpcCidrBlocks := "[10.192.96.0/19 10.192.128.0/19 10.192.160.0/19]"
+	assert.Equal(t, expectedPublicVpcCidrBlocks, terraform.Output(t, terraformOptions, "public_vpc_cidr_blocks"))
 
 	// Wait for the worker nodes to join the cluster
 	// https://github.com/kubernetes/client-go
@@ -134,24 +120,25 @@ func TestModulesEKSCluster(t *testing.T) {
 	// https://stackoverflow.com/questions/60547409/unable-to-obtain-kubeconfig-of-an-aws-eks-cluster-in-go-code/60573982#60573982
 	fmt.Println("Waiting for worker nodes to join the EKS cluster")
 
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String(region),
-	}))
+	sess, err := utils.GetAwsClient()
+	require.NoErrorf(t, err, "Failed to get aws client")
 
 	// list your services here
-	eksSvc := eks.New(sess)
-	iamSvc := iam.New(sess)
-	ec2Svc := ec2.New(sess)
-	kmsSvc := kms.New(sess)
+	eksSvc := eks.NewFromConfig(sess)
+	iamSvc := iam.NewFromConfig(sess)
+	ec2Svc := ec2.NewFromConfig(sess)
+	kmsSvc := kms.NewFromConfig(sess)
+
+	var expectedNodesCount uint64 = 3
 
 	inputEKS := &eks.DescribeClusterInput{
 		Name: aws.String(clusterName),
 	}
 
-	result, err := eksSvc.DescribeCluster(inputEKS)
+	result, err := eksSvc.DescribeCluster(context.TODO(), inputEKS)
 	assert.NoError(t, err)
 
-	clientSet, err := newClientSet(result.Cluster)
+	clientSet, err := utils.NewClientSet(result.Cluster)
 	assert.NoError(t, err)
 
 	factory := informers.NewSharedInformerFactory(clientSet, 0)
@@ -164,14 +151,19 @@ func TestModulesEKSCluster(t *testing.T) {
 			node := obj.(*corev1.Node)
 			fmt.Printf("Worker Node %s has joined the EKS cluster at %s\n", node.Name, node.CreationTimestamp)
 			atomic.AddUint64(&countOfWorkerNodes, 1)
-			if countOfWorkerNodes > 1 {
-				close(stopChannel)
+			if countOfWorkerNodes >= expectedNodesCount {
+				stopChannel <- struct{}{} // send close signal
 			}
 		},
 	})
 	require.NoError(t, errEventHandler)
 
 	go informer.Run(stopChannel)
+	go func() {
+		// wait to receive a signal to close the channel
+		<-stopChannel
+		close(stopChannel)
+	}()
 
 	select {
 	case <-stopChannel:
@@ -185,14 +177,16 @@ func TestModulesEKSCluster(t *testing.T) {
 
 	// Verify list of addons installed on the EKS
 	expectedEKSAddons := []string{"coredns", "kube-proxy", "vpc-cni", "aws-ebs-csi-driver"}
-	inputDescribeAddons := &eks.ListAddonsInput{}
-	outputEKSAddons, errEKSAddons := eksSvc.ListAddons(inputDescribeAddons)
+	inputDescribeAddons := &eks.ListAddonsInput{
+		ClusterName: aws.String(clusterName),
+	}
+	outputEKSAddons, errEKSAddons := eksSvc.ListAddons(context.TODO(), inputDescribeAddons)
 	require.NoError(t, errEKSAddons)
 
 	// perform the diff
 	presenceAddonsMap := make(map[string]bool)
 	for _, addon := range outputEKSAddons.Addons {
-		presenceAddonsMap[*addon] = true
+		presenceAddonsMap[addon] = true
 	}
 	for _, addonName := range expectedEKSAddons {
 		assert.Truef(t, presenceAddonsMap[addonName], "Addon %s not installed on the EKS cluster", addonName)
@@ -211,7 +205,7 @@ func TestModulesEKSCluster(t *testing.T) {
 			RoleName: aws.String(roleName),
 		}
 
-		_, err := iamSvc.GetRole(input)
+		_, err := iamSvc.GetRole(context.TODO(), input)
 		assert.NoErrorf(t, err, "Failed to get IAM EKS role %s", roleName)
 	}
 
@@ -220,15 +214,15 @@ func TestModulesEKSCluster(t *testing.T) {
 	vpcName := fmt.Sprintf("%s-vpc", clusterName)
 
 	inputVPC := &ec2.DescribeVpcsInput{
-		Filters: []*ec2.Filter{
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("tag:Name"),
-				Values: []*string{aws.String(vpcName)},
+				Values: []string{vpcName},
 			},
 		},
 	}
 
-	outputVPC, errVPC := ec2Svc.DescribeVpcs(inputVPC)
+	outputVPC, errVPC := ec2Svc.DescribeVpcs(context.TODO(), inputVPC)
 	require.NoError(t, errVPC)
 
 	assert.Equal(t, len(outputVPC.Vpcs), 1)
@@ -237,26 +231,27 @@ func TestModulesEKSCluster(t *testing.T) {
 	vpcID := *vpc.VpcId
 	assert.NotEmpty(t, vpcID)
 
-	// WIP
-	/*	val, err := checkVpcAttribute(ec2Svc, vpcID, "mapPublicIpOnLaunch")
-		assert.NoError(t, err)
-		assert.Equal(t, true, *val)
-		checkVpcAttribute(ec2Svc, vpcID, "enableDnsSupport")
-		checkVpcAttribute(ec2Svc, vpcID, "enableDnsHostnames")
-	*/
+	// todo: implement
+	/*	valAttr, errAttr := utils.CheckVpcAttribute(ec2Svc, vpcID, types.VpcAttributeNameEnableDnsHostnames)
+		assert.NoError(t, errAttr)
+		assert.Equal(t, true, *valAttr)
+		valAttr, errAttr = utils.CheckVpcAttribute(ec2Svc, vpcID, types.VpcAttributeNameEnableDnsSupport)
+		assert.NoError(t, errAttr)
+		assert.Equal(t, true, *valAttr)*/
 
+	// key
 	keyDescription := fmt.Sprintf("%s -  EKS Secret Encryption Key", clusterName)
 	inputKMS := &kms.ListKeysInput{}
-	outputKMSList, errKMSList := kmsSvc.ListKeys(inputKMS)
+	outputKMSList, errKMSList := kmsSvc.ListKeys(context.TODO(), inputKMS)
 	assert.NoError(t, errKMSList)
 
 	// Check if the key corresponding to the description exists
 	keyFound := false
 	for _, key := range outputKMSList.Keys {
-		keyDetails, err := kmsSvc.DescribeKey(&kms.DescribeKeyInput{
+		keyDetails, errKey := kmsSvc.DescribeKey(context.TODO(), &kms.DescribeKeyInput{
 			KeyId: key.KeyId,
 		})
-		require.NoErrorf(t, err, "Failed to describe key %s", *key.KeyId)
+		require.NoErrorf(t, errKey, "Failed to describe key %s", *key.KeyId)
 
 		keyFound = *keyDetails.KeyMetadata.Description == keyDescription
 		if keyFound {
@@ -265,3 +260,7 @@ func TestModulesEKSCluster(t *testing.T) {
 	}
 	assert.Truef(t, keyFound, "Failed to find key %s", keyDescription)
 }
+
+// todo: test upgrade path
+// todo: test auroradb integration
+// todo: test inputs

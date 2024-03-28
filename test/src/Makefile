@@ -6,7 +6,7 @@ init: ## Initialize tests
 	@exit 0
 
 .PHONY : test
-test: init ## Run tests
+test: init clean ## Run tests
 	go mod download
 	go test -v -timeout 120m
 

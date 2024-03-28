@@ -30,6 +30,9 @@ make test
 
 eksctl get clusters 
 ```
+# TODO: implement db pod
+# todo: tests weekly 
+# see https://github.com/camunda/c8-multi-region/blob/main/.github/workflows/nightly_aws_region_cleanup.yml
 
 # TODO: https://github.com/gruntwork-io/cloud-nuke every weekend
 # => we should have a dedicated tenant for CI
