@@ -15,10 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/tools/cache"
-	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -138,42 +134,8 @@ func testEksCluster(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *te
 	result, err := eksSvc.DescribeCluster(context.TODO(), inputEKS)
 	assert.NoError(t, err)
 
-	clientSet, err := utils.NewClientSet(result.Cluster)
-	assert.NoError(t, err)
-
-	factory := informers.NewSharedInformerFactory(clientSet, 0)
-	informer := factory.Core().V1().Nodes().Informer()
-	stopChannel := make(chan struct{})
-	var countOfWorkerNodes uint64 = 0
-
-	_, errEventHandler := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			node := obj.(*corev1.Node)
-			fmt.Printf("Worker Node %s has joined the EKS cluster at %s\n", node.Name, node.CreationTimestamp)
-			atomic.AddUint64(&countOfWorkerNodes, 1)
-			if countOfWorkerNodes >= expectedNodesCount {
-				stopChannel <- struct{}{} // send close signal
-			}
-		},
-	})
-	require.NoError(t, errEventHandler)
-
-	go informer.Run(stopChannel)
-	go func() {
-		// wait to receive a signal to close the channel
-		<-stopChannel
-		close(stopChannel)
-	}()
-
-	select {
-	case <-stopChannel:
-		msg := "All worker nodes have joined the EKS cluster"
-		fmt.Println(msg)
-	case <-time.After(5 * time.Minute):
-		msg := "Not all worker nodes have joined the EKS cluster"
-		fmt.Println(msg)
-		assert.Fail(t, msg)
-	}
+	errClusterReady := utils.WaitUntilClusterIsReady(result.Cluster, 5*time.Minute, expectedNodesCount)
+	require.NoError(t, errClusterReady)
 
 	// Verify list of addons installed on the EKS
 	expectedEKSAddons := []string{"coredns", "kube-proxy", "vpc-cni", "aws-ebs-csi-driver"}
