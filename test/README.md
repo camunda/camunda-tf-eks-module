@@ -18,9 +18,17 @@ export AWS_DEFAULT_PROFILE=SystemAdministrator-****
 export AWS_REGION=eu-central-1
 ```
 
-test with 
+If you want to have a non-random cluster uid:
+```
+export TEST_CLUSTER_ID="myTest"
+```
+
+test with
 ```bash
 make test
+
+# or just test one case
+go test -v -timeout 120m -run TestDefaultEKS
 ```
 
 ### Troubleshooting
@@ -28,10 +36,10 @@ make test
 ```bash
 # make sure you don't have test clusters running since a while
 
-eksctl get clusters 
+eksctl get clusters
 ```
 # TODO: implement db pod
-# todo: tests weekly 
+# todo: tests weekly
 # see https://github.com/camunda/c8-multi-region/blob/main/.github/workflows/nightly_aws_region_cleanup.yml
 
 # TODO: https://github.com/gruntwork-io/cloud-nuke every weekend

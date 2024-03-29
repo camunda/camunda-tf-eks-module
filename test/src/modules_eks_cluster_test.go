@@ -10,30 +10,33 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/camunda/camunda-tf-eks-module/utils"
+	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
+	"strings"
 	"testing"
 	"time"
 )
 
-func TestTearsUp(t *testing.T) {
+// TestDefaultEKS spawns an EKS cluster with the default parameters and checks the parameters
+func TestDefaultEKS(t *testing.T) {
 	// log
 	logger := zaptest.NewLogger(t)
 	sugar := logger.Sugar()
 
-	//randId := strings.ToLower(random.UniqueId())
-	randId := "leo"
-	clusterName := fmt.Sprintf("cluster-%s", randId)
+	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
+	clusterName := fmt.Sprintf("cluster-%s", clusterSuffix)
 	region := "eu-central-1"
 	sugar.Infow("Creating EKS cluster...")
+	expectedCapacity := 4
 
-	terraformOptions := TearsUpEKS(t, sugar, clusterName, region, "")
+	terraformOptions := SpawnEKS(t, sugar, expectedCapacity, clusterName, region, "")
 
 	// test suite
-	testEksCluster(t, sugar, terraformOptions)
+	baseChecksEKS(t, sugar, terraformOptions, uint64(expectedCapacity))
 
 	// At the end of the test, run `terraform destroy` to clean up any resources that were created
 	/*	defer terraform.Destroy(t, terraformOptions)
@@ -46,11 +49,53 @@ func TestTearsUp(t *testing.T) {
 	TearsDown(t, sugar)
 }
 
-// TearsUpEKS spawns a new EKS Cluster with a random name from a fixture file
-func TearsUpEKS(t *testing.T, sugar *zap.SugaredLogger, clusterName, region, kubernetesVersion string) *terraform.Options {
+// TestCustomEKSAndRDS spawns a custom EKS cluster with custom parameters, and spawns a
+// pg client pod that will test connection to AuroraDB
+func TestCustomEKSAndRDS(t *testing.T) {
+
+}
+
+// TestUpgradeEKS starts from a version of EKS, deploy a simple chart, upgrade the cluster
+// and check that everything is working as expected
+func TestUpgradeEKS(t *testing.T) {
+	// log
+	logger := zaptest.NewLogger(t)
+	sugar := logger.Sugar()
+
+	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
+	clusterName := fmt.Sprintf("cluster-%s", clusterSuffix)
+	region := "eu-central-1"
+	sugar.Infow("Creating EKS cluster...")
+	expectedCapacity := 4
+
+	terraformOptions := SpawnEKS(t, sugar, expectedCapacity, clusterName, region, "1.27")
+
+	// test suite
+	baseChecksEKS(t, sugar, terraformOptions, 3)
+
+	// upgrade the cluster
+	terraformOptions = SpawnEKS(t, sugar, expectedCapacity, clusterName, region, "1.28")
+
+	// check everything works as expected
+	baseChecksEKS(t, sugar, terraformOptions, 3)
+
+	// At the end of the test, run `terraform destroy` to clean up any resources that were created
+	/*	defer terraform.Destroy(t, terraformOptions)
+
+		// If Go runtime crushes, run `terraform destroy` to clean up any resources that were created
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(t, terraformOptions)
+		})*/
+
+	TearsDown(t, sugar)
+}
+
+// SpawnEKS spawns a new EKS Cluster with a random name from a fixture file
+func SpawnEKS(t *testing.T, sugar *zap.SugaredLogger, desiredNodeCount int, clusterName, region, kubernetesVersion string) *terraform.Options {
 	varsConfig := map[string]interface{}{
-		"name":   clusterName,
-		"region": region,
+		"name":                  clusterName,
+		"region":                region,
+		"np_desired_node_count": desiredNodeCount,
 	}
 
 	if kubernetesVersion != "" {
@@ -64,7 +109,7 @@ func TearsUpEKS(t *testing.T, sugar *zap.SugaredLogger, clusterName, region, kub
 		TerraformDir: "../../modules/eks-cluster",
 		Upgrade:      false,
 		// Variables to pass to our Terraform code using -var-file options
-		VarFiles: []string{"../../test/src/fixtures/fixtures.eu-central-1.eks.tfvars"},
+		VarFiles: []string{"../../test/src/fixtures/fixtures.default.eks.tfvars"},
 		Vars:     varsConfig,
 	}
 
@@ -75,11 +120,11 @@ func TearsUpEKS(t *testing.T, sugar *zap.SugaredLogger, clusterName, region, kub
 }
 
 func TearsDown(t *testing.T, sugar *zap.SugaredLogger) {
-	sugar.Infow("Tests completed")
+	sugar.Infow("All tests completed")
 }
 
-// Test the Terraform module in modules/eks-cluster.
-func testEksCluster(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *terraform.Options) {
+// baseChecksEKS checks the defaults of an EKS cluster
+func baseChecksEKS(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *terraform.Options, expectedNodesCount uint64) {
 	clusterName := terraformOptions.Vars["name"].(string)
 	sugar.Infow("Testing status of the EKS cluster", clusterName)
 
@@ -98,6 +143,7 @@ func testEksCluster(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *te
 	assert.NotEmpty(t, terraform.Output(t, terraformOptions, "vpc_main_route_table_id"))
 	assert.NotEmpty(t, terraform.Output(t, terraformOptions, "private_route_table_ids"))
 
+	// test IAM roles
 	assert.Equal(t, fmt.Sprintf("%s-eks-iam-role", clusterName), terraform.Output(t, terraformOptions, "cluster_iam_role_name"))
 
 	// this is a split(6)[0..2] of the base cluster_node_ipv4_cidr    = "10.192.0.0/16"
@@ -108,14 +154,6 @@ func testEksCluster(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *te
 	expectedPublicVpcCidrBlocks := "[10.192.96.0/19 10.192.128.0/19 10.192.160.0/19]"
 	assert.Equal(t, expectedPublicVpcCidrBlocks, terraform.Output(t, terraformOptions, "public_vpc_cidr_blocks"))
 
-	// Wait for the worker nodes to join the cluster
-	// https://github.com/kubernetes/client-go
-	// https://www.rushtehrani.com/post/using-kubernetes-api
-	// https://rancher.com/using-kubernetes-api-go-kubecon-2017-session-recap
-	// https://gianarb.it/blog/kubernetes-shared-informer
-	// https://stackoverflow.com/questions/60547409/unable-to-obtain-kubeconfig-of-an-aws-eks-cluster-in-go-code/60573982#60573982
-	fmt.Println("Waiting for worker nodes to join the EKS cluster")
-
 	sess, err := utils.GetAwsClient()
 	require.NoErrorf(t, err, "Failed to get aws client")
 
@@ -125,8 +163,6 @@ func testEksCluster(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *te
 	ec2Svc := ec2.NewFromConfig(sess)
 	kmsSvc := kms.NewFromConfig(sess)
 
-	var expectedNodesCount uint64 = 3
-
 	inputEKS := &eks.DescribeClusterInput{
 		Name: aws.String(clusterName),
 	}
@@ -134,6 +170,8 @@ func testEksCluster(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *te
 	result, err := eksSvc.DescribeCluster(context.TODO(), inputEKS)
 	assert.NoError(t, err)
 
+	// Wait for the worker nodes to join the cluster
+	sugar.Infow("Waiting for worker nodes to join the EKS cluster")
 	errClusterReady := utils.WaitUntilClusterIsReady(result.Cluster, 5*time.Minute, expectedNodesCount)
 	require.NoError(t, errClusterReady)
 
@@ -188,18 +226,6 @@ func testEksCluster(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *te
 	require.NoError(t, errVPC)
 
 	assert.Equal(t, len(outputVPC.Vpcs), 1)
-
-	vpc := outputVPC.Vpcs[0]
-	vpcID := *vpc.VpcId
-	assert.NotEmpty(t, vpcID)
-
-	// todo: implement
-	/*	valAttr, errAttr := utils.CheckVpcAttribute(ec2Svc, vpcID, types.VpcAttributeNameEnableDnsHostnames)
-		assert.NoError(t, errAttr)
-		assert.Equal(t, true, *valAttr)
-		valAttr, errAttr = utils.CheckVpcAttribute(ec2Svc, vpcID, types.VpcAttributeNameEnableDnsSupport)
-		assert.NoError(t, errAttr)
-		assert.Equal(t, true, *valAttr)*/
 
 	// key
 	keyDescription := fmt.Sprintf("%s -  EKS Secret Encryption Key", clusterName)

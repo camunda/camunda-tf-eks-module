@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	types2 "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/eks/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/informers"
@@ -20,6 +18,7 @@ import (
 	"time"
 )
 
+// NewClientSet generate a kubernetes.Clientset from an aws Cluster
 func NewClientSet(cluster *types.Cluster) (*kubernetes.Clientset, error) {
 	gen, err := token.NewGenerator(true, false)
 	if err != nil {
@@ -51,6 +50,7 @@ func NewClientSet(cluster *types.Cluster) (*kubernetes.Clientset, error) {
 	return clientSet, nil
 }
 
+// GetAwsClient returns an aws.Config client from the env variables `AWS_PROFILE` and `AWS_REGION`
 func GetAwsClient() (aws.Config, error) {
 	awsProfile := GetEnv("AWS_PROFILE", GetEnv("AWS_DEFAULT_PROFILE", "infex"))
 	region := GetEnv("AWS_REGION", "eu-central-1")
@@ -61,17 +61,14 @@ func GetAwsClient() (aws.Config, error) {
 	)
 }
 
-// CheckVpcAttribute Function to check a specific VPC attribute
-func CheckVpcAttribute(ec2Svc *ec2.Client, vpcID string, attributeName types2.VpcAttributeName) (*ec2.DescribeVpcAttributeOutput, error) {
-	input := &ec2.DescribeVpcAttributeInput{
-		VpcId:     &vpcID,
-		Attribute: attributeName,
-	}
-
-	return ec2Svc.DescribeVpcAttribute(context.TODO(), input)
-}
-
+// WaitUntilClusterIsReady waits until the kube cluster is read or returns an error
 func WaitUntilClusterIsReady(cluster *types.Cluster, timeout time.Duration, expectedNodesCount uint64) error {
+	// https://github.com/kubernetes/client-go
+	// https://www.rushtehrani.com/post/using-kubernetes-api
+	// https://rancher.com/using-kubernetes-api-go-kubecon-2017-session-recap
+	// https://gianarb.it/blog/kubernetes-shared-informer
+	// https://stackoverflow.com/questions/60547409/unable-to-obtain-kubeconfig-of-an-aws-eks-cluster-in-go-code/60573982#60573982
+
 	clientSet, err := NewClientSet(cluster)
 	if err != nil {
 		return err
