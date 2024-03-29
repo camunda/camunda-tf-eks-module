@@ -10,12 +10,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/camunda/camunda-tf-eks-module/utils"
+	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"strings"
 	"testing"
 	"time"
@@ -33,18 +38,16 @@ func TestDefaultEKS(t *testing.T) {
 	sugar.Infow("Creating EKS cluster...")
 	expectedCapacity := 4
 
-	terraformOptions := SpawnEKS(t, sugar, expectedCapacity, clusterName, region, "")
+	varsConfig := map[string]interface{}{
+		"name":                  clusterName,
+		"region":                region,
+		"np_desired_node_count": expectedCapacity,
+	}
+
+	terraformOptions := SpawnEKS(t, sugar, varsConfig)
 
 	// test suite
 	baseChecksEKS(t, sugar, terraformOptions, uint64(expectedCapacity))
-
-	// At the end of the test, run `terraform destroy` to clean up any resources that were created
-	/*	defer terraform.Destroy(t, terraformOptions)
-
-		// If Go runtime crushes, run `terraform destroy` to clean up any resources that were created
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(t, terraformOptions)
-		})*/
 
 	TearsDown(t, sugar)
 }
@@ -52,7 +55,94 @@ func TestDefaultEKS(t *testing.T) {
 // TestCustomEKSAndRDS spawns a custom EKS cluster with custom parameters, and spawns a
 // pg client pod that will test connection to AuroraDB
 func TestCustomEKSAndRDS(t *testing.T) {
+	// log
+	logger := zaptest.NewLogger(t)
+	sugar := logger.Sugar()
 
+	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
+	clusterName := fmt.Sprintf("cluster-rds-%s", clusterSuffix)
+	region := "eu-central-1"
+	sugar.Infow("Creating EKS cluster...")
+	expectedCapacity := 3
+
+	varsConfigEKS := map[string]interface{}{
+		"name":                  clusterName,
+		"region":                region,
+		"np_desired_node_count": expectedCapacity,
+	}
+
+	terraformOptions := SpawnEKS(t, sugar, varsConfigEKS)
+
+	// Wait for the worker nodes to join the cluster
+	sess, err := utils.GetAwsClient()
+	require.NoErrorf(t, err, "Failed to get aws client")
+
+	// list your services here
+	eksSvc := eks.NewFromConfig(sess)
+
+	inputEKS := &eks.DescribeClusterInput{
+		Name: aws.String(clusterName),
+	}
+
+	result, err := eksSvc.DescribeCluster(context.TODO(), inputEKS)
+	assert.NoError(t, err)
+
+	sugar.Infow("Waiting for worker nodes to join the EKS cluster")
+	errClusterReady := utils.WaitUntilClusterIsReady(result.Cluster, 5*time.Minute, uint64(expectedCapacity))
+	require.NoError(t, errClusterReady)
+
+	// Spawn RDS within the EKS VPC/subnet
+	publicBlocks := strings.Fields(strings.Trim(terraform.Output(t, terraformOptions, "public_vpc_cidr_blocks"), "[]"))
+	privateBlocks := strings.Fields(strings.Trim(terraform.Output(t, terraformOptions, "private_vpc_cidr_blocks"), "[]"))
+
+	auroraUsername := "myuser"
+	auroraPassword := "mypassword123secure"
+	varsConfigAurora := map[string]interface{}{
+		"username":         auroraUsername,
+		"password":         auroraPassword,
+		"cluster_name":     fmt.Sprintf("postgres-%s", clusterSuffix),
+		"subnet_ids":       result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"vpc_id":           result.Cluster.ResourcesVpcConfig.VpcId,
+		"cidr_blocks":      append(publicBlocks, privateBlocks...),
+		"iam_auth_enabled": true,
+	}
+
+	terraformOptionsRDS := SpawnAurora(t, sugar, varsConfigAurora)
+	auroraEndpoint := terraform.Output(t, terraformOptionsRDS, "aurora_endpoint")
+	assert.NotEmpty(t, auroraEndpoint)
+
+	// Launch a pod on the cluster and test the RDS
+	kubeClient, err := utils.NewClientSet(result.Cluster)
+	require.NoError(t, err)
+
+	// create the configmap
+	namespace := "postgres-client"
+	k8s.CreateNamespace(t, kubeClient, namespace)
+
+	// todo:
+https: //github.com/camunda/c8-multi-region/blob/main/test/internal/helpers/aws/helpers.go#L242
+
+	configMapPostgres := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "aurora-config",
+			Namespace: namespace,
+		},
+		Data: map[string]string{
+			"aurora_endpoint": auroraEndpoint,
+			"aurora_username": auroraUsername,
+			"aurora_port":     "5432",
+			"aws_region":      region,
+			"aurora_db_name":  auroraEndpoint,
+		},
+	}
+	_, err = kubeClient.CoreV1().ConfigMaps(namespace).Create(context.Background(), configMapPostgres, metav1.CreateOptions{})
+	if err != nil {
+		if !errors.IsAlreadyExists(err) {
+			require.NoError(t, err)
+		}
+	}
+
+	TearsDown(t, sugar)
 }
 
 // TestUpgradeEKS starts from a version of EKS, deploy a simple chart, upgrade the cluster
@@ -63,45 +153,36 @@ func TestUpgradeEKS(t *testing.T) {
 	sugar := logger.Sugar()
 
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
-	clusterName := fmt.Sprintf("cluster-%s", clusterSuffix)
+	clusterName := fmt.Sprintf("cluster-upgrade-%s", clusterSuffix)
 	region := "eu-central-1"
 	sugar.Infow("Creating EKS cluster...")
 	expectedCapacity := 4
 
-	terraformOptions := SpawnEKS(t, sugar, expectedCapacity, clusterName, region, "1.27")
+	varsConfig := map[string]interface{}{
+		"name":                  clusterName,
+		"region":                region,
+		"np_desired_node_count": expectedCapacity,
+		"kubernetes_version":    "1.27",
+	}
+
+	terraformOptions := SpawnEKS(t, sugar, varsConfig)
 
 	// test suite
 	baseChecksEKS(t, sugar, terraformOptions, 3)
 
 	// upgrade the cluster
-	terraformOptions = SpawnEKS(t, sugar, expectedCapacity, clusterName, region, "1.28")
+	varsConfig["kubernetes_version"] = "1.28"
+
+	terraformOptions = SpawnEKS(t, sugar, varsConfig)
 
 	// check everything works as expected
 	baseChecksEKS(t, sugar, terraformOptions, 3)
 
-	// At the end of the test, run `terraform destroy` to clean up any resources that were created
-	/*	defer terraform.Destroy(t, terraformOptions)
-
-		// If Go runtime crushes, run `terraform destroy` to clean up any resources that were created
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(t, terraformOptions)
-		})*/
-
 	TearsDown(t, sugar)
 }
 
-// SpawnEKS spawns a new EKS Cluster with a random name from a fixture file
-func SpawnEKS(t *testing.T, sugar *zap.SugaredLogger, desiredNodeCount int, clusterName, region, kubernetesVersion string) *terraform.Options {
-	varsConfig := map[string]interface{}{
-		"name":                  clusterName,
-		"region":                region,
-		"np_desired_node_count": desiredNodeCount,
-	}
-
-	if kubernetesVersion != "" {
-		varsConfig["kubernetes_version"] = kubernetesVersion
-	}
-
+// SpawnEKS spawns a new EKS Cluster from a default fixture file
+func SpawnEKS(t *testing.T, sugar *zap.SugaredLogger, varsConfig map[string]interface{}) *terraform.Options {
 	sugar.Infow("TF vars", varsConfig)
 
 	terraformOptions := &terraform.Options{
@@ -111,6 +192,49 @@ func SpawnEKS(t *testing.T, sugar *zap.SugaredLogger, desiredNodeCount int, clus
 		// Variables to pass to our Terraform code using -var-file options
 		VarFiles: []string{"../../test/src/fixtures/fixtures.default.eks.tfvars"},
 		Vars:     varsConfig,
+	}
+
+	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
+
+	if cleanClusterAtTheEnd == "true" {
+		// At the end of the test, run `terraform destroy` to clean up any resources that were created
+		defer terraform.Destroy(t, terraformOptions)
+
+		// If Go runtime crushes, run `terraform destroy` to clean up any resources that were created
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(t, terraformOptions)
+		})
+	}
+
+	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors
+	// then it will re-run apply to make sure that out tf is idempotent
+	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
+	return terraformOptions
+}
+
+// SpawnAurora spawns a new Aurora RDS from a default fixture file
+func SpawnAurora(t *testing.T, sugar *zap.SugaredLogger, varsConfig map[string]interface{}) *terraform.Options {
+	sugar.Infow("TF vars", varsConfig)
+
+	terraformOptions := &terraform.Options{
+		// The path to where our Terraform code is located
+		TerraformDir: "../../modules/aurora",
+		Upgrade:      false,
+		// Variables to pass to our Terraform code using -var-file options
+		VarFiles: []string{"../../test/src/fixtures/fixtures.default.aurora.tfvars"},
+		Vars:     varsConfig,
+	}
+
+	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
+
+	if cleanClusterAtTheEnd == "true" {
+		// At the end of the test, run `terraform destroy` to clean up any resources that were created
+		defer terraform.Destroy(t, terraformOptions)
+
+		// If Go runtime crushes, run `terraform destroy` to clean up any resources that were created
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(t, terraformOptions)
+		})
 	}
 
 	// This will run `terraform init` and `terraform apply` and fail the test if there are any errors

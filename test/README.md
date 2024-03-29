@@ -23,6 +23,11 @@ If you want to have a non-random cluster uid:
 export TEST_CLUSTER_ID="myTest"
 ```
 
+If you don't want to delete the ressources at the end:
+```
+CLEAN_CLUSTER_AT_THE_END=false
+```
+
 test with
 ```bash
 make test
