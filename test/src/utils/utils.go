@@ -50,10 +50,18 @@ func NewClientSet(cluster *types.Cluster) (*kubernetes.Clientset, error) {
 	return clientSet, nil
 }
 
+func GetAwsProfile() string {
+	return GetEnv("AWS_PROFILE", GetEnv("AWS_DEFAULT_PROFILE", "infex"))
+}
+
+func GetAwsRegion() string {
+	return GetEnv("AWS_REGION", "eu-central-1")
+}
+
 // GetAwsClient returns an aws.Config client from the env variables `AWS_PROFILE` and `AWS_REGION`
 func GetAwsClient() (aws.Config, error) {
-	awsProfile := GetEnv("AWS_PROFILE", GetEnv("AWS_DEFAULT_PROFILE", "infex"))
-	region := GetEnv("AWS_REGION", "eu-central-1")
+	awsProfile := GetAwsProfile()
+	region := GetAwsRegion()
 
 	return config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(region),

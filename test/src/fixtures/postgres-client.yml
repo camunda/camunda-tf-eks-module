@@ -1,23 +1,30 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: postgres-client
   labels:
     app: postgres-client
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres-client
   template:
-    metadata:
-      labels:
-        app: postgres-client
     spec:
+      restartPolicy: Never
       containers:
         - name: postgres-client
-          image: ubuntu:latest
-          command: ["sh", "-c", "apt-get update && apt-get install -y python3 python3-pip && python3 -m pip install awscli && AWS_PG_PASSWORD=$(aws rds generate-db-auth-token --hostname $AURORA_ENDPOINT --port $AURORA_PORT --region $AWS_REGION --username $AURORA_USERNAME) && psql -h $AURORA_ENDPOINT -p $AURORA_PORT \"dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AWS_PG_PASSWORD\" -c 'SELECT version();' && sleep 3600"]
+          image: ubuntu:latest # TODO: create the irsa user on the db (see kc)
+          command:
+            - sh
+            - "-c"
+            - |
+              /bin/bash <<'EOF'
+
+              apt-get update &&
+              apt-get install -y python3 python3-pip build-essential postgresql-client &&
+              python3 -m pip install awscli &&
+              aws rds generate-db-auth-token --hostname $AURORA_ENDPOINT --port $AURORA_PORT --region $AWS_REGION --username $AURORA_USERNAME
+              AWS_PG_PASSWORD=$(aws rds generate-db-auth-token --hostname $AURORA_ENDPOINT --port $AURORA_PORT --region $AWS_REGION --username $AURORA_USERNAME) &&
+              psql -h $AURORA_ENDPOINT -p $AURORA_PORT "dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AWS_PG_PASSWORD" -c 'SELECT version();'
+
+              EOF
           env:
             - name: AURORA_ENDPOINT
               valueFrom:

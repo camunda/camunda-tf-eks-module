@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -97,12 +98,13 @@ func TestCustomEKSAndRDS(t *testing.T) {
 
 	auroraUsername := "myuser"
 	auroraPassword := "mypassword123secure"
+
 	varsConfigAurora := map[string]interface{}{
 		"username":         auroraUsername,
 		"password":         auroraPassword,
 		"cluster_name":     fmt.Sprintf("postgres-%s", clusterSuffix),
 		"subnet_ids":       result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"vpc_id":           result.Cluster.ResourcesVpcConfig.VpcId,
+		"vpc_id":           *result.Cluster.ResourcesVpcConfig.VpcId,
 		"cidr_blocks":      append(publicBlocks, privateBlocks...),
 		"iam_auth_enabled": true,
 	}
@@ -115,12 +117,24 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	kubeClient, err := utils.NewClientSet(result.Cluster)
 	require.NoError(t, err)
 
+	// create kubeconfig
+	cmd := exec.Command("aws", "eks", "--region", region, "update-kubeconfig", "--name", clusterName, "--profile", utils.GetAwsProfile(), "--kubeconfig", "kubeconfig")
+	_, errCmdKubeProfile := cmd.Output()
+	require.NoError(t, errCmdKubeProfile)
+
 	// create the configmap
 	namespace := "postgres-client"
-	k8s.CreateNamespace(t, kubeClient, namespace)
+	pgKubeCtlOptions := k8s.NewKubectlOptions("", "kubeconfig", namespace)
+	_, errFindNamespace := k8s.GetNamespaceE(t, pgKubeCtlOptions, namespace)
+	if errFindNamespace != nil {
+		if errors.IsNotFound(err) {
+			k8s.CreateNamespace(t, pgKubeCtlOptions, namespace)
+		} else {
+			require.NoError(t, errFindNamespace)
+		}
+	}
 
-	// todo:
-https: //github.com/camunda/c8-multi-region/blob/main/test/internal/helpers/aws/helpers.go#L242
+	// todo: https: //github.com/camunda/c8-multi-region/blob/main/test/internal/helpers/aws/helpers.go#L242
 
 	configMapPostgres := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -141,6 +155,18 @@ https: //github.com/camunda/c8-multi-region/blob/main/test/internal/helpers/aws/
 			require.NoError(t, err)
 		}
 	}
+	// cleanup existing jobs
+	jobListOptions := metav1.ListOptions{LabelSelector: "app=postgres-client"}
+	existingJobs := k8s.ListJobs(t, pgKubeCtlOptions, jobListOptions)
+	for _, job := range existingJobs {
+		err := kubeClient.BatchV1().Jobs(namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
+		assert.NoError(t, err)
+	}
+
+	k8s.KubectlApply(t, pgKubeCtlOptions, "../../test/src/fixtures/postgres-client.yml")
+
+	errJob := utils.WaitForJobCompletion(kubeClient, namespace, "postgres-client", 5*time.Minute, jobListOptions)
+	require.NoError(t, errJob)
 
 	TearsDown(t, sugar)
 }
