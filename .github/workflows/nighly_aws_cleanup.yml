@@ -1,0 +1,80 @@
+---
+name: Nightly AWS Region Cleanup
+
+on:
+  schedule:
+    - cron: '0 5 * * 1-5'
+  workflow_dispatch:
+
+env:
+  AWS_PROFILE: infex
+
+jobs:
+  aws-nightly-cleanup:
+    runs-on: ubuntu-latest
+    # Other dependencies from hosted runner
+    # AWS CLI
+    # indirectly node used by actions
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import Secrets
+        id: secrets
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          exportEnv: false
+          secrets: |
+            secret/data/products/infrastructure-experience/ci/common AWS_ACCESS_KEY;
+            secret/data/products/infrastructure-experience/ci/common AWS_SECRET_KEY;
+
+      # Official action does not support profiles
+      - name: Add profile credentials to ~/.aws/credentials
+        run: |
+          aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set region eu-west-2 --profile ${{ env.AWS_PROFILE }}
+
+      - name: Install Cloud Nuke
+        run: |
+          wget https://github.com/gruntwork-io/cloud-nuke/releases/download/v0.33.0/cloud-nuke_linux_amd64
+          chmod +x cloud-nuke_linux_amd64
+
+      # This is likely to fail, therefore we ignore the error
+      # We're ignoring ec2_dhcp_option as they couldn't be deleted
+      # cloudtrail is managed by IT and can't be deleted either
+      - name: Run Cloud Nuke
+        timeout-minutes: 45
+        env:
+          DISABLE_TELEMETRY: "true"
+        run: |
+          ./cloud-nuke_linux_amd64 aws \
+          --region eu-west-2 \
+          --region eu-west-3 \
+          --force \
+          --newer-than 4h \
+          --exclude-resource-type ec2_dhcp_option \
+          --exclude-resource-type cloudtrail || true
+
+      # Following will delete global resources and things that cloud-nuke does not support
+      - name: Delete additional AWS resources
+        timeout-minutes: 15
+        run: .github/workflows/scripts/aws_cleanup.sh
+
+      # The second run should remove the remaining resources (VPCs) and fail if there's anything left
+      - name: Run Cloud Nuke
+        timeout-minutes: 45
+        env:
+          DISABLE_TELEMETRY: "true"
+        run: |
+          ./cloud-nuke_linux_amd64 aws \
+          --region eu-west-2 \
+          --region eu-west-3 \
+          --force \
+          --newer-than 4h \
+          --exclude-resource-type ec2_dhcp_option \
+          --exclude-resource-type cloudtrail

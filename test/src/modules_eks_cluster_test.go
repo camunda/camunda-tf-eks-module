@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/camunda/camunda-tf-eks-module/utils"
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -80,6 +82,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 
 	// list your services here
 	eksSvc := eks.NewFromConfig(sess)
+	rdsSvc := rds.NewFromConfig(sess)
 
 	inputEKS := &eks.DescribeClusterInput{
 		Name: aws.String(clusterName),
@@ -98,15 +101,17 @@ func TestCustomEKSAndRDS(t *testing.T) {
 
 	auroraUsername := "myuser"
 	auroraPassword := "mypassword123secure"
+	auroraDatabase := "camunda"
 
 	varsConfigAurora := map[string]interface{}{
-		"username":         auroraUsername,
-		"password":         auroraPassword,
-		"cluster_name":     fmt.Sprintf("postgres-%s", clusterSuffix),
-		"subnet_ids":       result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"vpc_id":           *result.Cluster.ResourcesVpcConfig.VpcId,
-		"cidr_blocks":      append(publicBlocks, privateBlocks...),
-		"iam_auth_enabled": true,
+		"username":              auroraUsername,
+		"password":              auroraPassword,
+		"default_database_name": auroraDatabase,
+		"cluster_name":          fmt.Sprintf("postgres-%s", clusterSuffix),
+		"subnet_ids":            result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"vpc_id":                *result.Cluster.ResourcesVpcConfig.VpcId,
+		"cidr_blocks":           append(publicBlocks, privateBlocks...),
+		"iam_auth_enabled":      true,
 	}
 
 	terraformOptionsRDS := SpawnAurora(t, sugar, varsConfigAurora)
@@ -127,7 +132,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	pgKubeCtlOptions := k8s.NewKubectlOptions("", "kubeconfig", namespace)
 	_, errFindNamespace := k8s.GetNamespaceE(t, pgKubeCtlOptions, namespace)
 	if errFindNamespace != nil {
-		if errors.IsNotFound(err) {
+		if errors.IsNotFound(errFindNamespace) {
 			k8s.CreateNamespace(t, pgKubeCtlOptions, namespace)
 		} else {
 			require.NoError(t, errFindNamespace)
@@ -142,19 +147,61 @@ func TestCustomEKSAndRDS(t *testing.T) {
 			Namespace: namespace,
 		},
 		Data: map[string]string{
-			"aurora_endpoint": auroraEndpoint,
-			"aurora_username": auroraUsername,
-			"aurora_port":     "5432",
-			"aws_region":      region,
-			"aurora_db_name":  auroraEndpoint,
+			"aurora_endpoint":      auroraEndpoint,
+			"aurora_username":      auroraUsername,
+			"aurora_username_irsa": fmt.Sprintf("%s-irsa", auroraUsername),
+			"aurora_port":          "5432",
+			"aws_region":           region,
+			"aurora_db_name":       auroraDatabase,
 		},
 	}
-	_, err = kubeClient.CoreV1().ConfigMaps(namespace).Create(context.Background(), configMapPostgres, metav1.CreateOptions{})
-	if err != nil {
-		if !errors.IsAlreadyExists(err) {
-			require.NoError(t, err)
-		}
+
+	err = kubeClient.CoreV1().ConfigMaps(namespace).Delete(context.Background(), configMapPostgres.Name, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		require.NoError(t, err)
 	}
+	_, err = kubeClient.CoreV1().ConfigMaps(namespace).Create(context.Background(), configMapPostgres, metav1.CreateOptions{})
+	k8s.WaitUntilConfigMapAvailable(t, pgKubeCtlOptions, configMapPostgres.Name, 6, 10*time.Second)
+
+	// create the secret
+	secretPostgres := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "aurora-secret",
+			Namespace: namespace,
+		},
+		StringData: map[string]string{
+			"aurora_password": auroraPassword,
+		},
+	}
+	err = kubeClient.CoreV1().Secrets(namespace).Delete(context.Background(), configMapPostgres.Name, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		require.NoError(t, err)
+	}
+	_, err = kubeClient.CoreV1().Secrets(namespace).Create(context.Background(), secretPostgres, metav1.CreateOptions{})
+	k8s.WaitUntilSecretAvailable(t, pgKubeCtlOptions, secretPostgres.Name, 6, 10*time.Second)
+
+	// add the scripts
+	scriptPath := "../../test/src/fixtures/scripts/create_aurora_pg_db.sh"
+	scriptContent, err := os.ReadFile(scriptPath)
+	require.NoError(t, err)
+
+	configMapScript := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "postgres-scripts",
+			Namespace: namespace,
+		},
+		Data: map[string]string{
+			"create_aurora_pg_db.sh": string(scriptContent),
+		},
+	}
+
+	err = kubeClient.CoreV1().ConfigMaps(namespace).Delete(context.Background(), configMapScript.Name, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		require.NoError(t, err)
+	}
+	_, err = kubeClient.CoreV1().ConfigMaps(namespace).Create(context.Background(), configMapScript, metav1.CreateOptions{})
+	k8s.WaitUntilConfigMapAvailable(t, pgKubeCtlOptions, configMapScript.Name, 6, 10*time.Second)
+
 	// cleanup existing jobs
 	jobListOptions := metav1.ListOptions{LabelSelector: "app=postgres-client"}
 	existingJobs := k8s.ListJobs(t, pgKubeCtlOptions, jobListOptions)
@@ -168,7 +215,38 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	errJob := utils.WaitForJobCompletion(kubeClient, namespace, "postgres-client", 5*time.Minute, jobListOptions)
 	require.NoError(t, errJob)
 
-	TearsDown(t, sugar)
+	// TODO: apply https://kubedemy.io/aws-eks-part-13-setup-iam-roles-for-service-accounts-irsa to setup iam
+
+	// RDS test that cluster parameters are applied as expected
+	describeDBInput := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: varsConfigAurora["cluster_name"].(*string),
+	}
+
+	describeDBOutput, err := rdsSvc.DescribeDBInstances(context.TODO(), describeDBInput)
+	require.NoError(t, err)
+
+	// todo : finish the tests
+
+	assert.Equal(t, varsConfigAurora["iam_auth_enabled"].(bool), describeDBOutput.DBInstances[0].IAMDatabaseAuthenticationEnabled)
+	// EKS test that cluster parameters are applied as expected
+
+	// count nb of nodes
+	nodes, err := kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, expectedCapacity, len(nodes.Items))
+
+	// verifies for each node, the flavor and the region
+	expectedInstanceType := "t2.medium"
+	for _, node := range nodes.Items {
+		regionNode, _ := node.Labels["failure-domain.beta.kubernetes.io/region"]
+		instanceType, _ := node.Annotations["node.kubernetes.io/instance-type"]
+		for _, addr := range node.Status.Addresses {
+			if addr.Type == "InternalIP" {
+				assert.Equal(t, region, regionNode)
+				assert.Equal(t, expectedInstanceType, instanceType)
+			}
+		}
+	}
 }
 
 // TestUpgradeEKS starts from a version of EKS, deploy a simple chart, upgrade the cluster
