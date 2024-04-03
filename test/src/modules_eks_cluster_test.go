@@ -219,7 +219,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 
 	// RDS test that cluster parameters are applied as expected
 	describeDBInput := &rds.DescribeDBInstancesInput{
-		DBInstanceIdentifier: varsConfigAurora["cluster_name"].(*string),
+		DBInstanceIdentifier: aws.String(varsConfigAurora["cluster_name"].(string)),
 	}
 
 	describeDBOutput, err := rdsSvc.DescribeDBInstances(context.TODO(), describeDBInput)
