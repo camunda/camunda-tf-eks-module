@@ -3,11 +3,12 @@ package utils
 import (
 	"context"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -58,6 +59,17 @@ func WaitForJobCompletion(clientset *kubernetes.Clientset, namespace, jobName st
 			}
 		case <-time.After(timeout):
 			return fmt.Errorf("Timeout: job did not complete after %v minutes", timeout)
+		}
+	}
+}
+
+func CreateIfNotExistsNamespace(t *testing.T, kubeCtlOptions *k8s.KubectlOptions, namespace string) {
+	_, errFindNamespace := k8s.GetNamespaceE(t, kubeCtlOptions, namespace)
+	if errFindNamespace != nil {
+		if errors.IsNotFound(errFindNamespace) {
+			k8s.CreateNamespace(t, kubeCtlOptions, namespace)
+		} else {
+			require.NoError(t, errFindNamespace)
 		}
 	}
 }
@@ -114,7 +126,7 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 	case <-time.After(timeout):
 		msg := "Not all worker nodes have joined the Kube cluster"
 		fmt.Println(msg)
-		return errors.New(msg)
+		return errors.NewResourceExpired(msg)
 	}
 	return nil
 }

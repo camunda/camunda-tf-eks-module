@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/camunda/camunda-tf-eks-module/utils"
+	http_helper "github.com/gruntwork-io/terratest/modules/http-helper"
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -36,7 +37,7 @@ func TestDefaultEKS(t *testing.T) {
 
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	clusterName := fmt.Sprintf("cluster-%s", clusterSuffix)
-	region := "eu-central-1"
+	region := utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
 	sugar.Infow("Creating EKS cluster...")
 	expectedCapacity := 4
 
@@ -63,7 +64,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	clusterName := fmt.Sprintf("cluster-rds-%s", clusterSuffix)
-	region := "eu-central-1"
+	region := utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
 	sugar.Infow("Creating EKS cluster...")
 	expectedCapacity := 3
 
@@ -121,19 +122,12 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	kubeClient, err := utils.NewKubeClientSet(result.Cluster)
 	require.NoError(t, err)
 
-	utils.GenerateKubeConfigFromAWS(t, region, clusterName, utils.GetAwsProfile(), "kubeconfig")
+	kubeConfigPath := "kubeconfig-eks-rds"
+	utils.GenerateKubeConfigFromAWS(t, region, clusterName, utils.GetAwsProfile(), kubeConfigPath)
 
-	// ensure postgres-client namespace exists
 	namespace := "postgres-client"
-	pgKubeCtlOptions := k8s.NewKubectlOptions("", "kubeconfig", namespace)
-	_, errFindNamespace := k8s.GetNamespaceE(t, pgKubeCtlOptions, namespace)
-	if errFindNamespace != nil {
-		if errors.IsNotFound(errFindNamespace) {
-			k8s.CreateNamespace(t, pgKubeCtlOptions, namespace)
-		} else {
-			require.NoError(t, errFindNamespace)
-		}
-	}
+	pgKubeCtlOptions := k8s.NewKubectlOptions("", kubeConfigPath, namespace)
+	utils.CreateIfNotExistsNamespace(t, pgKubeCtlOptions, namespace)
 
 	// deploy the postgres-client ConfigMap
 	configMapPostgres := &corev1.ConfigMap{
@@ -219,7 +213,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	describeDBClusterOutput, err := rdsSvc.DescribeDBClusters(context.Background(), describeDBClusterInput)
 	require.NoError(t, err)
 
-	expectedRDSAZ := []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}
+	expectedRDSAZ := []string{fmt.Sprintf("%sa", region), fmt.Sprintf("%sb", region), fmt.Sprintf("%sc", region)}
 	assert.Equal(t, varsConfigAurora["iam_auth_enabled"].(bool), *describeDBClusterOutput.DBClusters[0].IAMDatabaseAuthenticationEnabled)
 	assert.Equal(t, varsConfigAurora["username"].(string), *describeDBClusterOutput.DBClusters[0].MasterUsername)
 	assert.Equal(t, auroraDatabase, *describeDBClusterOutput.DBClusters[0].DatabaseName)
@@ -279,9 +273,9 @@ func TestUpgradeEKS(t *testing.T) {
 
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	clusterName := fmt.Sprintf("cluster-upgrade-%s", clusterSuffix)
-	region := "eu-central-1"
+	region := utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
 	sugar.Infow("Creating EKS cluster...")
-	expectedCapacity := 4
+	expectedCapacity := 3
 
 	varsConfig := map[string]interface{}{
 		"name":                  clusterName,
@@ -290,18 +284,95 @@ func TestUpgradeEKS(t *testing.T) {
 		"kubernetes_version":    "1.27",
 	}
 
-	terraformOptions := SpawnEKS(t, sugar, varsConfig)
+	SpawnEKS(t, sugar, varsConfig)
 
-	// test suite
-	baseChecksEKS(t, sugar, terraformOptions, 3)
+	// Wait for the worker nodes to join the cluster
+	sess, err := utils.GetAwsClient()
+	require.NoErrorf(t, err, "Failed to get aws client")
+
+	// list your services here
+	eksSvc := eks.NewFromConfig(sess)
+
+	inputEKS := &eks.DescribeClusterInput{
+		Name: aws.String(clusterName),
+	}
+
+	result, err := eksSvc.DescribeCluster(context.Background(), inputEKS)
+	assert.NoError(t, err)
+
+	sugar.Infow("Waiting for worker nodes to join the EKS cluster")
+	errClusterReady := utils.WaitUntilKubeClusterIsReady(result.Cluster, 5*time.Minute, uint64(expectedCapacity))
+	require.NoError(t, errClusterReady)
+
+	kubeConfigPath := "kubeconfig-upgrade-eks"
+	utils.GenerateKubeConfigFromAWS(t, region, clusterName, utils.GetAwsProfile(), kubeConfigPath)
+
+	// test suite: deploy a pod and check it is healthy
+	namespace := "example"
+	kubeCtlOptions := k8s.NewKubectlOptions("", kubeConfigPath, namespace)
+	utils.CreateIfNotExistsNamespace(t, kubeCtlOptions, namespace)
+
+	// deploy the postgres-client Job to test the connection
+	k8s.KubectlApply(t, kubeCtlOptions, "../../test/src/fixtures/whoami-deployment.yml")
+
+	k8s.WaitUntilServiceAvailable(t, kubeCtlOptions, "whoami-service", 10, 1*time.Second)
+
+	// Now we verify that the service will successfully boot and start serving requests
+	localPort1 := 8081
+
+	service := k8s.GetService(t, kubeCtlOptions, "whoami-service")
+	portForwardProc1 := k8s.NewTunnel(kubeCtlOptions, k8s.ResourceTypeService, service.ObjectMeta.Name, localPort1, 80)
+	defer portForwardProc1.Close()
+
+	// wait for the port forward to be ready
+	time.Sleep(5 * time.Second)
+	localURL := fmt.Sprintf("http://127.0.0.1:%d", localPort1)
+
+	http_helper.HttpGetWithRetryWithCustomValidation(
+		t,
+		localURL,
+		nil,
+		30,
+		10*time.Second,
+		func(statusCode int, body string) bool {
+			return statusCode == 200
+		},
+	)
 
 	// upgrade the cluster
 	varsConfig["kubernetes_version"] = "1.28"
+	SpawnEKS(t, sugar, varsConfig)
 
-	terraformOptions = SpawnEKS(t, sugar, varsConfig)
+	sugar.Infow("Waiting for worker nodes to join the EKS cluster after the upgrade")
+	errClusterReady = utils.WaitUntilKubeClusterIsReady(result.Cluster, 5*time.Minute, uint64(expectedCapacity))
+	require.NoError(t, errClusterReady)
 
 	// check everything works as expected
-	baseChecksEKS(t, sugar, terraformOptions, 3)
+	k8s.WaitUntilServiceAvailable(t, kubeCtlOptions, "whoami-service", 10, 1*time.Second)
+
+	// Now we verify that the service will successfully boot and start serving requests
+	localPort2 := 8082
+
+	service = k8s.GetService(t, kubeCtlOptions, "whoami-service")
+	portForwardProc2 := k8s.NewTunnel(kubeCtlOptions, k8s.ResourceTypeService, service.ObjectMeta.Name, localPort2, 80)
+	defer portForwardProc2.Close()
+
+	// wait for the port forward to be ready
+	time.Sleep(5 * time.Second)
+	localURL = fmt.Sprintf("http://127.0.0.1:%d", localPort2)
+
+	http_helper.HttpGetWithRetryWithCustomValidation(
+		t,
+		localURL,
+		nil,
+		30,
+		10*time.Second,
+		func(statusCode int, body string) bool {
+			return statusCode == 200
+		},
+	)
+
+	// TODO: assert version of the cluster after the upgrade
 
 	TearsDown(t, sugar)
 }

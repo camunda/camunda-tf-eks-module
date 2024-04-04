@@ -43,10 +43,15 @@ go test -v -timeout 120m -run TestDefaultEKS
 
 eksctl get clusters
 ```
-# TODO: implement db pod
-# todo: tests weekly
+
+
+You can change the default deployment region:
+```bash
+export TESTS_CLUSTER_REGION "eu-west-1"
+```
+# TODO : tests weekly
 # see https://github.com/camunda/c8-multi-region/blob/main/.github/workflows/nightly_aws_region_cleanup.yml
 
-# TODO: https://github.com/gruntwork-io/cloud-nuke every weekend
+# TODO : https://github.com/gruntwork-io/cloud-nuke every weekend
 # => we should have a dedicated tenant for CI
 # => sometimes, EKS deletion fails with error: DeleteCluster ResourceInUseException: Cluster has nodegroups attached terraform
