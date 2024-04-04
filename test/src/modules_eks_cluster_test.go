@@ -23,7 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
-	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -88,11 +87,11 @@ func TestCustomEKSAndRDS(t *testing.T) {
 		Name: aws.String(clusterName),
 	}
 
-	result, err := eksSvc.DescribeCluster(context.TODO(), inputEKS)
+	result, err := eksSvc.DescribeCluster(context.Background(), inputEKS)
 	assert.NoError(t, err)
 
 	sugar.Infow("Waiting for worker nodes to join the EKS cluster")
-	errClusterReady := utils.WaitUntilClusterIsReady(result.Cluster, 5*time.Minute, uint64(expectedCapacity))
+	errClusterReady := utils.WaitUntilKubeClusterIsReady(result.Cluster, 5*time.Minute, uint64(expectedCapacity))
 	require.NoError(t, errClusterReady)
 
 	// Spawn RDS within the EKS VPC/subnet
@@ -118,16 +117,13 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	auroraEndpoint := terraform.Output(t, terraformOptionsRDS, "aurora_endpoint")
 	assert.NotEmpty(t, auroraEndpoint)
 
-	// Launch a pod on the cluster and test the RDS
-	kubeClient, err := utils.NewClientSet(result.Cluster)
+	// Test of the RDS connection is performed by launching a pod on the cluster and test the pg connection
+	kubeClient, err := utils.NewKubeClientSet(result.Cluster)
 	require.NoError(t, err)
 
-	// create kubeconfig
-	cmd := exec.Command("aws", "eks", "--region", region, "update-kubeconfig", "--name", clusterName, "--profile", utils.GetAwsProfile(), "--kubeconfig", "kubeconfig")
-	_, errCmdKubeProfile := cmd.Output()
-	require.NoError(t, errCmdKubeProfile)
+	utils.GenerateKubeConfigFromAWS(t, region, clusterName, utils.GetAwsProfile(), "kubeconfig")
 
-	// create the configmap
+	// ensure postgres-client namespace exists
 	namespace := "postgres-client"
 	pgKubeCtlOptions := k8s.NewKubectlOptions("", "kubeconfig", namespace)
 	_, errFindNamespace := k8s.GetNamespaceE(t, pgKubeCtlOptions, namespace)
@@ -139,8 +135,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 		}
 	}
 
-	// todo: https: //github.com/camunda/c8-multi-region/blob/main/test/internal/helpers/aws/helpers.go#L242
-
+	// deploy the postgres-client ConfigMap
 	configMapPostgres := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "aurora-config",
@@ -163,7 +158,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	_, err = kubeClient.CoreV1().ConfigMaps(namespace).Create(context.Background(), configMapPostgres, metav1.CreateOptions{})
 	k8s.WaitUntilConfigMapAvailable(t, pgKubeCtlOptions, configMapPostgres.Name, 6, 10*time.Second)
 
-	// create the secret
+	// create the secret for aurora pg password
 	secretPostgres := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "aurora-secret",
@@ -180,7 +175,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	_, err = kubeClient.CoreV1().Secrets(namespace).Create(context.Background(), secretPostgres, metav1.CreateOptions{})
 	k8s.WaitUntilSecretAvailable(t, pgKubeCtlOptions, secretPostgres.Name, 6, 10*time.Second)
 
-	// add the scripts
+	// add the scripts as a ConfigMap
 	scriptPath := "../../test/src/fixtures/scripts/create_aurora_pg_db.sh"
 	scriptContent, err := os.ReadFile(scriptPath)
 	require.NoError(t, err)
@@ -206,29 +201,55 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	jobListOptions := metav1.ListOptions{LabelSelector: "app=postgres-client"}
 	existingJobs := k8s.ListJobs(t, pgKubeCtlOptions, jobListOptions)
 	for _, job := range existingJobs {
-		err := kubeClient.BatchV1().Jobs(namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
+		err := kubeClient.BatchV1().Jobs(namespace).Delete(context.Background(), job.Name, metav1.DeleteOptions{})
 		assert.NoError(t, err)
 	}
 
+	// deploy the postgres-client Job to test the connection
 	k8s.KubectlApply(t, pgKubeCtlOptions, "../../test/src/fixtures/postgres-client.yml")
-
 	errJob := utils.WaitForJobCompletion(kubeClient, namespace, "postgres-client", 5*time.Minute, jobListOptions)
 	require.NoError(t, errJob)
 
-	// TODO: apply https://kubedemy.io/aws-eks-part-13-setup-iam-roles-for-service-accounts-irsa to setup iam
+	// TODO: test IRSA apply https://kubedemy.io/aws-eks-part-13-setup-iam-roles-for-service-accounts-irsa to setup iam
 
-	// RDS test that cluster parameters are applied as expected
-	describeDBInput := &rds.DescribeDBInstancesInput{
-		DBInstanceIdentifier: aws.String(varsConfigAurora["cluster_name"].(string)),
+	// Retrieve RDS information
+	describeDBClusterInput := &rds.DescribeDBClustersInput{
+		DBClusterIdentifier: aws.String(varsConfigAurora["cluster_name"].(string)),
 	}
-
-	describeDBOutput, err := rdsSvc.DescribeDBInstances(context.TODO(), describeDBInput)
+	describeDBClusterOutput, err := rdsSvc.DescribeDBClusters(context.Background(), describeDBClusterInput)
 	require.NoError(t, err)
 
-	// todo : finish the tests
+	expectedRDSAZ := []string{"eu-central-1a", "eu-central-1b", "eu-central-1c"}
+	assert.Equal(t, varsConfigAurora["iam_auth_enabled"].(bool), *describeDBClusterOutput.DBClusters[0].IAMDatabaseAuthenticationEnabled)
+	assert.Equal(t, varsConfigAurora["username"].(string), *describeDBClusterOutput.DBClusters[0].MasterUsername)
+	assert.Equal(t, auroraDatabase, *describeDBClusterOutput.DBClusters[0].DatabaseName)
+	assert.Equal(t, int32(5432), *describeDBClusterOutput.DBClusters[0].Port)
+	assert.Equal(t, "15.4", *describeDBClusterOutput.DBClusters[0].EngineVersion)
+	assert.ElementsMatch(t, expectedRDSAZ, describeDBClusterOutput.DBClusters[0].AvailabilityZones)
+	assert.Equal(t, varsConfigAurora["cluster_name"].(string), *describeDBClusterOutput.DBClusters[0].DBClusterIdentifier)
 
-	assert.Equal(t, varsConfigAurora["iam_auth_enabled"].(bool), describeDBOutput.DBInstances[0].IAMDatabaseAuthenticationEnabled)
-	// EKS test that cluster parameters are applied as expected
+	// Some of the tests are performed on the first instance of the cluster
+	describeDBInstanceInput := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: describeDBClusterOutput.DBClusters[0].DBClusterMembers[0].DBInstanceIdentifier,
+	}
+	describeDBInstanceOutput, err := rdsSvc.DescribeDBInstances(context.Background(), describeDBInstanceInput)
+	require.NoError(t, err)
+
+	assert.Equal(t, "db.t3.medium", *describeDBInstanceOutput.DBInstances[0].DBInstanceClass)
+	assert.Equal(t, true, *describeDBInstanceOutput.DBInstances[0].AutoMinorVersionUpgrade)
+	assert.Equal(t, "aurora-postgresql", *describeDBInstanceOutput.DBInstances[0].Engine)
+	assert.Equal(t, "rds-ca-2019", *describeDBInstanceOutput.DBInstances[0].CertificateDetails.CAIdentifier)
+	assert.Equal(t, varsConfigAurora["vpc_id"].(string), *describeDBInstanceOutput.DBInstances[0].DBSubnetGroup.VpcId)
+	assert.Contains(t, *describeDBInstanceOutput.DBInstances[0].AvailabilityZone, region)
+
+	// construct the subnet ids
+	actualSubnetIds := make([]string, len(describeDBInstanceOutput.DBInstances[0].DBSubnetGroup.Subnets))
+	for id, subnet := range describeDBInstanceOutput.DBInstances[0].DBSubnetGroup.Subnets {
+		actualSubnetIds[id] = *subnet.SubnetIdentifier
+	}
+	assert.ElementsMatch(t, varsConfigAurora["subnet_ids"].([]string), actualSubnetIds)
+
+	// EKS test that custom cluster parameters are applied as expected
 
 	// count nb of nodes
 	nodes, err := kubeClient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
@@ -239,7 +260,7 @@ func TestCustomEKSAndRDS(t *testing.T) {
 	expectedInstanceType := "t2.medium"
 	for _, node := range nodes.Items {
 		regionNode, _ := node.Labels["failure-domain.beta.kubernetes.io/region"]
-		instanceType, _ := node.Annotations["node.kubernetes.io/instance-type"]
+		instanceType, _ := node.Labels["node.kubernetes.io/instance-type"]
 		for _, addr := range node.Status.Addresses {
 			if addr.Type == "InternalIP" {
 				assert.Equal(t, region, regionNode)
@@ -287,7 +308,7 @@ func TestUpgradeEKS(t *testing.T) {
 
 // SpawnEKS spawns a new EKS Cluster from a default fixture file
 func SpawnEKS(t *testing.T, sugar *zap.SugaredLogger, varsConfig map[string]interface{}) *terraform.Options {
-	sugar.Infow("TF vars", varsConfig)
+	sugar.Infow("TF vars", "vars", varsConfig)
 
 	terraformOptions := &terraform.Options{
 		// The path to where our Terraform code is located
@@ -318,7 +339,7 @@ func SpawnEKS(t *testing.T, sugar *zap.SugaredLogger, varsConfig map[string]inte
 
 // SpawnAurora spawns a new Aurora RDS from a default fixture file
 func SpawnAurora(t *testing.T, sugar *zap.SugaredLogger, varsConfig map[string]interface{}) *terraform.Options {
-	sugar.Infow("TF vars", varsConfig)
+	sugar.Infow("TF vars", "vars", varsConfig)
 
 	terraformOptions := &terraform.Options{
 		// The path to where our Terraform code is located
@@ -354,7 +375,7 @@ func TearsDown(t *testing.T, sugar *zap.SugaredLogger) {
 // baseChecksEKS checks the defaults of an EKS cluster
 func baseChecksEKS(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *terraform.Options, expectedNodesCount uint64) {
 	clusterName := terraformOptions.Vars["name"].(string)
-	sugar.Infow("Testing status of the EKS cluster", clusterName)
+	sugar.Infow("Testing status of the EKS cluster", "clusterName", clusterName)
 
 	// Do some basic not empty tests on outputs
 	assert.NotEmpty(t, terraform.Output(t, terraformOptions, "cluster_endpoint"))
@@ -395,12 +416,12 @@ func baseChecksEKS(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *ter
 		Name: aws.String(clusterName),
 	}
 
-	result, err := eksSvc.DescribeCluster(context.TODO(), inputEKS)
+	result, err := eksSvc.DescribeCluster(context.Background(), inputEKS)
 	assert.NoError(t, err)
 
 	// Wait for the worker nodes to join the cluster
 	sugar.Infow("Waiting for worker nodes to join the EKS cluster")
-	errClusterReady := utils.WaitUntilClusterIsReady(result.Cluster, 5*time.Minute, expectedNodesCount)
+	errClusterReady := utils.WaitUntilKubeClusterIsReady(result.Cluster, 5*time.Minute, expectedNodesCount)
 	require.NoError(t, errClusterReady)
 
 	// Verify list of addons installed on the EKS
@@ -408,7 +429,7 @@ func baseChecksEKS(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *ter
 	inputDescribeAddons := &eks.ListAddonsInput{
 		ClusterName: aws.String(clusterName),
 	}
-	outputEKSAddons, errEKSAddons := eksSvc.ListAddons(context.TODO(), inputDescribeAddons)
+	outputEKSAddons, errEKSAddons := eksSvc.ListAddons(context.Background(), inputDescribeAddons)
 	require.NoError(t, errEKSAddons)
 
 	// perform the diff
@@ -433,7 +454,7 @@ func baseChecksEKS(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *ter
 			RoleName: aws.String(roleName),
 		}
 
-		_, err := iamSvc.GetRole(context.TODO(), input)
+		_, err := iamSvc.GetRole(context.Background(), input)
 		assert.NoErrorf(t, err, "Failed to get IAM EKS role %s", roleName)
 	}
 
@@ -450,7 +471,7 @@ func baseChecksEKS(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *ter
 		},
 	}
 
-	outputVPC, errVPC := ec2Svc.DescribeVpcs(context.TODO(), inputVPC)
+	outputVPC, errVPC := ec2Svc.DescribeVpcs(context.Background(), inputVPC)
 	require.NoError(t, errVPC)
 
 	assert.Equal(t, len(outputVPC.Vpcs), 1)
@@ -458,13 +479,13 @@ func baseChecksEKS(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *ter
 	// key
 	keyDescription := fmt.Sprintf("%s -  EKS Secret Encryption Key", clusterName)
 	inputKMS := &kms.ListKeysInput{}
-	outputKMSList, errKMSList := kmsSvc.ListKeys(context.TODO(), inputKMS)
+	outputKMSList, errKMSList := kmsSvc.ListKeys(context.Background(), inputKMS)
 	assert.NoError(t, errKMSList)
 
 	// Check if the key corresponding to the description exists
 	keyFound := false
 	for _, key := range outputKMSList.Keys {
-		keyDetails, errKey := kmsSvc.DescribeKey(context.TODO(), &kms.DescribeKeyInput{
+		keyDetails, errKey := kmsSvc.DescribeKey(context.Background(), &kms.DescribeKeyInput{
 			KeyId: key.KeyId,
 		})
 		require.NoErrorf(t, errKey, "Failed to describe key %s", *key.KeyId)
@@ -478,5 +499,3 @@ func baseChecksEKS(t *testing.T, sugar *zap.SugaredLogger, terraformOptions *ter
 }
 
 // todo: test upgrade path
-// todo: test auroradb integration
-// todo: test inputs
