@@ -2,8 +2,15 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
+	"github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/gruntwork-io/terratest/modules/terraform"
+	"k8s.io/apimachinery/pkg/util/runtime"
+	"testing"
+	"time"
 )
 
 func GetAwsProfile() string {
@@ -23,4 +30,74 @@ func GetAwsClient() (aws.Config, error) {
 		config.WithRegion(region),
 		config.WithSharedConfigProfile(awsProfile),
 	)
+}
+
+// ApplyTfAndCleanup applies a Tf resource and cleanup at the end
+func ApplyTfAndCleanup(t *testing.T, terraformOptions *terraform.Options) *terraform.Options {
+	cleanClusterAtTheEnd := GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
+
+	if cleanClusterAtTheEnd == "true" {
+		defer terraform.Destroy(t, terraformOptions)
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(t, terraformOptions)
+		})
+	}
+
+	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
+	return terraformOptions
+}
+
+func WaitForUpdateEKS(ctx context.Context, client *eks.Client, clusterName, updateID string) error {
+	describeUpdateInput := &eks.DescribeUpdateInput{
+		Name:     &clusterName,
+		UpdateId: &updateID,
+	}
+
+L:
+	for {
+		updateOutput, err := client.DescribeUpdate(ctx, describeUpdateInput)
+		if err != nil {
+			return err
+		}
+
+		status := updateOutput.Update.Status
+		fmt.Printf("Update status: %s\n", status)
+
+		switch status {
+		case types.UpdateStatusFailed:
+			return fmt.Errorf("update failed")
+		case types.UpdateStatusCancelled:
+			return fmt.Errorf("update cancelled")
+		case types.UpdateStatusSuccessful:
+			break L
+		case types.UpdateStatusInProgress:
+			time.Sleep(5 * time.Second)
+		default:
+			return fmt.Errorf("update status unknown: %s", status)
+		}
+	}
+
+	return nil
+}
+
+func UpgradeEKS(ctx context.Context, client *eks.Client, clusterName, version string) error {
+	input := &eks.UpdateClusterVersionInput{
+		Name:    &clusterName,
+		Version: &version,
+	}
+
+	output, err := client.UpdateClusterVersion(ctx, input)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Update initiated, update ID: %s\n", *output.Update.Id)
+
+	err = WaitForUpdateEKS(ctx, client, clusterName, *output.Update.Id)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Update completed successfully")
+	return nil
 }

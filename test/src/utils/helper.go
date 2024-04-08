@@ -1,6 +1,8 @@
 package utils
 
-import "os"
+import (
+	"os"
+)
 
 func GetEnv(key, fallback string) string {
 	value, exists := os.LookupEnv(key)
