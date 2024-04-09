@@ -7,9 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/eks/types"
-	"github.com/gruntwork-io/terratest/modules/terraform"
-	"k8s.io/apimachinery/pkg/util/runtime"
-	"testing"
 	"time"
 )
 
@@ -30,21 +27,6 @@ func GetAwsClient() (aws.Config, error) {
 		config.WithRegion(region),
 		config.WithSharedConfigProfile(awsProfile),
 	)
-}
-
-// ApplyTfAndCleanup applies a Tf resource and cleanup at the end
-func ApplyTfAndCleanup(t *testing.T, terraformOptions *terraform.Options) *terraform.Options {
-	cleanClusterAtTheEnd := GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
-
-	if cleanClusterAtTheEnd == "true" {
-		defer terraform.Destroy(t, terraformOptions)
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(t, terraformOptions)
-		})
-	}
-
-	terraform.InitAndApplyAndIdempotent(t, terraformOptions)
-	return terraformOptions
 }
 
 func WaitForUpdateEKS(ctx context.Context, client *eks.Client, clusterName, updateID string) error {

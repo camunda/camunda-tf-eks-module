@@ -10,13 +10,16 @@ import (
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -42,12 +45,17 @@ func (suite *CustomEKSRDSTestSuite) SetupTest() {
 	suite.clusterName = fmt.Sprintf("cluster-rds-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
 	suite.expectedNodes = 3
-	suite.kubeConfigPath = "kubeconfig-rds-eks"
-	suite.tfDataDir = fmt.Sprintf("tf-data-%s", clusterSuffix)
+	var errAbsPath error
+	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
+	suite.Require().NoError(errAbsPath)
+	suite.kubeConfigPath = fmt.Sprintf("%s/kubeconfig-rds-eks", suite.tfDataDir)
 }
 
 func (suite *CustomEKSRDSTestSuite) TearUpTest() {
-	err := os.Setenv("TF_DATA_DIR", suite.tfDataDir)
+	// create tf state
+	absPath, err := filepath.Abs(suite.tfDataDir)
+	suite.Require().NoError(err)
+	err = os.MkdirAll(absPath, os.ModePerm)
 	suite.Require().NoError(err)
 }
 
@@ -63,7 +71,36 @@ func (suite *CustomEKSRDSTestSuite) TearDownTest() {
 // TestCustomEKSAndRDS spawns a custom EKS cluster with custom parameters, and spawns a
 // pg client pod that will test connection to AuroraDB
 func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
-	terraformOptions := suite.createEKS()
+	suite.varTf = map[string]interface{}{
+		"name":                  suite.clusterName,
+		"region":                suite.region,
+		"np_desired_node_count": suite.expectedNodes,
+	}
+
+	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
+
+	fullDir := fmt.Sprintf("%seks-cluster/", suite.tfDataDir)
+	errTfDir := os.MkdirAll(fullDir, os.ModePerm)
+	suite.Require().NoError(errTfDir)
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../", "modules/eks-cluster", fullDir)
+
+	terraformOptions := &terraform.Options{
+		TerraformDir: tfDir,
+		Upgrade:      false,
+		VarFiles:     []string{"../fixtures/fixtures.default.eks.tfvars"},
+		Vars:         suite.varTf,
+	}
+
+	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
+
+	if cleanClusterAtTheEnd == "true" {
+		defer terraform.Destroy(suite.T(), terraformOptions)
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(suite.T(), terraformOptions)
+		})
+	}
+
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
 
 	// Wait for the worker nodes to join the cluster
 	sess, err := utils.GetAwsClient()
@@ -103,14 +140,27 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"iam_auth_enabled":      true,
 	}
 
+	fullDirAurora := fmt.Sprintf("%s/aurora/", suite.tfDataDir)
+	errTfDirAurora := os.MkdirAll(fullDir, os.ModePerm)
+	suite.Require().NoError(errTfDirAurora)
+
+	tfDirAurora := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "aurora/", fullDirAurora)
+
 	terraformOptionsRDS := &terraform.Options{
-		TerraformDir: "../../modules/aurora",
+		TerraformDir: tfDirAurora,
 		Upgrade:      false,
-		VarFiles:     []string{"../../test/src/fixtures/fixtures.default.aurora.tfvars"},
+		VarFiles:     []string{"../fixtures/fixtures.default.aurora.tfvars"},
 		Vars:         suite.varTf,
 	}
 
-	terraformOptionsRDS = utils.ApplyTfAndCleanup(suite.T(), terraformOptionsRDS)
+	if cleanClusterAtTheEnd == "true" {
+		defer terraform.Destroy(suite.T(), terraformOptionsRDS)
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(suite.T(), terraformOptionsRDS)
+		})
+	}
+
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptionsRDS)
 	auroraEndpoint := terraform.Output(suite.T(), terraformOptionsRDS, "aurora_endpoint")
 	suite.Assert().NotEmpty(auroraEndpoint)
 
@@ -118,11 +168,10 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	kubeClient, err := utils.NewKubeClientSet(result.Cluster)
 	suite.Require().NoError(err)
 
-	kubeConfigPath := "kubeconfig-eks-rds"
-	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), kubeConfigPath)
+	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
 
 	namespace := "postgres-client"
-	pgKubeCtlOptions := k8s.NewKubectlOptions("", kubeConfigPath, namespace)
+	pgKubeCtlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, namespace)
 	utils.CreateIfNotExistsNamespace(suite.T(), pgKubeCtlOptions, namespace)
 
 	// deploy the postgres-client ConfigMap
@@ -258,24 +307,6 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 			}
 		}
 	}
-}
-
-func (suite *CustomEKSRDSTestSuite) createEKS() *terraform.Options {
-	suite.varTf = map[string]interface{}{
-		"name":                  suite.clusterName,
-		"region":                suite.region,
-		"np_desired_node_count": suite.expectedNodes,
-	}
-
-	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
-
-	terraformOptions := &terraform.Options{
-		TerraformDir: "../../modules/eks-cluster",
-		Upgrade:      false,
-		VarFiles:     []string{"../../test/src/fixtures/fixtures.default.eks.tfvars"},
-		Vars:         suite.varTf,
-	}
-	return utils.ApplyTfAndCleanup(suite.T(), terraformOptions)
 }
 
 func TestCustomEKSRDSTestSuite(t *testing.T) {

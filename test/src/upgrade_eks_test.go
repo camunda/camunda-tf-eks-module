@@ -10,10 +10,13 @@ import (
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -40,16 +43,18 @@ func (suite *UpgradeEKSTestSuite) SetupTest() {
 	suite.clusterName = fmt.Sprintf("cluster-upgrade-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
 	suite.expectedNodes = 3
-	suite.kubeConfigPath = "kubeconfig-upgrade-eks"
 	suite.kubeVersion = "1.28"
-	suite.tfDataDir = fmt.Sprintf("tf-data-%s", clusterSuffix)
-
-	// Create EKS cluster
-	suite.createEKS()
+	var errAbsPath error
+	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
+	suite.Require().NoError(errAbsPath)
+	suite.kubeConfigPath = fmt.Sprintf("%s/kubeconfig-upgrade-eks", suite.tfDataDir)
 }
 
 func (suite *UpgradeEKSTestSuite) TearUpTest() {
-	err := os.Setenv("TF_DATA_DIR", suite.tfDataDir)
+	// create tf state
+	absPath, err := filepath.Abs(suite.tfDataDir)
+	suite.Require().NoError(err)
+	err = os.MkdirAll(absPath, os.ModePerm)
 	suite.Require().NoError(err)
 }
 
@@ -65,6 +70,40 @@ func (suite *UpgradeEKSTestSuite) TearDownTest() {
 // TestUpgradeEKS starts from a version of EKS, deploy a simple chart, upgrade the cluster
 // and check that everything is working as expected
 func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
+	// create the eks cluster
+	suite.varTf = map[string]interface{}{
+		"name":                  suite.clusterName,
+		"region":                suite.region,
+		"np_desired_node_count": suite.expectedNodes,
+		"kubernetes_version":    suite.kubeVersion,
+	}
+
+	fullDir := fmt.Sprintf("%s/eks-cluster/", suite.tfDataDir)
+	errTfDir := os.MkdirAll(fullDir, os.ModePerm)
+	suite.Require().NoError(errTfDir)
+
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDir)
+
+	terraformOptions := &terraform.Options{
+		TerraformDir: tfDir,
+		Upgrade:      false,
+		VarFiles:     []string{"../fixtures/fixtures.default.eks.tfvars"},
+		Vars:         suite.varTf,
+	}
+
+	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
+
+	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
+
+	if cleanClusterAtTheEnd == "true" {
+		defer terraform.Destroy(suite.T(), terraformOptions)
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(suite.T(), terraformOptions)
+		})
+	}
+
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+
 	// Wait for the worker nodes to join the cluster
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
@@ -157,25 +196,6 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 			return statusCode == 200
 		},
 	)
-}
-
-func (suite *UpgradeEKSTestSuite) createEKS() *terraform.Options {
-	suite.varTf = map[string]interface{}{
-		"name":                  suite.clusterName,
-		"region":                suite.region,
-		"np_desired_node_count": suite.expectedNodes,
-		"kubernetes_version":    suite.kubeVersion,
-	}
-
-	terraformOptions := &terraform.Options{
-		TerraformDir: "../../modules/eks-cluster",
-		Upgrade:      false,
-		VarFiles:     []string{"../../test/src/fixtures/fixtures.default.eks.tfvars"},
-		Vars:         suite.varTf,
-	}
-
-	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
-	return utils.ApplyTfAndCleanup(suite.T(), terraformOptions)
 }
 
 func TestUpgradeEKSTestSuite(t *testing.T) {

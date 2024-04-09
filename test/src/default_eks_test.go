@@ -2,8 +2,10 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
@@ -12,10 +14,13 @@ import (
 	"github.com/camunda/camunda-tf-eks-module/utils"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
+	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
+	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -40,13 +45,18 @@ func (suite *DefaultEKSTestSuite) SetupTest() {
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	suite.clusterName = fmt.Sprintf("cluster-test-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
-	suite.kubeConfigPath = "kubeconfig-default-eks"
 	suite.expectedNodes = 4
-	suite.tfDataDir = fmt.Sprintf("tf-data-%s", clusterSuffix)
+	var errAbsPath error
+	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
+	suite.Require().NoError(errAbsPath)
+	suite.kubeConfigPath = fmt.Sprintf("%s/kubeconfig-default-eks", suite.tfDataDir)
 }
 
 func (suite *DefaultEKSTestSuite) TearUpTest() {
-	err := os.Setenv("TF_DATA_DIR", suite.tfDataDir)
+	// create tf state
+	absPath, err := filepath.Abs(suite.tfDataDir)
+	suite.Require().NoError(err)
+	err = os.MkdirAll(absPath, os.ModePerm)
 	suite.Require().NoError(err)
 }
 
@@ -68,14 +78,29 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 		"np_desired_node_count": suite.expectedNodes,
 	}
 
+	fullDir := fmt.Sprintf("%s/eks-cluster/", suite.tfDataDir)
+	errTfDir := os.MkdirAll(fullDir, os.ModePerm)
+	suite.Require().NoError(errTfDir)
+
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDir)
+
 	terraformOptions := &terraform.Options{
-		TerraformDir: "../../modules/eks-cluster",
+		TerraformDir: tfDir,
 		Upgrade:      false,
-		VarFiles:     []string{"../../test/src/fixtures/fixtures.default.eks.tfvars"},
+		VarFiles:     []string{"../fixtures/fixtures.default.eks.tfvars"},
 		Vars:         suite.varTf,
 	}
 
-	terraformOptions = utils.ApplyTfAndCleanup(suite.T(), terraformOptions)
+	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
+
+	if cleanClusterAtTheEnd == "true" {
+		defer terraform.Destroy(suite.T(), terraformOptions)
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(suite.T(), terraformOptions)
+		})
+	}
+
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
 	suite.baseChecksEKS(terraformOptions)
 }
 
@@ -195,7 +220,18 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 		keyDetails, errKey := kmsSvc.DescribeKey(context.Background(), &kms.DescribeKeyInput{
 			KeyId: key.KeyId,
 		})
-		suite.Require().NoErrorf(errKey, "Failed to describe key %s", *key.KeyId)
+
+		if errKey != nil {
+			// ignore AccessDenied
+			var re *awshttp.ResponseError
+			if errors.As(err, &re) {
+				if re.HTTPStatusCode() == 400 {
+					continue
+				}
+			}
+
+			suite.Require().NoErrorf(errKey, "Failed to describe key %s", *key.KeyId)
+		}
 
 		keyFound = *keyDetails.KeyMetadata.Description == keyDescription
 		if keyFound {
