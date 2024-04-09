@@ -33,7 +33,7 @@ provider "kubernetes" {
 # https://github.com/terraform-aws-modules/terraform-aws-eks
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "19.21.0"
+  version = "20.8.5"
 
   cluster_name                    = var.name
   cluster_version                 = var.kubernetes_version
