@@ -3,7 +3,7 @@ name: Nightly Cleanup
 
 on:
   schedule:
-    - cron: '0 5 * * 1-5'
+    - cron: '0 5 * * *'
   workflow_dispatch:
 
 env:

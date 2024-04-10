@@ -135,6 +135,8 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	k8s.KubectlApply(suite.T(), kubeCtlOptions, "../../modules/fixtures/whoami-deployment.yml")
 
 	k8s.WaitUntilServiceAvailable(suite.T(), kubeCtlOptions, "whoami-service", 60, 1*time.Second)
+	// wait to ensure service available
+	time.Sleep(30 * time.Second)
 
 	// Now we verify that the service will successfully boot and start serving requests
 	localPort1 := 8883
@@ -175,6 +177,8 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 
 	// check everything works as expected
 	k8s.WaitUntilServiceAvailable(suite.T(), kubeCtlOptions, "whoami-service", 60, 1*time.Second)
+	// wait to ensure service available
+	time.Sleep(30 * time.Second)
 
 	// Forward port again
 	localPort2 := 8887

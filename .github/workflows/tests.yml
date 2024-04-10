@@ -3,7 +3,7 @@ name: Terraform modules tests
 
 on:
   schedule:
-    - cron: '0 0 * * 1-5'
+    - cron: '0 1 * * 2'
   workflow_dispatch:
   pull_request_review:
     types: [submitted]
