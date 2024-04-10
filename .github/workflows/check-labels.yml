@@ -10,11 +10,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Check labels
         run: |
           labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+          echo "Labels: $labels"
           if [[ ! $labels =~ (^|\s)(testing-allowed|testing-ci-not-necessary)(\s|$) ]]; then
             echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label. Then push a new dummy commit."
             exit 1
