@@ -90,14 +90,14 @@ jobs:
         run: |
           export TEST_CLUSTER_ID="${{ env.TEST_CLUSTER_ID }}"
           export CLEAN_CLUSTER_AT_THE_END=true
-          go install gotest.tools/gotestsum@v1.1.0
+          go install gotest.tools/gotestsum@v1.11.0
           gotestsum --junitfile unit-tests.xml --format pkgname -- -v --timeout=120m -p 1 ./...
 
       - name: Test Summary
         uses: test-summary/action@v2
         with:
           paths: "unit-tests.xml"
-        if: always()
+        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary') && always()"
 
       - name: Remove profile credentials from ~/.aws/credentials
         if: always()
