@@ -96,7 +96,7 @@ jobs:
       - name: Test Summary
         uses: test-summary/action@v2
         with:
-          paths: "unit-tests.xml"
+          paths: "./test/src/unit-tests.xml"
         if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary') && always()"
 
       - name: Remove profile credentials from ~/.aws/credentials
