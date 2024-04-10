@@ -6,13 +6,9 @@ init: ## Initialize tests
 	@exit 0
 
 .PHONY : test
-test: init clean ## Run tests
+test: init ## Run tests
 	go mod download
 	go test -v -timeout 120m
-
-.PHONY : clean
-clean: ## Clean up files
-	rm -rf ../../*/*/*.tfstate*
 
 # see https://suva.sh/posts/well-documented-makefiles/
 .PHONY : help
