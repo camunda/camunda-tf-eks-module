@@ -79,10 +79,10 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
 
-	fullDir := fmt.Sprintf("%seks-cluster/", suite.tfDataDir)
-	errTfDir := os.MkdirAll(fullDir, os.ModePerm)
-	suite.Require().NoError(errTfDir)
-	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../", "modules/eks-cluster", fullDir)
+	fullDirEKS := fmt.Sprintf("%seks-cluster/", suite.tfDataDir)
+	errTfDirEKS := os.MkdirAll(fullDirEKS, os.ModePerm)
+	suite.Require().NoError(errTfDirEKS)
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDirEKS)
 
 	terraformOptions := &terraform.Options{
 		TerraformDir: tfDir,
@@ -141,7 +141,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	}
 
 	fullDirAurora := fmt.Sprintf("%s/aurora/", suite.tfDataDir)
-	errTfDirAurora := os.MkdirAll(fullDir, os.ModePerm)
+	errTfDirAurora := os.MkdirAll(fullDirAurora, os.ModePerm)
 	suite.Require().NoError(errTfDirAurora)
 
 	tfDirAurora := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "aurora/", fullDirAurora)

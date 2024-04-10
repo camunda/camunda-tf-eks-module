@@ -1,0 +1,83 @@
+---
+name: Terraform modules tests
+
+on:
+  schedule:
+    - cron: '0 0 * * 1-5'
+  workflow_dispatch:
+  pull_request_review:
+    types: [submitted]
+
+env:
+  AWS_PROFILE: "infex"
+  AWS_REGION: "eu-central-1"
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-22.04
+    if: (github.event.label.name == 'test' || github.event.label.name == 'terraform') && github.event.review.state == 'approved'
+    # Other dependencies from hosted runner
+    # AWS CLI
+    # indirectly node used by actions
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get go.mod details
+        uses: Eun/go-mod-details@v1
+        id: go-mod-details
+        with:
+          modfile: ${{ github.workspace }}/test/src/go.mod
+
+      - name: Set up Go environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ steps.go-mod-details.outputs.go_version }}
+
+      - name: Set up Terraform (OpenTofu)
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.6.2
+
+      - name: Import Secrets
+        id: secrets
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          exportEnv: false
+          secrets: |
+            secret/data/products/infrastructure-experience/ci/common AWS_ACCESS_KEY;
+            secret/data/products/infrastructure-experience/ci/common AWS_SECRET_KEY;
+
+      # Official action does not support profiles
+      - name: Add profile credentials to ~/.aws/credentials
+        run: |
+          aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
+
+      - name: Get Short GitHub SHA and Save in Environment Variable
+        run: echo "SHORT_GITHUB_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Configure tests
+        id: configure-tests
+        run: |
+          echo "TEST_CLUSTER_ID=${{ env.SHORT_GITHUB_SHA }}" >> "$GITHUB_ENV"
+          echo "CLEAN_CLUSTER_AT_THE_END=true" >> "$GITHUB_ENV"
+
+      - name: Launch tests
+        working-directory: ./test/src/
+        timeout-minutes: 400 # todo: replace all single tests with a global one
+        run: |
+          go test -v -timeout 120m -run TestDefaultEKSTestSuite
+          go test -v -timeout 120m -run TestUpgradeEKSTestSuite
+          go test -v -timeout 120m -run TestCustomEKSRDSTestSuite
+
+      - name: Remove profile credentials from ~/.aws/credentials
+        if: always()
+        run: |
+          rm -rf ~/.aws/credentials
