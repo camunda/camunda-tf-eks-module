@@ -29,7 +29,7 @@ To start developing or testing the EKS module, follow these steps:
    - Set `CLEAN_CLUSTER_AT_THE_END=false` to prevent automatic cluster deletion in case of errors.
    - Optionally, manually clean up the cluster after testing by reversing this setting.
 
-**Note**: Ensure that the "testing-allowed" label is added to a pull request to trigger the tests. Then push a new dummy commit.
+**Note**: Ensure that the "testing-allowed" label is added to a pull request to trigger the tests. Then re-run this workflow.
 
 ## Releasing a New Version
 

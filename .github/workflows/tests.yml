@@ -15,7 +15,6 @@ env:
 jobs:
   integration-test:
     runs-on: ubuntu-22.04
-    if: (github.event.label.name == 'test' || github.event.label.name == 'terraform') && github.event.label.name == 'testing-allowed'
     # Other dependencies from hosted runner
     # AWS CLI
     # indirectly node used by actions
@@ -23,6 +22,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Check labels
+        run: |
+          labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+          echo "Labels: $labels"
+          if ! echo "$labels" | grep -qE "^testing-allowed$|^testing-ci-not-necessary$"; then
+            echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label. Then re-run this workflow."
+            exit 1
+          fi
+
+      - name: Stop if testing is not necessary
+        if: ${{ github.event.label.name == 'testing-ci-not-necessary' }}
+        run: exit 78 # Exit code 78 marks the job as skipped
 
       - name: Get go.mod details
         uses: Eun/go-mod-details@v1
