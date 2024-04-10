@@ -16,6 +16,6 @@ jobs:
         run: |
           labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
           if [[ ! $labels =~ (^|\s)(testing-allowed|testing-ci-not-necessary)(\s|$) ]]; then
-            echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label."
+            echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label. Then push a new dummy commit."
             exit 1
           fi
