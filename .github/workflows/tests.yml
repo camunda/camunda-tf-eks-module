@@ -31,27 +31,27 @@ jobs:
             exit 1
           fi
 
-      - name: Stop if testing is not necessary
-        if: ${{ github.event.label.name == 'testing-ci-not-necessary' }}
-        run: exit 78 # Exit code 78 marks the job as skipped
-
       - name: Get go.mod details
+        if: ${{ github.event.label.name != 'testing-ci-not-necessary' }}
         uses: Eun/go-mod-details@v1
         id: go-mod-details
         with:
           modfile: ${{ github.workspace }}/test/src/go.mod
 
       - name: Set up Go environment
+        if: ${{ github.event.label.name != 'testing-ci-not-necessary' }}
         uses: actions/setup-go@v5
         with:
           go-version: ${{ steps.go-mod-details.outputs.go_version }}
 
       - name: Set up Terraform (OpenTofu)
+        if: ${{ github.event.label.name != 'testing-ci-not-necessary' }}
         uses: opentofu/setup-opentofu@v1
         with:
           tofu_version: 1.6.2
 
       - name: Import Secrets
+        if: ${{ github.event.label.name != 'testing-ci-not-necessary' }}
         id: secrets
         uses: hashicorp/vault-action@v3
         with:
@@ -66,21 +66,25 @@ jobs:
 
       # Official action does not support profiles
       - name: Add profile credentials to ~/.aws/credentials
+        if: ${{ github.event.label.name != 'testing-ci-not-necessary' }}
         run: |
           aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
       - name: Get Short GitHub SHA and Save in Environment Variable
+        if: ${{ github.event.label.name != 'testing-ci-not-necessary' }}
         run: echo "SHORT_GITHUB_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
       - name: Configure tests
+        if: ${{ github.event.label.name != 'testing-ci-not-necessary' }}
         id: configure-tests
         run: |
           echo "TEST_CLUSTER_ID=${{ env.SHORT_GITHUB_SHA }}" >> "$GITHUB_ENV"
           echo "CLEAN_CLUSTER_AT_THE_END=true" >> "$GITHUB_ENV"
 
       - name: Launch tests
+        if: ${{ github.event.label.name != 'testing-ci-not-necessary' }}
         working-directory: ./test/src/
         timeout-minutes: 125 # due to a limit on elastic ips, tests suites are ran 1 by 1
         run: |
