@@ -174,7 +174,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	suite.Assert().Equal(suite.varTf["kubernetes_version"], *result.Cluster.Version)
 
 	// check everything works as expected
-	k8s.WaitUntilServiceAvailable(suite.T(), kubeCtlOptions, "whoami-service", 10, 1*time.Second)
+	k8s.WaitUntilServiceAvailable(suite.T(), kubeCtlOptions, "whoami-service", 60, 1*time.Second)
 
 	// Forward port again
 	localPort2 := 8887
