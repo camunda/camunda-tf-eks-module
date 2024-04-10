@@ -199,5 +199,6 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 }
 
 func TestUpgradeEKSTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(UpgradeEKSTestSuite))
 }

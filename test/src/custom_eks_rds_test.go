@@ -44,7 +44,7 @@ func (suite *CustomEKSRDSTestSuite) SetupTest() {
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	suite.clusterName = fmt.Sprintf("cluster-rds-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
-	suite.expectedNodes = 3
+	suite.expectedNodes = 1
 	var errAbsPath error
 	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
 	suite.Require().NoError(errAbsPath)
@@ -310,5 +310,6 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 }
 
 func TestCustomEKSRDSTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(CustomEKSRDSTestSuite))
 }

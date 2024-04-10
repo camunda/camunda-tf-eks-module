@@ -242,5 +242,6 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 }
 
 func TestDefaultEKSTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(DefaultEKSTestSuite))
 }
