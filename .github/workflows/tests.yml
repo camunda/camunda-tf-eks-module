@@ -71,11 +71,9 @@ jobs:
 
       - name: Launch tests
         working-directory: ./test/src/
-        timeout-minutes: 400 # todo: replace all single tests with a global one
+        timeout-minutes: 125 # due to a limit on elastic ips, tests suites are ran 1 by 1
         run: |
-          go test -v -timeout 120m -run TestDefaultEKSTestSuite
-          go test -v -timeout 120m -run TestUpgradeEKSTestSuite
-          go test -v -timeout 120m -run TestCustomEKSRDSTestSuite
+          go test -v -timeout 120m -p 1 ./...
 
       - name: Remove profile credentials from ~/.aws/credentials
         if: always()

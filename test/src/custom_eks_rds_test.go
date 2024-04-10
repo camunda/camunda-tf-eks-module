@@ -150,7 +150,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		TerraformDir: tfDirAurora,
 		Upgrade:      false,
 		VarFiles:     []string{"../fixtures/fixtures.default.aurora.tfvars"},
-		Vars:         suite.varTf,
+		Vars:         varsConfigAurora,
 	}
 
 	if cleanClusterAtTheEnd == "true" {
