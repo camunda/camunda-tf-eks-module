@@ -15,7 +15,7 @@ env:
 jobs:
   integration-test:
     runs-on: ubuntu-22.04
-    if: (github.event.label.name == 'test' || github.event.label.name == 'terraform') && github.event.review.state == 'approved'
+    if: (github.event.label.name == 'test' || github.event.label.name == 'terraform') && github.event.label.name == 'testing-allowed'
     # Other dependencies from hosted runner
     # AWS CLI
     # indirectly node used by actions

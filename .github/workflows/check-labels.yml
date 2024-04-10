@@ -1,0 +1,21 @@
+name: Check Pull Request Labels
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check_labels:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Check labels
+        run: |
+          labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+          if [[ ! $labels =~ (^|\s)(testing-allowed|testing-ci-not-necessary)(\s|$) ]]; then
+            echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label."
+            exit 1
+          fi
