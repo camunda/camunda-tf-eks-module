@@ -94,7 +94,7 @@ jobs:
           gotestsum --junitfile unit-tests.xml --format pkgname -- -v --timeout=120m -p 1 ./...
 
       - name: Test Summary
-        uses: test-summary/action@v2
+        uses: test-summary/action@v2 # may not work due to https://github.com/test-summary/action/issues/5
         with:
           paths: "./test/src/unit-tests.xml"
         if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary') && always()"
