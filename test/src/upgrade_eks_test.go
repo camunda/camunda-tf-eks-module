@@ -170,6 +170,28 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	errClusterReady = utils.WaitUntilKubeClusterIsReady(result.Cluster, 5*time.Minute, uint64(suite.expectedNodes))
 	suite.Require().NoError(errClusterReady)
 
+	// perform update with terraform
+	terraformOptions = &terraform.Options{
+		TerraformDir: tfDir,
+		Upgrade:      false,
+		VarFiles:     []string{"../fixtures/fixtures.default.eks.tfvars"},
+		Vars:         suite.varTf,
+	}
+
+	suite.sugaredLogger.Infow("Reapply terraform after EKS cluster upgrade...", "extraVars", suite.varTf)
+
+	if cleanClusterAtTheEnd == "true" {
+		defer terraform.Destroy(suite.T(), terraformOptions)
+		defer runtime.HandleCrash(func(i interface{}) {
+			terraform.Destroy(suite.T(), terraformOptions)
+		})
+	}
+
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+
+	errClusterReady = utils.WaitUntilKubeClusterIsReady(result.Cluster, 5*time.Minute, uint64(suite.expectedNodes))
+	suite.Require().NoError(errClusterReady)
+
 	// Check version of the upgraded cluster
 	result, err = eksSvc.DescribeCluster(context.Background(), inputEKS)
 	suite.Assert().NoError(err)
