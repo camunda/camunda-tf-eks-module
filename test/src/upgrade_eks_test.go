@@ -132,7 +132,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	utils.CreateIfNotExistsNamespace(suite.T(), kubeCtlOptions, namespace)
 
 	// deploy the postgres-client Job to test the connection
-	k8s.KubectlApply(suite.T(), kubeCtlOptions, "../fixtures/whoami-deployment.yml")
+	k8s.KubectlApply(suite.T(), kubeCtlOptions, "../../modules/fixtures/whoami-deployment.yml")
 
 	k8s.WaitUntilServiceAvailable(suite.T(), kubeCtlOptions, "whoami-service", 60, 1*time.Second)
 

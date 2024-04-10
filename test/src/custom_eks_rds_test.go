@@ -215,7 +215,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	k8s.WaitUntilSecretAvailable(suite.T(), pgKubeCtlOptions, secretPostgres.Name, 6, 10*time.Second)
 
 	// add the scripts as a ConfigMap
-	scriptPath := "../fixtures/scripts/create_aurora_pg_db.sh"
+	scriptPath := "../../modules/fixtures/scripts/create_aurora_pg_db.sh"
 	scriptContent, err := os.ReadFile(scriptPath)
 	suite.Require().NoError(err)
 
@@ -245,7 +245,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	}
 
 	// deploy the postgres-client Job to test the connection
-	k8s.KubectlApply(suite.T(), pgKubeCtlOptions, "../fixtures/postgres-client.yml")
+	k8s.KubectlApply(suite.T(), pgKubeCtlOptions, "../../modules/fixtures/postgres-client.yml")
 	errJob := utils.WaitForJobCompletion(kubeClient, namespace, "postgres-client", 5*time.Minute, jobListOptions)
 	suite.Require().NoError(errJob)
 
