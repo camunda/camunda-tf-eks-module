@@ -27,7 +27,7 @@ jobs:
           labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
           echo "Labels: $labels"
           if ! echo "$labels" | grep -qE "^testing-allowed$|^testing-ci-not-necessary$"; then
-            echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label. Then re-run this workflow."
+            echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label. Then re-run this workflow by pushing a dummy commit."
             exit 1
           fi
 
