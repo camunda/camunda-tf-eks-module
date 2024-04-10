@@ -4,8 +4,8 @@ Terraform module which creates AWS EKS (Kubernetes) resources with an opinionate
 
 ## Documentation
 
-The related [guide](https://docs.camunda.io/docs/next/self-managed/platform-deployment/helm-kubernetes/platforms/amazon-eks/eks-terraform/) describing a more detailed usage.
-Consider installing Camunda 8 via [following guide](https://docs.camunda.io/docs/next/self-managed/platform-deployment/helm-kubernetes/platforms/amazon-eks/eks-helm/) after having deployed the AWS EKS cluster.
+The related [guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-terraform/) describing a more detailed usage.
+Consider installing Camunda 8 via [following guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-helm/) after having deployed the AWS EKS cluster.
 
 ## Usage
 

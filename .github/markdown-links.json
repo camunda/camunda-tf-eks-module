@@ -3,6 +3,9 @@
   "ignorePatterns": [
     {
       "pattern": "^http(s?)://localhost"
+    },
+    {
+      "pattern": "^#"
     }
   ],
   "replacementPatterns": [
