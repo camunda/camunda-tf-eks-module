@@ -46,4 +46,10 @@ We follow Semantic Versioning (SemVer) guidelines for versioning. Follow these s
    - Publish the new version on GitHub Releases.
    - Tag the release with the version number and include release notes summarizing changes.
 
+## Adding new GH actions
+
+Please pin GitHub action, if you need you can use [pin-github-action](https://github.com/mheap/pin-github-action) cli tool.
+
+---
+
 By following these guidelines, we ensure smooth development iterations, robust testing practices, and clear version management for the Terraform EKS module. Happy coding!

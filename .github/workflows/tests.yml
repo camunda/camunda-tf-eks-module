@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
   pull_request:
 
+
 env:
   AWS_PROFILE: "infex"
   AWS_REGION: "eu-central-1"
@@ -21,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Check labels
         run: |
@@ -34,27 +35,27 @@ jobs:
 
       - name: Get go.mod details
         if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
-        uses: Eun/go-mod-details@v1
+        uses: Eun/go-mod-details@b719cd324463e2037cf3a0dd1dd6091bdc2730f4 # v1
         id: go-mod-details
         with:
           modfile: ${{ github.workspace }}/test/src/go.mod
 
       - name: Set up Go environment
         if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
         with:
           go-version: ${{ steps.go-mod-details.outputs.go_version }}
 
       - name: Set up Terraform (OpenTofu)
         if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
-        uses: opentofu/setup-opentofu@v1
+        uses: opentofu/setup-opentofu@ae80d4ecaab946d8f5ff18397fbf6d0686c6d46a # v1
         with:
           tofu_version: 1.6.2
 
       - name: Import Secrets
         if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
         id: secrets
-        uses: hashicorp/vault-action@v3
+        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
         with:
           url: ${{ secrets.VAULT_ADDR }}
           method: approle
@@ -88,7 +89,8 @@ jobs:
           gotestsum --junitfile unit-tests.xml --format pkgname -- -v --timeout=120m -p 1 ./...
 
       - name: Test Summary
-        uses: test-summary/action@v2 # may not work due to https://github.com/test-summary/action/issues/5
+        # may not work due to https://github.com/test-summary/action/issues/5
+        uses: test-summary/action@032c8a9cec6aaa3c20228112cae6ca10a3b29336 # v2
         with:
           paths: "./test/src/unit-tests.xml"
         if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary') && always()"

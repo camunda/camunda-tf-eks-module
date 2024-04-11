@@ -6,6 +6,7 @@ on:
     - cron: '0 5 * * *'
   workflow_dispatch:
 
+
 env:
   AWS_PROFILE: "infex"
   AWS_REGION: "eu-central-1"
@@ -18,11 +19,11 @@ jobs:
     # indirectly node used by actions
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Import Secrets
         id: secrets
-        uses: hashicorp/vault-action@v3
+        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
         with:
           url: ${{ secrets.VAULT_ADDR }}
           method: approle
