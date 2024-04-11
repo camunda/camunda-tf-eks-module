@@ -25,7 +25,7 @@ export AWS_REGION=eu-central-1
 If you want to specify a non-random cluster UID:
 
 ```bash
-export TEST_CLUSTER_ID="myTest"
+export TESTS_CLUSTER_ID="myTest"
 ```
 
 If you don't want to delete the resources at the end of the test:
