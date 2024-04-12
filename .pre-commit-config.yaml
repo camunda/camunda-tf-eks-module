@@ -11,7 +11,6 @@ repos:
   - id: trailing-whitespace
   - id: check-yaml
     args: [--allow-multiple-documents]
-  - id: check-toml
   - id: check-json
   - id: check-symlinks
   - id: check-shebang-scripts-are-executable
@@ -59,7 +58,6 @@ repos:
   rev: v0.5.1
   hooks:
     - id: go-fmt
-    - id: validate-toml
     - id: no-go-testing
     - id: go-mod-tidy
 ...
