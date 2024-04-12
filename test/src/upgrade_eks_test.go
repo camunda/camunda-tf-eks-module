@@ -161,7 +161,10 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	)
 
 	// upgrade the cluster
-	suite.varTf["kubernetes_version"] = "1.29"
+	var errIncVersion error
+	suite.varTf["kubernetes_version"], errIncVersion = utils.IncrementMinorVersionTwoParts(suite.kubeVersion)
+	suite.Require().NoError(errIncVersion)
+
 	suite.sugaredLogger.Infow(fmt.Sprintf("Upgrading the EKS cluster to v%s using aws sdk", suite.varTf["kubernetes_version"]), "extraVars", suite.varTf)
 	errUpdate := utils.UpgradeEKS(context.Background(), eksSvc, suite.clusterName, suite.varTf["kubernetes_version"].(string))
 	suite.Require().NoError(errUpdate)
