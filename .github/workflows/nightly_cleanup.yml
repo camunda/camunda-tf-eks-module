@@ -10,6 +10,7 @@ on:
 env:
   AWS_PROFILE: "infex"
   AWS_REGION: "eu-central-1"
+  CLEANUP_NEWER_THAN: "6 hours"
 
 jobs:
   aws-nightly-cleanup:
@@ -57,7 +58,7 @@ jobs:
           ./cloud-nuke_linux_amd64 aws \
           --region ${{ env.AWS_REGION }} \
           --force \
-          --newer-than 4h \
+          --newer-than ${{ env.CLEANUP_NEWER_THAN }} \
           --exclude-resource-type ec2_dhcp_option \
           --exclude-resource-type cloudtrail || true
 
@@ -75,6 +76,6 @@ jobs:
           ./cloud-nuke_linux_amd64 aws \
           --region ${{ env.AWS_REGION }} \
           --force \
-          --newer-than 4h \
+          --newer-than ${{ env.CLEANUP_NEWER_THAN }} \
           --exclude-resource-type ec2_dhcp_option \
           --exclude-resource-type cloudtrail

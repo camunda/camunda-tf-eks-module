@@ -14,7 +14,16 @@ env:
 
 jobs:
   integration-test:
-    if: "contains(github.event.pull_request.labels.*.name, 'test') || contains(github.event.pull_request.labels.*.name, 'terraform')"
+    # we allow integration tests for schedules, and for PR only if the content is tests or terraform related
+    if: >-
+      github.event_name == 'schedule' || (
+        github.event_name == 'pull_request' &&
+        (
+          contains(github.event.pull_request.labels.*.name, 'test') ||
+          contains(github.event.pull_request.labels.*.name, 'terraform')
+        ) &&
+        !contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')
+      )
     runs-on: ubuntu-22.04
     # Other dependencies from hosted runner
     # AWS CLI
@@ -29,32 +38,28 @@ jobs:
         run: |
           labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
           echo "Labels: $labels"
-          if ! echo "$labels" | grep -qE "^testing-allowed$|^testing-ci-not-necessary$"; then
+          if ! echo "$labels" | grep -qE "^testing-allowed$"; then
             echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label. Then re-run this workflow by pushing a dummy commit."
             exit 1
           fi
 
       - name: Get go.mod details
-        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
         uses: Eun/go-mod-details@b719cd324463e2037cf3a0dd1dd6091bdc2730f4 # v1
         id: go-mod-details
         with:
           modfile: ${{ github.workspace }}/test/src/go.mod
 
       - name: Set up Go environment
-        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
         uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
         with:
           go-version: ${{ steps.go-mod-details.outputs.go_version }}
 
       - name: Set up Terraform (OpenTofu)
-        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
         uses: opentofu/setup-opentofu@ae80d4ecaab946d8f5ff18397fbf6d0686c6d46a # v1
         with:
           tofu_version: 1.6.2
 
       - name: Import Secrets
-        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
         id: secrets
         uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
         with:
@@ -69,18 +74,15 @@ jobs:
 
       # Official action does not support profiles
       - name: Add profile credentials to ~/.aws/credentials
-        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
         run: |
           aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
       - name: Get Short GitHub SHA and Save in Environment Variable
-        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
         run: echo "SHORT_GITHUB_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
       - name: Launch tests in parallel
-        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')"
         working-directory: ./test/src/
         timeout-minutes: 125
         run: |
@@ -94,7 +96,6 @@ jobs:
         uses: test-summary/action@032c8a9cec6aaa3c20228112cae6ca10a3b29336 # v2
         with:
           paths: "./test/src/unit-tests.xml"
-        if: "!contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary') && always()"
 
       - name: Remove profile credentials from ~/.aws/credentials
         if: always()
