@@ -43,3 +43,7 @@ module "postgresql" {
   depends_on = [module.eks_cluster]
 }
 ```
+
+## Support
+
+Please note that the modules have been tested with **[OpenTofu](https://opentofu.org/)** in the version described in the [.tool-versions](./.tool-versions) of this project.

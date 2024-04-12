@@ -7,3 +7,13 @@ terraform-docs 0.17.0
 tflint 0.50.3
 
 tfsec 1.28.5
+
+opentofu 1.6.2
+
+golang 1.22.2
+
+awscli 2.15.20
+
+eksctl 0.175.0
+
+just 1.25.2

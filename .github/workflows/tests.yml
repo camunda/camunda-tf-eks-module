@@ -43,21 +43,8 @@ jobs:
             exit 1
           fi
 
-      - name: Get go.mod details
-        uses: Eun/go-mod-details@b719cd324463e2037cf3a0dd1dd6091bdc2730f4 # v1
-        id: go-mod-details
-        with:
-          modfile: ${{ github.workspace }}/test/src/go.mod
-
-      - name: Set up Go environment
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5
-        with:
-          go-version: ${{ steps.go-mod-details.outputs.go_version }}
-
-      - name: Set up Terraform (OpenTofu)
-        uses: opentofu/setup-opentofu@ae80d4ecaab946d8f5ff18397fbf6d0686c6d46a # v1
-        with:
-          tofu_version: 1.6.2
+      - name: Install tooling using asdf
+        uses: asdf-vm/actions/install@v3
 
       - name: Import Secrets
         id: secrets
@@ -79,17 +66,20 @@ jobs:
           aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
+      - name: Get go.mod details
+        uses: Eun/go-mod-details@b719cd324463e2037cf3a0dd1dd6091bdc2730f4 # v1
+        id: go-mod-details
+        with:
+          modfile: ${{ github.workspace }}/test/src/go.mod
+
       - name: Get Short GitHub SHA and Save in Environment Variable
         run: echo "SHORT_GITHUB_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
       - name: Launch tests in parallel
-        working-directory: ./test/src/
         timeout-minutes: 125
         run: |
           export TESTS_CLUSTER_ID="${{ env.SHORT_GITHUB_SHA }}"
-          export CLEAN_CLUSTER_AT_THE_END=true
-          go install gotest.tools/gotestsum@v1.11.0
-          gotestsum --junitfile unit-tests.xml --format pkgname -- -v --timeout=120m -p 1 ./...
+          just tests "--junitfile unit-tests.xml"
 
       - name: Test Summary
         # may not work due to https://github.com/test-summary/action/issues/5
