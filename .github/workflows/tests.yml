@@ -24,7 +24,7 @@ jobs:
         ) &&
         !contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')
       )
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     # Other dependencies from hosted runner
     # AWS CLI
     # indirectly node used by actions
