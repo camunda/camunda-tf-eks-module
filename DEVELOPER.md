@@ -32,6 +32,8 @@ To start developing or testing the EKS module, follow these steps:
 **Note**: Ensure that the "testing-allowed" label is added to a pull request to trigger the tests.
 Then re-run this workflow by pushing a dummy commit: `git commit --allow-empty -m "trigger workflow"`.
 
+You can skip specific tests in the CI by listing them in the commit description with the prefix `skip-tests:` (e.g.: `skip-tests: Test1,Test2`).
+
 ## Releasing a New Version
 
 We follow Semantic Versioning (SemVer) guidelines for versioning. Follow these steps to release a new version:
