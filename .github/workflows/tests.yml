@@ -10,7 +10,7 @@ on:
 
 env:
   AWS_PROFILE: "infex"
-  AWS_REGION: "eu-central-1"
+  AWS_REGION: "eu-west-2"
 
 jobs:
   integration-test:
