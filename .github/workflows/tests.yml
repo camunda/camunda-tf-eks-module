@@ -61,11 +61,9 @@ jobs:
 
           : # Extract test names marked to be skipped from the commit message description
           commit_message=$(git log -1 --pretty=format:"%B")
-          if [[ $commit_message == *skip-tests:* ]]; then
-            skipped_tests=$(echo "$commit_message" | grep 'skip-tests' | sed 's/skip-tests://')
-          else
-            skipped_tests=""
-          fi
+          skipped_tests=$(echo "$commit_message" | grep 'skip-tests' | sed 's/skip-tests://')
+
+          echo "skipped_tests=$skipped_tests"
 
           : # If any tests are marked to be skipped, remove them from the list of test functions
           if [ -n "$skipped_tests" ]; then
