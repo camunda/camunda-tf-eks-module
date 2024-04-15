@@ -130,8 +130,9 @@ jobs:
 
   test-report:
     runs-on: ubuntu-latest
-    if: always()
+    if: ${{ always() && needs.check-run-tests.result == 'success' }}
     needs:
+      - check-run-tests
       - integration-tests
     steps:
       - name: Download artifacts
