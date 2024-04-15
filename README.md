@@ -1,5 +1,9 @@
 # Camunda Terraform EKS Modules
 
+[![Camunda](https://img.shields.io/badge/Camunda-FC5D0D)](https://www.camunda.com/)
+[![tests](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml)
+[![License](https://img.shields.io/github/license/camunda/camunda-tf-eks-module)](LICENSE)
+
 Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8.
 
 ## Documentation
