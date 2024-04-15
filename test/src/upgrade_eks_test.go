@@ -31,6 +31,7 @@ type UpgradeEKSTestSuite struct {
 	kubeConfigPath string
 	kubeVersion    string
 	tfDataDir      string
+	tfBinaryName   string
 	region         string
 	varTf          map[string]interface{}
 }
@@ -42,6 +43,8 @@ func (suite *UpgradeEKSTestSuite) SetupTest() {
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	suite.clusterName = fmt.Sprintf("cluster-upgrade-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
+	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "tofu")
+	suite.sugaredLogger.Infow("Terraform binary for the suite", "binary", suite.tfBinaryName)
 	suite.expectedNodes = 3
 	suite.kubeVersion = "1.28"
 	var errAbsPath error
@@ -85,10 +88,11 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDir)
 
 	terraformOptions := &terraform.Options{
-		TerraformDir: tfDir,
-		Upgrade:      false,
-		VarFiles:     []string{"../fixtures/fixtures.default.eks.tfvars"},
-		Vars:         suite.varTf,
+		TerraformBinary: suite.tfBinaryName,
+		TerraformDir:    tfDir,
+		Upgrade:         false,
+		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
+		Vars:            suite.varTf,
 	}
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
@@ -173,10 +177,11 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 
 	// perform update with terraform
 	terraformOptions = &terraform.Options{
-		TerraformDir: tfDir,
-		Upgrade:      false,
-		VarFiles:     []string{"../fixtures/fixtures.default.eks.tfvars"},
-		Vars:         suite.varTf,
+		TerraformBinary: suite.tfBinaryName,
+		TerraformDir:    tfDir,
+		Upgrade:         false,
+		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
+		Vars:            suite.varTf,
 	}
 
 	suite.sugaredLogger.Infow("Reapply terraform after EKS cluster upgrade...", "extraVars", suite.varTf)

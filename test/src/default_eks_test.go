@@ -35,6 +35,7 @@ type DefaultEKSTestSuite struct {
 	kubeConfigPath string
 	region         string
 	tfDataDir      string
+	tfBinaryName   string
 	varTf          map[string]interface{}
 }
 
@@ -45,6 +46,9 @@ func (suite *DefaultEKSTestSuite) SetupTest() {
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	suite.clusterName = fmt.Sprintf("cluster-test-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
+	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "tofu")
+	suite.sugaredLogger.Infow("Terraform binary for the suite", "binary", suite.tfBinaryName)
+
 	suite.expectedNodes = 4
 	var errAbsPath error
 	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
@@ -85,10 +89,11 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDir)
 
 	terraformOptions := &terraform.Options{
-		TerraformDir: tfDir,
-		Upgrade:      false,
-		VarFiles:     []string{"../fixtures/fixtures.default.eks.tfvars"},
-		Vars:         suite.varTf,
+		TerraformBinary: suite.tfBinaryName,
+		TerraformDir:    tfDir,
+		Upgrade:         false,
+		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
+		Vars:            suite.varTf,
 	}
 
 	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")

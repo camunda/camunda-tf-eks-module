@@ -58,6 +58,11 @@ You can change the default deployment region:
 export TESTS_CLUSTER_REGION="eu-west-1"
 ```
 
+You can change the terraform binary (default is `tofu`):
+```bash
+export TESTS_TF_BINARY_NAME="terraform"
+```
+
 ### Run the tests
 
 Test with:
