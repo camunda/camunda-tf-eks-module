@@ -69,6 +69,8 @@ jobs:
         run: |
           test_functions=$(grep -rho 'func \(Test[^ ]*\)' ./test/src/ | sed 's/func \(Test[^ ]*\)(t/\1/')
 
+          cat "$GITHUB_EVENT_PATH"
+
           : # Extract test names marked to be skipped from the commit message description
           commit_message=$(jq -r '.commits[].message' "$GITHUB_EVENT_PATH")
           if [[ $commit_message == *skip-tests:* ]]; then
