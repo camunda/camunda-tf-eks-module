@@ -72,7 +72,7 @@ jobs:
           cat "$GITHUB_EVENT_PATH"
 
           : # Extract test names marked to be skipped from the commit message description
-          commit_message=$(jq -r '.commits[].message' "$GITHUB_EVENT_PATH")
+          commit_message=$(git log -1 --pretty=format:"%s")
           if [[ $commit_message == *skip-tests:* ]]; then
             skipped_tests=$(echo "$commit_message" | grep -oP '(?<=skip-tests: )[^\,]+' | tr '\n' ',')
           else
