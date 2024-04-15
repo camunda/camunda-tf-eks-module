@@ -5,15 +5,13 @@ feature:
 # Add 'test' label to any changes within 'test' folder or any subfolders
 test:
   - changed-files:
-      - any-glob-to-any-file: test/**
-
-doc:
-  - changed-files:
       - any-glob-to-any-file:
-          - docs/**
-          - "**.md"
+        - test/**.go
+        - test/**/go.mod
+        - modules/fixtures/**
 
 terraform:
   - changed-files:
       - any-glob-to-any-file:
           - modules/**.tf
+          - .tool-versions
