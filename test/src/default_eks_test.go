@@ -208,37 +208,43 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 
 	suite.Assert().Equal(len(outputVPC.Vpcs), 1)
 
-	// key
-	keyDescription := fmt.Sprintf("%s -  EKS Secret Encryption Key", clusterName)
-	inputKMS := &kms.ListKeysInput{}
-	outputKMSList, errKMSList := kmsSvc.ListKeys(context.Background(), inputKMS)
-	suite.Assert().NoError(errKMSList)
+	// KMS checks are not working as expected in CI due to permission
+	skipTestKMS := utils.GetEnv("TESTS_DISABLE_KMS_CHECKS", "false")
+	if skipTestKMS == "true" {
+		suite.sugaredLogger.Infow("Skipping tests as KMS check (TESTS_DISABLE_KMS_CHECKS) is disabled")
+	} else {
+		// key
+		keyDescription := fmt.Sprintf("%s -  EKS Secret Encryption Key", clusterName)
+		inputKMS := &kms.ListKeysInput{}
+		outputKMSList, errKMSList := kmsSvc.ListKeys(context.Background(), inputKMS)
+		suite.Assert().NoError(errKMSList)
 
-	// Check if the key corresponding to the description exists
-	keyFound := false
-	for _, key := range outputKMSList.Keys {
-		keyDetails, errKey := kmsSvc.DescribeKey(context.Background(), &kms.DescribeKeyInput{
-			KeyId: key.KeyId,
-		})
+		// Check if the key corresponding to the description exists
+		keyFound := false
+		for _, key := range outputKMSList.Keys {
+			keyDetails, errKey := kmsSvc.DescribeKey(context.Background(), &kms.DescribeKeyInput{
+				KeyId: key.KeyId,
+			})
 
-		if errKey != nil {
-			// ignore AccessDenied
-			var re *awshttp.ResponseError
-			if errors.As(err, &re) {
-				if re.HTTPStatusCode() == 400 {
-					continue
+			if errKey != nil {
+				// ignore AccessDenied
+				var re *awshttp.ResponseError
+				if errors.As(err, &re) {
+					if re.HTTPStatusCode() == 400 {
+						continue
+					}
 				}
+
+				suite.Require().NoErrorf(errKey, "Failed to describe key %s", *key.KeyId)
 			}
 
-			suite.Require().NoErrorf(errKey, "Failed to describe key %s", *key.KeyId)
+			keyFound = *keyDetails.KeyMetadata.Description == keyDescription
+			if keyFound {
+				break
+			}
 		}
-
-		keyFound = *keyDetails.KeyMetadata.Description == keyDescription
-		if keyFound {
-			break
-		}
+		suite.Assert().Truef(keyFound, "Failed to find key %s", keyDescription)
 	}
-	suite.Assert().Truef(keyFound, "Failed to find key %s", keyDescription)
 }
 
 func TestDefaultEKSTestSuite(t *testing.T) {

@@ -136,6 +136,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"cluster_name":          fmt.Sprintf("postgres-%s", suite.clusterName),
 		"subnet_ids":            result.Cluster.ResourcesVpcConfig.SubnetIds,
 		"vpc_id":                *result.Cluster.ResourcesVpcConfig.VpcId,
+		"availability_zones":    []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
 		"cidr_blocks":           append(publicBlocks, privateBlocks...),
 		"iam_auth_enabled":      true,
 	}

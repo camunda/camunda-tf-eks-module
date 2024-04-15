@@ -132,11 +132,10 @@ jobs:
         run: |
           export TESTS_CLUSTER_ID="${{ needs.configure-tests.outputs.cluster_id }}"
           export TESTS_CLUSTER_REGION="${{ env.AWS_REGION }}"
+          export TESTS_DISABLE_KMS_CHECKS=true
           just test ${{ matrix.test_function }} "--junitfile ${{ matrix.test_function }}_unit-tests.xml"
 
-      # The test report is currently not working as expected due to https://github.com/test-summary/action/issues/5
-      # TODO: filter logger.go from the xml to make it work
-
+      # this is a workaround for test report not working as expected due to https://github.com/test-summary/action/issues/5
       - name: Filter logger.go from the test report (too large)
         if: always()
         run: |
