@@ -70,11 +70,17 @@ jobs:
           test_functions=$(grep -rho 'func \(Test[^ ]*\)' ./test/src/ | sed 's/func \(Test[^ ]*\)(t/\1/')
 
           : # Extract test names marked to be skipped from the commit message description
-          skipped_tests=$(echo "$GITHUB_EVENT_PATH" | xargs cat | jq -r '.commits[].message' | grep -oP '(?<=skip: )[^\,]+' | tr '\n' ',')
+          commit_message=$(jq -r '.commits[].message' "$GITHUB_EVENT_PATH")
+          if [[ $commit_message == *skip-tests:* ]]; then
+            skipped_tests=$(echo "$commit_message" | grep -oP '(?<=skip-tests: )[^\,]+' | tr '\n' ',')
+          else
+            skipped_tests=""
+          fi
 
           : # If any tests are marked to be skipped, remove them from the list of test functions
           if [ -n "$skipped_tests" ]; then
             for test in $(echo "$skipped_tests" | tr ',' '\n'); do
+              echo "Skipping test: $test"
               test_functions=$(echo "$test_functions" | grep -v "$test")
             done
           fi
