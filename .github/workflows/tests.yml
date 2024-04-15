@@ -73,7 +73,8 @@ jobs:
           if [ -n "$skipped_tests" ]; then
             for test in $(echo "$skipped_tests" | tr ',' '\n'); do
               echo "Skipping test: $test"
-              test_functions=$(echo "$test_functions" | sed -E "s/([,]+)$test//")
+              test_functions=$(echo "$test_functions" | sed -E "s/(^|,)${test}(,|$)//g")
+              echo "test_functions=$test_functions"
             done
           fi
 
