@@ -57,12 +57,14 @@ jobs:
       - name: Extract Test Functions
         id: extract_test_functions
         run: |
+          sudo apt install git -y
           test_functions=$(grep -rho 'func \(Test[^ ]*\)' ./test/src/ | sed 's/func \(Test[^ ]*\)(t/\1/' | tr '\n' ',' | sed 's/,$//')
 
           : # Extract test names marked to be skipped from the commit message description
           commit_message=$(git log -1 --pretty=format:"%B")
-          skipped_tests=$(echo "$commit_message" | grep 'skip-tests' | sed 's/skip-tests://')
+          echo "commit_message=$commit_message"
 
+          skipped_tests=$(echo "$commit_message" | grep 'skip-tests' | sed 's/skip-tests://')
           echo "skipped_tests=$skipped_tests"
 
           : # If any tests are marked to be skipped, remove them from the list of test functions
