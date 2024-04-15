@@ -49,6 +49,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
       - name: Get Short GitHub SHA
         id: short_git_sha
@@ -57,7 +60,6 @@ jobs:
       - name: Extract Test Functions
         id: extract_test_functions
         run: |
-          sudo apt install git -y
           test_functions=$(grep -rho 'func \(Test[^ ]*\)' ./test/src/ | sed 's/func \(Test[^ ]*\)(t/\1/' | tr '\n' ',' | sed 's/,$//')
 
           : # Extract test names marked to be skipped from the commit message description
