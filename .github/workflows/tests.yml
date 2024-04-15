@@ -67,9 +67,7 @@ jobs:
       - name: Extract Test Functions
         id: extract_test_functions
         run: |
-          test_functions=$(grep -rho 'func \(Test[^ ]*\)' ./test/src/ | sed 's/func \(Test[^ ]*\)(t/\1/')
-
-          cat "$GITHUB_EVENT_PATH"
+          test_functions=$(grep -rho 'func \(Test[^ ]*\)' ./test/src/ | sed 's/func \(Test[^ ]*\)(t/\1/' | tr '\n' ',' | sed 's/,$//')
 
           : # Extract test names marked to be skipped from the commit message description
           commit_message=$(git log -1 --pretty=format:"%s")
@@ -83,9 +81,18 @@ jobs:
           if [ -n "$skipped_tests" ]; then
             for test in $(echo "$skipped_tests" | tr ',' '\n'); do
               echo "Skipping test: $test"
-              test_functions=$(echo "$test_functions" | grep -v "$test")
+              test_functions=$(echo "$test_functions" | sed -E "s/([,]+)$test//")
             done
           fi
+
+          : # to json array
+          IFS=',' read -ra array <<< "$test_functions"
+          json_array="["
+          for element in "${array[@]}"
+          do
+            json_array+="\"$element\","
+          done
+          test_functions="${json_array%,}]"
 
           echo "test_functions=${test_functions}" >> "$GITHUB_OUTPUT"
           echo "test_functions=${test_functions}"
