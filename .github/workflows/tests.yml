@@ -52,6 +52,7 @@ jobs:
         id: extract_test_functions
         run: |
           test_functions=$(grep -rho 'func \(Test[^ ]*\)' ./test/src/ | sed 's/func \(Test[^ ]*\)(t/\1/' | tr '\n' ',' | sed 's/,$//')
+          echo "test_functions=$test_functions"
 
           : # Extract test names marked to be skipped from the commit message description
           commit_message=$(git log -1 --pretty=format:"%B")
@@ -69,7 +70,7 @@ jobs:
             if [ -n "$skipped_tests" ]; then
               for test in $(echo "$skipped_tests" | tr ',' '\n'); do
                 echo "Skipping test: $test"
-                test_functions=$(echo "$test_functions" | sed -E "s/(^|,)${test}(,|$)//g")
+                test_functions=$(echo "$test_functions" | sed "s/$test//g" | sed 's/,,/,/g' | sed 's/^,//' | sed 's/,$//')
                 echo "test_functions=$test_functions"
               done
             fi
