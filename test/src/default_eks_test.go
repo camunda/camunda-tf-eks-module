@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
+	"github.com/aws/smithy-go"
 	"github.com/camunda/camunda-tf-eks-module/utils"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
@@ -19,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -232,11 +234,18 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 			})
 
 			if errKey != nil {
-				// ignore AccessDenied
-				var re *awshttp.ResponseError
-				if errors.As(err, &re) {
-					if re.HTTPStatusCode() == 400 {
-						continue
+				// ignore AccessDenied, the user may not have the permission to describe the key
+				// operation error KMS: DescribeKey, https response error StatusCode: 400,...
+
+				suite.sugaredLogger.Infow("Failing operation: DescribeKey", "keyId", key.KeyId, "err", errKey)
+
+				var oe *smithy.OperationError
+				if errors.As(err, &oe) {
+					var opErrHttp *awshttp.ResponseError
+					if errors.As(oe.Err, &opErrHttp) {
+						if opErrHttp.HTTPStatusCode() == http.StatusBadRequest {
+							continue
+						}
 					}
 				}
 
