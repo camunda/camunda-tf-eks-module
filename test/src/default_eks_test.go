@@ -215,19 +215,19 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 
 	suite.Assert().Equal(len(outputVPC.Vpcs), 1)
 
-	// KMS checks are not working as expected in CI due to permission
-	skipTestKMS := utils.GetEnv("TESTS_DISABLE_KMS_CHECKS", "false")
-	if skipTestKMS == "true" {
-		suite.sugaredLogger.Infow("Skipping tests as KMS check (TESTS_DISABLE_KMS_CHECKS) is disabled")
-	} else {
-		// key
-		keyDescription := fmt.Sprintf("%s -  EKS Secret Encryption Key", clusterName)
-		inputKMS := &kms.ListKeysInput{}
-		outputKMSList, errKMSList := kmsSvc.ListKeys(context.Background(), inputKMS)
+	// key
+	keyDescription := fmt.Sprintf("%s -  EKS Secret Encryption Key", clusterName)
+	inputKMS := &kms.ListKeysInput{}
+	paginatorKms := kms.NewListKeysPaginator(kmsSvc, inputKMS, func(o *kms.ListKeysPaginatorOptions) {
+		o.Limit = 50
+	})
+
+	// Check if the key corresponding to the description exists
+	keyFound := false
+	for !keyFound && paginatorKms.HasMorePages() {
+		outputKMSList, errKMSList := paginatorKms.NextPage(context.TODO())
 		suite.Assert().NoError(errKMSList)
 
-		// Check if the key corresponding to the description exists
-		keyFound := false
 		for _, key := range outputKMSList.Keys {
 			keyDetails, errKey := kmsSvc.DescribeKey(context.Background(), &kms.DescribeKeyInput{
 				KeyId: key.KeyId,
@@ -259,8 +259,9 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 				break
 			}
 		}
-		suite.Assert().Truef(keyFound, "Failed to find key %s", keyDescription)
 	}
+
+	suite.Assert().Truef(keyFound, "Failed to find key %s", keyDescription)
 }
 
 func TestDefaultEKSTestSuite(t *testing.T) {
