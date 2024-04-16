@@ -29,10 +29,16 @@ To start developing or testing the EKS module, follow these steps:
    - Set `CLEAN_CLUSTER_AT_THE_END=false` to prevent automatic cluster deletion in case of errors.
    - Optionally, manually clean up the cluster after testing by reversing this setting.
 
-**Note**: Ensure that the "testing-allowed" label is added to a pull request to trigger the tests.
-Then re-run this workflow by pushing a dummy commit: `git commit --allow-empty -m "trigger workflow"`.
+Understood, here's the updated documentation:
 
-You can skip specific tests in the CI by listing them in the commit description with the prefix `skip-tests:` (e.g.: `skip-tests: Test1,Test2`).
+## Tests in the CI
+
+The tests in the CI can be triggered automatically by labeling the pull request appropriately. It will be labeled either `test` or `terraform` automatically by the labeler.
+
+You can skip specific tests in the CI by listing them in the commit description with the prefix `skip-tests:` (e.g.: `skip-tests:Test1,Test2`).
+If you want to skip all tests, use `skip-tests:all`.
+Remember, if all tests are skipped, the workflow will intentionally result in a `failed` status.
+To skip tests without triggering an error, add the label `testing-ci-not-necessary` to the PR.
 
 ## Releasing a New Version
 
