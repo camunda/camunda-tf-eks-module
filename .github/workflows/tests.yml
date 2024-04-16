@@ -14,9 +14,12 @@ env:
   TESTS_TF_BINARY_NAME: "terraform"
 
 jobs:
-  check-run-tests:
+
+  # We can skip some tests (skip-tests:NameOfTest1,NameOfTest2) or all tests (skip-tests:all)
+  # If all tests are skipped, the result of this workflow will be `failed` on purpose
+  # If you want to skip tests and have no error, you need to use `testing-ci-not-necessary` as a label on the PR
+  configure-tests:
     runs-on: ubuntu-latest
-    # we allow integration tests for schedules, and for PR only if the content is tests or terraform related
     if: >-
       github.event_name == 'schedule' || (
         github.event_name == 'pull_request' &&
@@ -26,23 +29,6 @@ jobs:
         ) &&
         !contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')
       )
-    steps:
-      - name: Check labels
-        run: |
-          labels=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
-          echo "Labels: $labels"
-          if ! echo "$labels" | grep -qE "^testing-allowed$"; then
-            echo "ERROR: Pull request must have either 'testing-allowed' or 'testing-ci-not-necessary' label. Then re-run this workflow by pushing a dummy commit."
-            exit 1
-          fi
-
-  configure-tests:
-    runs-on: ubuntu-latest
-    # Other dependencies from hosted runner
-    # AWS CLI
-    # indirectly node used by actions
-    needs:
-      - check-run-tests
     outputs:
       test_functions: ${{ steps.extract_test_functions.outputs.test_functions }}
       cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
@@ -69,13 +55,19 @@ jobs:
           skipped_tests=$(echo "$commit_message" | grep 'skip-tests' | sed 's/skip-tests://')
           echo "skipped_tests=$skipped_tests"
 
-          : # If any tests are marked to be skipped, remove them from the list of test functions
-          if [ -n "$skipped_tests" ]; then
-            for test in $(echo "$skipped_tests" | tr ',' '\n'); do
-              echo "Skipping test: $test"
-              test_functions=$(echo "$test_functions" | sed -E "s/(^|,)${test}(,|$)//g")
-              echo "test_functions=$test_functions"
-            done
+          : # If all tests are marked to be skipped, then clear the test_functions list completely
+          if [ "$skipped_tests" == "all" ]; then
+            test_functions=""
+            echo "Skipping all tests (skip-tests:all found)"
+          else
+            : # Otherwise, remove the tests marked to be skipped from the test_functions list
+            if [ -n "$skipped_tests" ]; then
+              for test in $(echo "$skipped_tests" | tr ',' '\n'); do
+                echo "Skipping test: $test"
+                test_functions=$(echo "$test_functions" | sed -E "s/(^|,)${test}(,|$)//g")
+                echo "test_functions=$test_functions"
+              done
+            fi
           fi
 
           : # to json array
@@ -160,9 +152,9 @@ jobs:
 
   test-report:
     runs-on: ubuntu-latest
-    if: ${{ always() && needs.check-run-tests.result == 'success' }}
+    if: ${{ always() && needs.configure-tests.result == 'success' }}
     needs:
-      - check-run-tests
+      - configure-tests
       - integration-tests
     steps:
       - name: Download artifacts
