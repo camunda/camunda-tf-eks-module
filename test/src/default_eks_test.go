@@ -237,13 +237,14 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 				// ignore AccessDenied, the user may not have the permission to describe the key
 				// operation error KMS: DescribeKey, https response error StatusCode: 400,...
 
-				suite.sugaredLogger.Infow("Failing operation: DescribeKey", "keyId", key.KeyId, "err", errKey)
-
 				var oe *smithy.OperationError
-				if errors.As(err, &oe) {
+				suite.sugaredLogger.Debugw("Failing (non-fatal) operation: DescribeKey", "keyId", key.KeyId, "err", errKey, "errType", fmt.Sprintf("%T", errKey))
+				if errors.As(errKey, &oe) {
 					var opErrHttp *awshttp.ResponseError
+					suite.sugaredLogger.Debugw("Failing (non-fatal) operation: DescribeKey", "keyId", key.KeyId, "err", oe.Err, "errType", fmt.Sprintf("%T", oe.Err))
 					if errors.As(oe.Err, &opErrHttp) {
 						if opErrHttp.HTTPStatusCode() == http.StatusBadRequest {
+							suite.sugaredLogger.Infow("Skipping not authorized describing key...", "keyId", key.KeyId)
 							continue
 						}
 					}
@@ -254,6 +255,7 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 
 			keyFound = *keyDetails.KeyMetadata.Description == keyDescription
 			if keyFound {
+				suite.sugaredLogger.Infow("Successfully described key", "keyId", key.KeyId)
 				break
 			}
 		}
