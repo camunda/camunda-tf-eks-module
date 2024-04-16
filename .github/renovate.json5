@@ -8,6 +8,7 @@
     ":enablePreCommit",
   ],
   schedule: ["every weekend"],
+  groupName: "mono-update-renovate", // we keep all updates in a single renovate branch in order to save CI tests
   platformAutomerge: false,
   prHourlyLimit: 6,
   prConcurrentLimit: 20,
@@ -31,7 +32,7 @@
   },
   vulnerabilityAlerts: {
     addLabels: ["security"],
-    enabled: true
+    enabled: true,
   },
   packageRules: [
     // limit the PR creation for the Renovate pre-commit hook (it's released very frequently)
@@ -53,7 +54,6 @@
       matchDatasources: ["terraform-module"],
       matchPackagePatterns: ["terraform-aws-modules.*"],
       addLabels: ["group:terraform"],
-      groupName: "Terraform AWS modules",
       schedule: [
         "every 2 weeks on Saturday and Sunday",
       ],
@@ -63,72 +63,8 @@
       matchDatasources: ["terraform-provider"],
       addLabels: ["group:terraform"],
       schedule: [
-        "every 2 weeks on Saturday and Sunday",
-      ]
-    },
-    // Terraform patch provider updates
-    {
-      matchUpdateTypes: ["patch"],
-      matchDatasources: ["terraform-provider"],
-      addLabels: ["group:terraform", "automerge"],
-      groupName: "Terraform providers",
-      automerge: true,
-      schedule: [
-        "every 2 weeks on Saturday and Sunday",
-      ]
-    },
-    // GitHub Actions
-    {
-      matchUpdateTypes: ["minor", "patch"],
-      matchManagers: ["github-actions"],
-      addLabels: ["automerge"],
-      automerge: true,
-    },
-    // Patches
-    // Those are tested packages, and we know that they follow the semver convention,
-    // but it's fine to have candidate packages to test before move them to minor section.
-    {
-      matchUpdateTypes: ["patch"],
-      matchPackagePatterns: [
-        "aquasecurity/tfsec",
-        "pre-commit",
-        "^terraform$",
-        "terraform-aws-modules/.+",
-        "terraform-docs",
-        "terraform-linters/tflint",
+        "every 2 weeks on Saturday and Sunday"
       ],
-      addLabels: ["automerge"],
-      automerge: true,
-    },
-    // Minor versions
-    // Those are tested packages, and we know that they follow the semver convention,
-    // but it's fine to have candidate packages to test before move them to minor section.
-    {
-      matchUpdateTypes: ["minor"],
-      matchPackagePatterns: [
-        "pre-commit",
-        "terraform-docs",
-        "terraform-linters/tflint",
-      ],
-      addLabels: ["automerge"],
-      automerge: true,
-    },
-    // Create PRs and automerge mentioned components afterward
-    // Those are tested packages
-    {
-      matchUpdateTypes: ["major"],
-      matchPackagePatterns: [
-        "pre-commit/.+",
-      ],
-      addLabels: ["automerge"],
-      automerge: true,
-    },
-    {
-      matchUpdateTypes: ["major", "minor", "patch"],
-      matchManagers: ["pre-commit"],
-      groupName: "pre-commit hooks",
-      addLabels: ["automerge"],
-      automerge: true
     },
     // For known GitHub repositories that use GitHub tags/releases of format
     // "v1.2.3" and where the asdf plugin ignores the "v" prefix, we also tell
@@ -138,8 +74,15 @@
       matchPackageNames: [
         "hashicorp/terraform",
         "pre-commit/pre-commit",
+        "casey/just",
+        "eksctl-io/eksctl",
+        "opentofu/opentofu",
+        "aquasecurity/tfsec",
+        "terraform-linters/tflint",
+        "terraform-docs/terraform-docs"
+        // TODO: add awscli
       ],
       extractVersion: "^v(?<version>.*)$",
-    },
-  ],
+    }
+  ]
 }
