@@ -6,10 +6,19 @@ on:
     - cron: '0 1 * * 2'
   workflow_dispatch:
   pull_request:
-
+    # the paths should be synced with ../labeler.yml
+    paths:
+      - test/**.go
+      - test/**/go.mod
+      - modules/fixtures/**
+      - modules/**.tf
+      - .tool-versions
+      - .github/workflows/tests.yml
+      - justfile
 
 env:
   AWS_PROFILE: "infex"
+  # remember to also update nightly_cleanup.yml!
   AWS_REGION: "eu-west-2"
   TESTS_TF_BINARY_NAME: "terraform"
 
@@ -21,12 +30,8 @@ jobs:
   configure-tests:
     runs-on: ubuntu-latest
     if: >-
-      github.event_name == 'schedule' || (
+      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (
         github.event_name == 'pull_request' &&
-        (
-          contains(github.event.pull_request.labels.*.name, 'test') ||
-          contains(github.event.pull_request.labels.*.name, 'terraform')
-        ) &&
         !contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')
       )
     outputs:

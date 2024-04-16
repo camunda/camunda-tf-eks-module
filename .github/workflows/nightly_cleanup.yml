@@ -9,6 +9,7 @@ on:
 
 env:
   AWS_PROFILE: "infex"
+  # remember to also update tests.yml!
   AWS_REGION: "eu-west-2"
   CLEANUP_NEWER_THAN: "6 hours"
   CLOUD_NUKE_VERSION: "v0.35.0"
@@ -16,10 +17,6 @@ env:
 jobs:
   aws-nightly-cleanup:
     runs-on: ubuntu-latest
-    # Other dependencies from hosted runner
-    # AWS CLI
-    # indirectly node used by actions
-
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
