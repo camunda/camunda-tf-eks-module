@@ -33,7 +33,8 @@ Understood, here's the updated documentation:
 
 ## Tests in the CI
 
-The tests in the CI can be triggered automatically by labeling the pull request appropriately. It will be labeled either `test` or `terraform` automatically by the labeler.
+The tests in the CI can be triggered automatically by labeling the pull request appropriately.
+It will be labeled either `test` or `terraform` automatically by the labeler.
 
 You can skip specific tests in the CI by listing them in the commit description with the prefix `skip-tests:` (e.g.: `skip-tests:Test1,Test2`).
 If you want to skip all tests, use `skip-tests:all`.
