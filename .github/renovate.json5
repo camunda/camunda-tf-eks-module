@@ -53,10 +53,69 @@
     {
       matchDatasources: ["terraform-module"],
       matchPackagePatterns: ["terraform-aws-modules.*"],
-      addLabels: ["group:terraform"],
+      addLabels: ["group:terraform", "automerge"],
+      automerge: true,
+      groupName: "mono-update-renovate-automerge",
       schedule: [
         "every 2 weeks on Saturday and Sunday",
       ],
+    },
+    // GitHub Actions
+    {
+      matchUpdateTypes: ["minor", "patch"],
+      matchManagers: ["github-actions"],
+      addLabels: ["automerge"],
+      groupName: "mono-update-renovate-automerge",
+      automerge: true,
+    },
+    // Patches
+    // Those are tested packages, and we know that they follow the semver convention,
+    // but it's fine to have candidate packages to test before move them to minor section.
+    {
+      matchUpdateTypes: ["patch"],
+      matchPackagePatterns: [
+        "aquasecurity/tfsec",
+        "pre-commit",
+        "^terraform$",
+        "terraform-aws-modules/.+",
+        "terraform-docs",
+        "terraform-linters/tflint",
+      ],
+      addLabels: ["automerge"],
+      groupName: "mono-update-renovate-automerge",
+      automerge: true,
+    },
+    // Minor versions
+    // Those are tested packages, and we know that they follow the semver convention,
+    // but it's fine to have candidate packages to test before move them to minor section.
+    {
+      matchUpdateTypes: ["minor"],
+      matchPackagePatterns: [
+        "pre-commit",
+        "terraform-docs",
+        "terraform-linters/tflint",
+      ],
+      addLabels: ["automerge"],
+      groupName: "mono-update-renovate-automerge",
+      automerge: true,
+    },
+    // Create PRs and automerge mentioned components afterward
+    // Those are tested packages
+    {
+      matchUpdateTypes: ["major"],
+      matchPackagePatterns: [
+        "pre-commit/.+",
+      ],
+      addLabels: ["automerge"],
+      groupName: "mono-update-renovate-automerge",
+      automerge: true,
+    },
+    {
+      matchUpdateTypes: ["major", "minor", "patch"],
+      matchManagers: ["pre-commit"],
+      groupName: "mono-update-renovate-automerge",
+      addLabels: ["automerge"],
+      automerge: true
     },
     // Terraform major provider updates
     {
