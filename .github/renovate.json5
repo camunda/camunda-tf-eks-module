@@ -34,6 +34,22 @@
     addLabels: ["security"],
     enabled: true,
   },
+  customManagers: [
+    {
+      "customType": "regex",
+      "fileMatch": ["^.tool-versions$"],
+      "matchStrings": [
+        "datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?\\s.*? (?<currentValue>.*)\\s"
+      ],
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^justfile$"],
+      "matchStrings": [
+        "datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?\\s(?<originalPackageName>.*) := \"(?<currentValue>.*?)\"\\s"
+      ],
+    },
+  ],
   packageRules: [
     // limit the PR creation for the Renovate pre-commit hook (it's released very frequently)
     {
@@ -59,6 +75,25 @@
       schedule: [
         "every 2 weeks on Saturday and Sunday",
       ],
+    },
+    // Terraform major provider updates
+    {
+      matchDatasources: ["terraform-provider"],
+      addLabels: ["group:terraform"],
+      schedule: [
+        "every 2 weeks on Saturday and Sunday"
+      ],
+    },
+    // Terraform patch provider updates
+    {
+      matchUpdateTypes: ["patch"],
+      matchDatasources: ["terraform-provider"],
+      addLabels: ["group:terraform", "automerge"],
+      groupName: "mono-update-renovate-automerge",
+      automerge: true,
+      schedule: [
+        "every 2 weeks on Saturday and Sunday",
+      ]
     },
     // GitHub Actions
     {
@@ -117,29 +152,14 @@
       addLabels: ["automerge"],
       automerge: true
     },
-    // Terraform major provider updates
-    {
-      matchDatasources: ["terraform-provider"],
-      addLabels: ["group:terraform"],
-      schedule: [
-        "every 2 weeks on Saturday and Sunday"
-      ],
-    },
     // For known GitHub repositories that use GitHub tags/releases of format
     // "v1.2.3" and where the asdf plugin ignores the "v" prefix, we also tell
     // Renovate to ignore it via extractVersion when updating .tool-version file
     {
-      matchFileNames: ["**/.tool-versions", "**/*.tf"],
+      matchFileNames: ["**/*.tf"],
       matchPackageNames: [
         "hashicorp/terraform",
         "pre-commit/pre-commit",
-        "casey/just",
-        "eksctl-io/eksctl",
-        "opentofu/opentofu",
-        "aquasecurity/tfsec",
-        "terraform-linters/tflint",
-        "terraform-docs/terraform-docs"
-        // TODO: add awscli
       ],
       extractVersion: "^v(?<version>.*)$",
     }

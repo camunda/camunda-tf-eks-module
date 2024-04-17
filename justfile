@@ -1,5 +1,6 @@
 # this file is a recipe file for the project
 
+# renovate: datasource=github-releases depName=gotestyourself/gotestsum
 gotestsum_version := "v1.11.0"
 
 # Launch a single test using go test in verbose mode
