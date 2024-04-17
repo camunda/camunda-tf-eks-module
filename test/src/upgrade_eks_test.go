@@ -43,7 +43,7 @@ func (suite *UpgradeEKSTestSuite) SetupTest() {
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	suite.clusterName = fmt.Sprintf("cluster-upgrade-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
-	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "tofu")
+	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "terraform")
 	suite.sugaredLogger.Infow("Terraform binary for the suite", "binary", suite.tfBinaryName)
 	suite.expectedNodes = 3
 	suite.kubeVersion = "1.28"

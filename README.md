@@ -50,4 +50,4 @@ module "postgresql" {
 
 ## Support
 
-Please note that the modules have been tested with **[OpenTofu](https://opentofu.org/)** in the version described in the [.tool-versions](./.tool-versions) of this project.
+Please note that the modules have been tested with **[Terraform](https://github.com/hashicorp/terraform)** in the version described in the [.tool-versions](./.tool-versions) of this project.
