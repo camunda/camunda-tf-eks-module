@@ -1,6 +1,6 @@
 pre-commit 3.7.0
 
-terraform 1.7.5
+terraform 1.8.1
 
 terraform-docs 0.17.0
 
