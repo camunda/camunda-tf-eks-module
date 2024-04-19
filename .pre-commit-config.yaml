@@ -60,12 +60,4 @@ repos:
     - id: go-fmt
     - id: no-go-testing
     - id: go-mod-tidy
-
-- repo: local
-  hooks:
-    - id: sort_tool_versions
-      name: sort_tool_versions
-      language: python
-      files: ^.tool-versions$
-      entry: .pre-commit-hooks/sort_tool_versions.py
 ...
