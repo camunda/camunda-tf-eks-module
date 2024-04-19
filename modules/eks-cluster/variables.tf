@@ -40,7 +40,7 @@ variable "np_instance_types" {
 
 variable "np_disk_size" {
   type        = number
-  description = "Disk size of the nodes on the default node poool"
+  description = "Disk size of the nodes on the default node pool"
   default     = 20
 }
 

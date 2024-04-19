@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-client
+  labels:
+    app: postgres-client
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: postgres-client
+          image: ubuntu:latest
+          command:
+            - sh
+            - "-c"
+            - |
+              /bin/bash <<'EOF'
+              set -o pipefail && \
+              apt-get update && \
+              apt-get install -y python3 python3-pip build-essential postgresql-client && \
+              echo "Creating IRSA db user" && \
+              mkdir -p /tmp/scripts  && cp /scripts/create_aurora_pg_db.sh /tmp/scripts/create_aurora_pg_db.sh && chmod +x /tmp/scripts/create_aurora_pg_db.sh && /tmp/scripts/create_aurora_pg_db.sh
+
+              EOF
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+          env:
+            - name: AURORA_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_endpoint
+            - name: AURORA_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_username
+            - name: AURORA_USERNAME_IRSA
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_username_irsa
+            - name: AURORA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aurora-secret
+                  key: aurora_password
+            - name: AURORA_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_port
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aws_region
+            - name: AURORA_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_db_name
+      volumes:
+        - name: scripts
+          configMap:
+            name: postgres-scripts

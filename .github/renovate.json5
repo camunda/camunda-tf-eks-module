@@ -8,6 +8,7 @@
     ":enablePreCommit",
   ],
   schedule: ["every weekend"],
+  groupName: "mono-update-renovate", // we keep all updates in a single renovate branch in order to save CI tests
   platformAutomerge: false,
   prHourlyLimit: 6,
   prConcurrentLimit: 20,
@@ -31,8 +32,24 @@
   },
   vulnerabilityAlerts: {
     addLabels: ["security"],
-    enabled: true
+    enabled: true,
   },
+  customManagers: [
+    {
+      "customType": "regex",
+      "fileMatch": ["^.tool-versions$"],
+      "matchStrings": [
+        "datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?\\s.*? (?<currentValue>.*)\\s"
+      ],
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^justfile$"],
+      "matchStrings": [
+        "datasource=(?<datasource>.*?) depName=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extractVersion=(?<extractVersion>.*?))?\\s(?<originalPackageName>.*) := \"(?<currentValue>.*?)\"\\s"
+      ],
+    },
+  ],
   packageRules: [
     // limit the PR creation for the Renovate pre-commit hook (it's released very frequently)
     {
@@ -52,8 +69,9 @@
     {
       matchDatasources: ["terraform-module"],
       matchPackagePatterns: ["terraform-aws-modules.*"],
-      addLabels: ["group:terraform"],
-      groupName: "Terraform AWS modules",
+      addLabels: ["group:terraform", "automerge"],
+      automerge: true,
+      groupName: "mono-update-renovate-automerge",
       schedule: [
         "every 2 weeks on Saturday and Sunday",
       ],
@@ -63,15 +81,15 @@
       matchDatasources: ["terraform-provider"],
       addLabels: ["group:terraform"],
       schedule: [
-        "every 2 weeks on Saturday and Sunday",
-      ]
+        "every 2 weeks on Saturday and Sunday"
+      ],
     },
     // Terraform patch provider updates
     {
       matchUpdateTypes: ["patch"],
       matchDatasources: ["terraform-provider"],
       addLabels: ["group:terraform", "automerge"],
-      groupName: "Terraform providers",
+      groupName: "mono-update-renovate-automerge",
       automerge: true,
       schedule: [
         "every 2 weeks on Saturday and Sunday",
@@ -82,6 +100,7 @@
       matchUpdateTypes: ["minor", "patch"],
       matchManagers: ["github-actions"],
       addLabels: ["automerge"],
+      groupName: "mono-update-renovate-automerge",
       automerge: true,
     },
     // Patches
@@ -98,6 +117,7 @@
         "terraform-linters/tflint",
       ],
       addLabels: ["automerge"],
+      groupName: "mono-update-renovate-automerge",
       automerge: true,
     },
     // Minor versions
@@ -111,6 +131,7 @@
         "terraform-linters/tflint",
       ],
       addLabels: ["automerge"],
+      groupName: "mono-update-renovate-automerge",
       automerge: true,
     },
     // Create PRs and automerge mentioned components afterward
@@ -121,12 +142,13 @@
         "pre-commit/.+",
       ],
       addLabels: ["automerge"],
+      groupName: "mono-update-renovate-automerge",
       automerge: true,
     },
     {
       matchUpdateTypes: ["major", "minor", "patch"],
       matchManagers: ["pre-commit"],
-      groupName: "pre-commit hooks",
+      groupName: "mono-update-renovate-automerge",
       addLabels: ["automerge"],
       automerge: true
     },
@@ -134,12 +156,12 @@
     // "v1.2.3" and where the asdf plugin ignores the "v" prefix, we also tell
     // Renovate to ignore it via extractVersion when updating .tool-version file
     {
-      matchFileNames: ["**/.tool-versions", "**/*.tf"],
+      matchFileNames: ["**/*.tf"],
       matchPackageNames: [
         "hashicorp/terraform",
         "pre-commit/pre-commit",
       ],
       extractVersion: "^v(?<version>.*)$",
-    },
-  ],
+    }
+  ]
 }

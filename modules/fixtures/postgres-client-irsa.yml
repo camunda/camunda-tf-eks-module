@@ -1,0 +1,76 @@
+# this manifest contains a version with the IRSA connection check, it is currently listed as a TODO
+# it may be implemented or dropped depending on if it's relevant or not to test IRSA connection for the db
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-client
+  labels:
+    app: postgres-client
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: postgres-client
+          image: ubuntu:latest
+          command:
+            - sh
+            - "-c"
+            - |
+              /bin/bash <<'EOF'
+              set -o pipefail && \
+              apt-get update && \
+              apt-get install -y python3 python3-pip build-essential postgresql-client && \
+              echo "Creating IRSA db user" && \
+              mkdir -p /tmp/scripts  && cp /scripts/create_aurora_pg_db.sh /tmp/scripts/create_aurora_pg_db.sh && chmod +x /tmp/scripts/create_aurora_pg_db.sh && /tmp/scripts/create_aurora_pg_db.sh && \
+              echo "Testing connection using IRSA"  && \
+              python3 -m pip install awscli && \
+              AWS_PG_PASSWORD=$(aws rds generate-db-auth-token --hostname $AURORA_ENDPOINT --port $AURORA_PORT --region $AWS_REGION --username $AURORA_USERNAME_IRSA) && \
+              psql -h $AURORA_ENDPOINT -p $AURORA_PORT "dbname=$AURORA_DB_NAME user=$AURORA_USERNAME_IRSA password=$AWS_PG_PASSWORD" -c 'SELECT version();'
+
+              EOF
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+          env:
+            - name: AURORA_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_endpoint
+            - name: AURORA_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_username
+            - name: AURORA_USERNAME_IRSA
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_username_irsa
+            - name: AURORA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: aurora-secret
+                  key: aurora_password
+            - name: AURORA_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_port
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aws_region
+            - name: AURORA_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: aurora-config
+                  key: aurora_db_name
+      volumes:
+        - name: scripts
+          configMap:
+            name: postgres-scripts

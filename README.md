@@ -1,11 +1,15 @@
 # Camunda Terraform EKS Modules
 
+[![Camunda](https://img.shields.io/badge/Camunda-FC5D0D)](https://www.camunda.com/)
+[![tests](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml)
+[![License](https://img.shields.io/github/license/camunda/camunda-tf-eks-module)](LICENSE)
+
 Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8.
 
 ## Documentation
 
-The related [guide](https://docs.camunda.io/docs/next/self-managed/platform-deployment/helm-kubernetes/platforms/amazon-eks/eks-terraform/) describing a more detailed usage.
-Consider installing Camunda 8 via [following guide](https://docs.camunda.io/docs/next/self-managed/platform-deployment/helm-kubernetes/platforms/amazon-eks/eks-helm/) after having deployed the AWS EKS cluster.
+The related [guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-terraform/) describing a more detailed usage.
+Consider installing Camunda 8 via [following guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-helm/) after having deployed the AWS EKS cluster.
 
 ## Usage
 
@@ -43,3 +47,7 @@ module "postgresql" {
   depends_on = [module.eks_cluster]
 }
 ```
+
+## Support
+
+Please note that the modules have been tested with **[Terraform](https://github.com/hashicorp/terraform)** in the version described in the [.tool-versions](./.tool-versions) of this project.
