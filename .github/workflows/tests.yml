@@ -39,7 +39,7 @@ jobs:
       cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
@@ -98,7 +98,7 @@ jobs:
         test_function: ${{ fromJson(needs.configure-tests.outputs.test_functions) }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # v4
 
       - name: Install tooling using asdf
         uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
