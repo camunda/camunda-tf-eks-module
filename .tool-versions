@@ -3,10 +3,10 @@
 # diff <(sed '/^#/d; /^$/d' .tool-versions | sort) <(sed '/^#/d; /^$/d' .tool-versions) && echo ".tool-versions is sorted correctly" || echo ".tool-versions is not sorted correctly"
 
 # renovate: datasource=github-releases depName=aws/aws-cli
-awscli 2.15.40
+awscli 2.15.42
 
 # renovate: datasource=github-releases depName=eksctl-io/eksctl
-eksctl 0.175.0
+eksctl 0.176.0
 
 # renovate: datasource=golang-version depName=golang
 golang 1.22.2
@@ -21,7 +21,7 @@ opentofu 1.6.2
 pre-commit 3.7.0
 
 # renovate: datasource=github-releases depName=hashicorp/terraform
-terraform 1.8.1
+terraform 1.8.2
 
 # renovate: datasource=github-releases depName=terraform-docs/terraform-docs
 terraform-docs 0.17.0
