@@ -18,16 +18,16 @@ just 1.25.2
 opentofu 1.6.2
 
 # renovate: datasource=github-releases depName=pre-commit/pre-commit
-pre-commit 3.7.0
+pre-commit 3.7.1
 
 # renovate: datasource=github-releases depName=hashicorp/terraform
-terraform 1.8.2
+terraform 1.8.3
 
 # renovate: datasource=github-releases depName=terraform-docs/terraform-docs
 terraform-docs 0.17.0
 
 # renovate: datasource=github-releases depName=terraform-linters/tflint
-tflint 0.50.3
+tflint 0.51.1
 
 # renovate: datasource=github-releases depName=aquasecurity/tfsec
-tfsec 1.28.5
+tfsec 1.28.6
