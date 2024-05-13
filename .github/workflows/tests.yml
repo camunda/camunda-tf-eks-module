@@ -16,6 +16,10 @@ on:
       - .github/workflows/tests.yml
       - justfile
 
+# limit to a single execution per actor of this workflow
+concurrency:
+  group: "${{ github.workflow }}-${{ github.actor }}"
+
 env:
   AWS_PROFILE: "infex"
   # remember to also update nightly_cleanup.yml!
