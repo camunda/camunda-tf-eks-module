@@ -40,6 +40,13 @@ jobs:
             secret/data/products/infrastructure-experience/ci/common AWS_SECRET_KEY;
             secret/data/products/infrastructure-experience/ci/common RH_OPENSHIFT_TOKEN;
 
+      # Official action does not support profiles
+      - name: Add profile credentials to ~/.aws/credentials
+        run: |
+          aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
+
       - name: Launch test
         timeout-minutes: 125
         uses: ./.github/actions/rosa-create-cluster

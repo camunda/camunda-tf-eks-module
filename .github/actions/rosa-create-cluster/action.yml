@@ -10,6 +10,9 @@ inputs:
   aws-secret-access-key:
     description: 'AWS Secret Access Key'
     required: true
+  aws-profile:
+    description: 'AWS profile to use'
+    required: false
   rh-token:
     description: 'Red Hat Hybrid Cloud Console Token'
     required: true
@@ -67,13 +70,6 @@ runs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
-    - name: Setup AWS CLI
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ inputs.aws-access-key-id }}
-        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
-        aws-region: ${{ inputs.aws-region }}
-
     - name: Install ROSA CLI
       shell: bash
       run: |
@@ -113,10 +109,6 @@ runs:
       run: |
         aws s3api create-bucket --bucket ${{ inputs.s3-backend-bucket }} --region ${{ inputs.aws-region }} --create-bucket-configuration LocationConstraint=${{ inputs.aws-region }}
         aws s3api put-bucket-policy --bucket ${{ inputs.s3-backend-bucket }} --policy file://bucket-policy.json
-      env:
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-        AWS_DEFAULT_REGION: ${{ inputs.aws-region }}
 
     - name: Terraform Init
       shell: bash
