@@ -1,0 +1,157 @@
+name: Deploy ROSA HCP Cluster
+
+description: |
+  This GitHub Action automates the deployment of a ROSA (Red Hat OpenShift Service on AWS) cluster using Terraform.
+
+inputs:
+  aws-access-key-id:
+    description: 'AWS Access Key ID'
+    required: true
+  aws-secret-access-key:
+    description: 'AWS Secret Access Key'
+    required: true
+  rh-token:
+    description: 'Red Hat Hybrid Cloud Console Token'
+    required: true
+  cluster-name:
+    description: 'Name of the ROSA cluster to deploy'
+    required: true
+  admin-password:
+    description: 'Admin password for the ROSA cluster'
+    required: true
+  admin-username:
+    description: 'Admin username for the ROSA cluster'
+    required: true
+  aws-region:
+    description: 'AWS region where the ROSA cluster will be deployed'
+    required: true
+  namespace:
+    description: 'Namespace to create in the ROSA cluster'
+    required: true
+  rosa-cli-version:
+    description: 'Version of the ROSA CLI to use'
+    required: true
+    default: "latest"
+  openshift-version:
+    description: 'Version of the OpenShift to install'
+    required: true
+    default: "4.14"
+  replicas:
+    description: 'Number of replicas for the ROSA cluster'
+    required: true
+    default: "2"
+  s3-backend-bucket:
+    description: 'Name of the S3 bucket to store Terraform state'
+    required: true
+
+outputs:
+  openshift-server-api:
+    description: 'The server API URL of the deployed ROSA cluster'
+    value: ${{ steps.kube_config.outputs.cluster_api }}
+
+  openshift-cluster-id:
+    description: 'The ID of the deployed ROSA cluster'
+    value: ${{ steps.cluster_id.outputs.cluster_id }}
+
+  terraform-state-url:
+    description: 'URL of the Terraform state file in the S3 bucket'
+    value: ${{ steps.init.outputs.terraform-state-url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Setup AWS CLI
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Install ROSA CLI
+      shell: bash
+      run: |
+        curl -O "https://mirror.openshift.com/pub/openshift-v4/clients/rosa/${{ inputs.rosa-cli-version }}/rosa-linux.tar.gz"
+        tar -xvf rosa-linux.tar.gz
+        sudo mv rosa /usr/local/bin/rosa
+        rosa version
+
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Install oc CLI
+      uses: redhat-actions/oc-installer@v1
+      with:
+        oc_version: ${{ inputs.openshift-version }}
+
+    - name: Login to Red Hat Hybrid Cloud Console
+      shell: bash
+      run: |
+        rosa login --token=${{ inputs.rh-token }}
+        rosa whoami
+
+    - name: Verify and enable HCP ROSA on AWS Marketplace
+      shell: bash
+      run: |
+        rosa verify quota --region="${{ inputs.aws-region }}"
+        rosa verify permissions --region="${{ inputs.aws-region }}"
+        rosa create account-roles --mode auto
+
+    - name: Install aws-cli
+      shell: bash
+      run: |
+        python3 -m pip install awscli
+
+    - name: Ensure S3 bucket exists
+      shell: bash
+      run: |
+        aws s3api create-bucket --bucket ${{ inputs.s3-backend-bucket }} --region ${{ inputs.aws-region }} --create-bucket-configuration LocationConstraint=${{ inputs.aws-region }}
+        aws s3api put-bucket-policy --bucket ${{ inputs.s3-backend-bucket }} --policy file://bucket-policy.json
+      env:
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
+        AWS_DEFAULT_REGION: ${{ inputs.aws-region }}
+
+    - name: Terraform Init
+      shell: bash
+      id: init
+      run: |
+        terraform init -backend-config="bucket=${{ inputs.s3-backend-bucket }}" -backend-config="region=${{ secrets.AWS_REGION }}" -backend-config="key=tfstate-${{ inputs.cluster-name }}/${{ inputs.cluster-name }}.tfstate" -backend-config="access_key=${{ inputs.aws-access-key-id }}" -backend-config="secret_key=${{ inputs.aws-secret-access-key }}"
+
+        terraform_state_key="tfstate-/${{ inputs.cluster-name }}.tfstate"
+        terraform_state_url="s3://${{ inputs.s3-backend-bucket }}/${terraform_state_key}"
+        echo "terraform-state-url=${terraform_state_url}" >> "$GITHUB_OUTPUT"
+
+    - name: Terraform Validate
+      shell: bash
+      id: validate
+      run: terraform validate -no-color
+
+    - name: Terraform Plan
+      shell: bash
+      id: plan
+      run: terraform plan -no-color -out rosa.plan -var "cluster_name=${{ inputs.cluster-name }}" -var "replicas=${{ inputs.replicas }}" -var "htpasswd_password=${{ inputs.admin-password }}" -var "htpasswd_username=${{ inputs.admin-username }}" -var "offline_access_token=${{ inputs.rh-token }}" -var "openshift_version=${{ inputs.openshift-version }}"
+      continue-on-error: true
+
+    - name: Retrieve cluster information
+      shell: bash
+      id: cluster_id
+      run: |
+        export cluster_id=$(terraform output cluster_id)
+        rosa describe cluster --output=json -c $cluster_id
+
+        echo "cluster_id=$cluster_id" >> "$GITHUB_OUTPUT"
+
+    - name: Generate kubeconfig
+      shell: bash
+      id: kube_config
+      run: |
+        export SERVER_API=$(rosa describe cluster --output=json -c "${{ steps.cluster_id.outputs.cluster_id }}" | jq -r '.api.url')
+        echo "server_api=$server_api" >> "$GITHUB_OUTPUT"
+
+        oc login --username "${{ inputs.admin-username }}" --password "${{ inputs.admin-password }}" --server=$SERVER_API
+        kubectl config rename-context $(oc config current-context) "${{ inputs.cluster-name }}"
+        kubectl config use "${{ inputs.cluster-name }}"
+        oc new-project "${{ inputs.namespace }}"

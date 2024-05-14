@@ -1,0 +1,36 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "DenyIncorrectEncryptionHeader",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:PutObject",
+        "Resource": "arn:aws:s3:::${{ inputs.s3-backend-bucket }}/*",
+        "Condition": {
+          "StringNotEquals": {
+            "s3:x-amz-server-side-encryption": "AES256"
+          }
+        }
+      },
+      {
+        "Sid": "DenyUnEncryptedObjectUploads",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:PutObject",
+        "Resource": "arn:aws:s3:::${{ inputs.s3-backend-bucket }}/*",
+        "Condition": {
+          "Null": {
+            "s3:x-amz-server-side-encryption": "true"
+          }
+        }
+      },
+      {
+        "Sid": "PublicReadForGetBucketObjects",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "s3:GetObject",
+        "Resource": "arn:aws:s3:::${{ inputs.s3-backend-bucket }}/*"
+      }
+    ]
+  }

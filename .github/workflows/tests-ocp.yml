@@ -1,0 +1,55 @@
+---
+name: OCP test
+
+on:
+  push:
+
+# limit to a single execution per actor of this workflow
+concurrency:
+  group: "${{ github.workflow }}-${{ github.actor }}"
+
+env:
+  AWS_PROFILE: "infex"
+  AWS_REGION: "eu-west-2"
+
+jobs:
+
+  # We can skip some tests using the commit description (skip-tests:NameOfTest1,NameOfTest2) or all tests (skip-tests:all) (see `DEVELOPER.md`)
+  # If all tests are skipped, the result of this workflow will be `failed` on purpose
+  # If you want to skip tests and have no error, you need to use `testing-ci-not-necessary` as a label on the PR
+  configure-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Import Secrets
+        id: secrets
+        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          exportEnv: false
+          secrets: |
+            secret/data/products/infrastructure-experience/ci/common AWS_ACCESS_KEY;
+            secret/data/products/infrastructure-experience/ci/common AWS_SECRET_KEY;
+            secret/data/products/infrastructure-experience/ci/common RH_OPENSHIFT_TOKEN;
+
+      - name: Launch test
+        timeout-minutes: 125
+        uses: ./.github/actions/rosa-create-cluster
+        with:
+          aws-access-key-id: ${{ steps.secrets.outputs.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ steps.secrets.outputs.AWS_SECRET_KEY }}
+          rh-token: ${{ steps.secrets.outputs.RH_OPENSHIFT_TOKEN }}
+          cluster-name: "mycluster"
+          admin-password: "myPassword1838!!&"
+          admin-username: "myadmin"
+          aws-region: ${{ env.AWS_REGION }}
+          namespace:  "myns"
+          s3-backend-bucket: "mybucket"
