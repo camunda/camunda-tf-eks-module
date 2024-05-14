@@ -11,12 +11,9 @@ terraform {
       source  = "terraform-redhat/rhcs"
     }
   }
-}
 
-terraform {
   backend "s3" {}
 }
-
 
 provider "rhcs" {
   token = var.offline_access_token
