@@ -118,7 +118,7 @@ runs:
       shell: bash
       id: init
       run: |
-        terraform init -backend-config="bucket=${{ inputs.s3-backend-bucket }}" -backend-config="region=${{ secrets.AWS_REGION }}" -backend-config="key=tfstate-${{ inputs.cluster-name }}/${{ inputs.cluster-name }}.tfstate" -backend-config="access_key=${{ inputs.aws-access-key-id }}" -backend-config="secret_key=${{ inputs.aws-secret-access-key }}"
+        terraform init -backend-config="bucket=${{ inputs.s3-backend-bucket }}" -backend-config="region=${{ inputs.aws-region }}" -backend-config="key=tfstate-${{ inputs.cluster-name }}/${{ inputs.cluster-name }}.tfstate" -backend-config="access_key=${{ inputs.aws-access-key-id }}" -backend-config="secret_key=${{ inputs.aws-secret-access-key }}"
 
         terraform_state_key="tfstate-/${{ inputs.cluster-name }}.tfstate"
         terraform_state_url="s3://${{ inputs.s3-backend-bucket }}/${terraform_state_key}"
