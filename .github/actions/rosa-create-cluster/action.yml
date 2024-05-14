@@ -104,11 +104,17 @@ runs:
       run: |
         python3 -m pip install awscli
 
-    - name: Ensure S3 bucket exists
+    - name: Check if S3 bucket exists
+      id: create-s3-bucket
       shell: bash
       run: |
-        aws s3api create-bucket --bucket ${{ inputs.s3-backend-bucket }} --region ${{ inputs.aws-region }} --create-bucket-configuration LocationConstraint=${{ inputs.aws-region }}
-        aws s3api put-bucket-policy --bucket ${{ inputs.s3-backend-bucket }} --policy file://bucket-policy.json
+        if aws s3api head-bucket --bucket ${{ inputs.s3-backend-bucket }} 2>/dev/null; then
+          echo "Bucket already exists"
+        else
+          echo "Bucket does not exist, creating..."
+          aws s3api create-bucket --bucket ${{ inputs.s3-backend-bucket }} --region ${{ inputs.aws-region }} --create-bucket-configuration LocationConstraint=${{ inputs.aws-region }}
+          aws s3api put-bucket-policy --bucket ${{ inputs.s3-backend-bucket }} --policy file://bucket-policy.json
+        fi
 
     - name: Terraform Init
       shell: bash
