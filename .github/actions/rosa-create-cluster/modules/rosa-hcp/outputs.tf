@@ -12,5 +12,5 @@ output "all_subnets" {
 }
 
 output "cluster_id" {
-  value = module.rosa-hcp.cluster_id
+  value = module.rosa_hcp.cluster_id
 }
