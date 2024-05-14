@@ -129,6 +129,10 @@ runs:
         export TFSTATE_BUCKET="${{ inputs.s3-backend-bucket }}"
         export TFSTATE_REGION="${{ inputs.aws-region }}"
         export TFSTATE_KEY="tfstate-${{ inputs.cluster-name }}/${{ inputs.cluster-name }}.tfstate"
+        echo "TFSTATE_BUCKET=${TFSTATE_BUCKET}" >> "$GITHUB_OUTPUT"
+        echo "TFSTATE_REGION=${TFSTATE_REGION}" >> "$GITHUB_OUTPUT"
+        echo "TFSTATE_KEY=${TFSTATE_KEY}" >> "$GITHUB_OUTPUT"
+
         terraform_state_url="s3://${TFSTATE_BUCKET}/${TFSTATE_KEY}"
         echo "terraform-state-url=${terraform_state_url}" >> "$GITHUB_OUTPUT"
 
@@ -137,22 +141,23 @@ runs:
       id: init
       run: |
         cd .github/actions/rosa-create-cluster/modules/rosa-hcp
+
         terraform init -backend-config="bucket=${{ steps.set-terraform-variables.outputs.TFSTATE_BUCKET }}" -backend-config="key=${{ steps.set-terraform-variables.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }}"
-        terraform validate -backend-config="bucket=${{ steps.set-terraform-variables.outputs.TFSTATE_BUCKET }}" -backend-config="key=${{ steps.set-terraform-variables.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }}" -no-color
+        terraform validate -no-color
 
     - name: Terraform Plan
       shell: bash
       id: plan
       run: |
         cd .github/actions/rosa-create-cluster/modules/rosa-hcp
-        terraform plan -no-color  -backend-config="bucket=${{ steps.set-terraform-variables.outputs.TFSTATE_BUCKET }}" -backend-config="key=${{ steps.set-terraform-variables.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }}" -out rosa.plan -var "cluster_name=${{ inputs.cluster-name }}" -var "replicas=${{ inputs.replicas }}" -var "htpasswd_password=${{ inputs.admin-password }}" -var "htpasswd_username=${{ inputs.admin-username }}" -var "offline_access_token=${{ inputs.rh-token }}" -var "openshift_version=${{ inputs.openshift-version }}"
+        terraform plan -no-color -out rosa.plan -var "cluster_name=${{ inputs.cluster-name }}" -var "replicas=${{ inputs.replicas }}" -var "htpasswd_password=${{ inputs.admin-password }}" -var "htpasswd_username=${{ inputs.admin-username }}" -var "offline_access_token=${{ inputs.rh-token }}" -var "openshift_version=${{ inputs.openshift-version }}"
 
     - name: Terraform Apply
       shell: bash
       id: apply
       run: |
         cd .github/actions/rosa-create-cluster/modules/rosa-hcp
-        terraform apply -no-color rosa.plan  -backend-config="bucket=${{ steps.set-terraform-variables.outputs.TFSTATE_BUCKET }}" -backend-config="key=${{ steps.set-terraform-variables.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }}"
+        terraform apply -no-color rosa.plan
 
     - name: Retrieve cluster information
       shell: bash
