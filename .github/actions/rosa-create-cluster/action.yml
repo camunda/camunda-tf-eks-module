@@ -115,7 +115,7 @@ runs:
           aws s3api create-bucket --bucket ${{ inputs.s3-backend-bucket }} --region ${{ inputs.aws-region }} --create-bucket-configuration LocationConstraint=${{ inputs.aws-region }}
         fi
 
-        aws s3api put-bucket-policy --bucket ${{ inputs.s3-backend-bucket }} --policy --policy file://.github/actions/rosa-create-cluster/bucket-policy.json
+        aws s3api put-bucket-policy --bucket ${{ inputs.s3-backend-bucket }} --region ${{ inputs.aws-region }} --policy file://.github/actions/rosa-create-cluster/bucket-policy.json
 
     - name: Terraform Init
       shell: bash
