@@ -32,6 +32,10 @@ inputs:
     description: 'Version of the ROSA CLI to use'
     required: true
     default: "latest"
+  oc-version:
+    description: 'Version of the oc cli to install'
+    required: true
+    default: "latest"
   openshift-version:
     description: 'Version of the OpenShift to install'
     required: true
@@ -84,7 +88,7 @@ runs:
     - name: Install oc CLI
       uses: redhat-actions/oc-installer@v1
       with:
-        oc_version: ${{ inputs.openshift-version }}
+        oc_version: ${{ inputs.oc-version }}
 
     - name: Login to Red Hat Hybrid Cloud Console
       shell: bash
