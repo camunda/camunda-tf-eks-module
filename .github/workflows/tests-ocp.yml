@@ -59,4 +59,4 @@ jobs:
           admin-username: "myadmin"
           aws-region: ${{ env.AWS_REGION }}
           namespace:  "myns"
-          s3-backend-bucket: "mybucket"
+          s3-backend-bucket: "378499mybucket"
