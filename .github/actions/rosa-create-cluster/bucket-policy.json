@@ -6,7 +6,7 @@
         "Effect": "Deny",
         "Principal": "*",
         "Action": "s3:PutObject",
-        "Resource": "arn:aws:s3:::${{ inputs.s3-backend-bucket }}/*",
+        "Resource": "arn:aws:s3:::{{ inputs.s3-backend-bucket }}/*",
         "Condition": {
           "StringNotEquals": {
             "s3:x-amz-server-side-encryption": "AES256"
@@ -18,7 +18,7 @@
         "Effect": "Deny",
         "Principal": "*",
         "Action": "s3:PutObject",
-        "Resource": "arn:aws:s3:::${{ inputs.s3-backend-bucket }}/*",
+        "Resource": "arn:aws:s3:::{{ inputs.s3-backend-bucket }}/*",
         "Condition": {
           "Null": {
             "s3:x-amz-server-side-encryption": "true"
@@ -30,7 +30,7 @@
         "Effect": "Deny",
         "Principal": "*",
         "Action": "s3:GetObject",
-        "Resource": "arn:aws:s3:::${{ inputs.s3-backend-bucket }}/*"
+        "Resource": "arn:aws:s3:::{{ inputs.s3-backend-bucket }}/*"
       }
     ]
   }

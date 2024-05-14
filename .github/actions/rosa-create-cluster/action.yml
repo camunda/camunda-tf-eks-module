@@ -119,7 +119,7 @@ runs:
         bucket_policy_path=".github/actions/rosa-create-cluster/bucket-policy.json"
 
         # Replace placeholders in the bucket policy file and apply the policy
-        sed -i "s|\${{ inputs.s3-backend-bucket }}|${{ inputs.s3-backend-bucket }}|g" "$bucket_policy_path"
+        sed -i "s|{{ inputs.s3-backend-bucket }}|${{ inputs.s3-backend-bucket }}|g" "$bucket_policy_path"
         aws s3api put-bucket-policy --bucket ${{ inputs.s3-backend-bucket }} --region ${{ inputs.aws-region }} --policy file://$bucket_policy_path
 
     - name: Terraform Init
