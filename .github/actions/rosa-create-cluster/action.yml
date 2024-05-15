@@ -167,7 +167,7 @@ runs:
         export server_api=$(rosa describe cluster --output=json -c "${{ steps.apply.outputs.cluster_id }}" | jq -r '.api.url')
         echo "server_api=$server_api" >> "$GITHUB_OUTPUT"
 
-        oc login --username "${{ inputs.admin-username }}" --password "${{ inputs.admin-password }}" --server=$SERVER_API
+        oc login --username "${{ inputs.admin-username }}" --password "${{ inputs.admin-password }}" --server=$server_api
         kubectl config rename-context $(oc config current-context) "${{ inputs.cluster-name }}"
         kubectl config use "${{ inputs.cluster-name }}"
         oc new-project "${{ inputs.namespace }}"
