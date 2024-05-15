@@ -61,6 +61,7 @@ jobs:
 
       - name: Delete Cluster
         timeout-minutes: 125
+        if: always()
         uses: ./.github/actions/rosa-delete-cluster
         with:
           rh-token: ${{ steps.secrets.outputs.RH_OPENSHIFT_TOKEN }}

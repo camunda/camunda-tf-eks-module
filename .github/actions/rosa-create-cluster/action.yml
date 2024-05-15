@@ -170,4 +170,12 @@ runs:
         oc login --username "${{ inputs.admin-username }}" --password "${{ inputs.admin-password }}" --server=$server_api
         kubectl config rename-context $(oc config current-context) "${{ inputs.cluster-name }}"
         kubectl config use "${{ inputs.cluster-name }}"
-        oc new-project "${{ inputs.namespace }}"
+
+    - name: Create namespace if not exists
+      shell: bash
+      run: |
+        if ! oc get namespace "${{ inputs.namespace }}"; then
+          oc new-project "${{ inputs.namespace }}"
+        else
+          echo "Namespace '${{ inputs.namespace }}' already exists"
+        fi
