@@ -154,20 +154,20 @@ runs:
         cd .github/actions/rosa-create-cluster/modules/rosa-hcp
         terraform apply -no-color rosa.plan
 
+        export cluster_id=$(terraform output cluster_id)
+        echo "cluster_id=$cluster_id" >> "$GITHUB_OUTPUT"
+
     - name: Retrieve cluster information
       shell: bash
-      id: cluster_id
+      id: cluster_info
       run: |
-        export cluster_id=$(terraform output cluster_id)
-        rosa describe cluster --output=json -c $cluster_id
-
-        echo "cluster_id=$cluster_id" >> "$GITHUB_OUTPUT"
+        rosa describe cluster --output=json -c "${{ steps.apply.outputs.cluster_id }}"
 
     - name: Generate kubeconfig
       shell: bash
       id: kube_config
       run: |
-        export SERVER_API=$(rosa describe cluster --output=json -c "${{ steps.cluster_id.outputs.cluster_id }}" | jq -r '.api.url')
+        export SERVER_API=$(rosa describe cluster --output=json -c "${{ steps.apply.outputs.cluster_id }}" | jq -r '.api.url')
         echo "server_api=$server_api" >> "$GITHUB_OUTPUT"
 
         oc login --username "${{ inputs.admin-username }}" --password "${{ inputs.admin-password }}" --server=$SERVER_API
