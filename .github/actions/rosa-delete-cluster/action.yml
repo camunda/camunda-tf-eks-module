@@ -56,7 +56,7 @@ runs:
       id: plan-destroy
       run: |
         cd .github/actions/rosa-delete-cluster/modules/rosa-hcp
-        terraform plan -destroy -no-color -out rosa-destroy.plan -var "cluster_name=${{ inputs.cluster-name }}"
+        terraform plan -destroy -no-color -out rosa-destroy.plan -var "cluster_name=${{ inputs.cluster-name }}" -var "htpasswd_password=dummy" -var "offline_access_token=${{ inputs.rh-token }}"
 
     - name: Terraform Apply Destroy
       shell: bash
