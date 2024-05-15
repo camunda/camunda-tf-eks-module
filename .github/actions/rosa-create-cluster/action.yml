@@ -42,7 +42,7 @@ inputs:
   openshift-version:
     description: 'Version of the OpenShift to install'
     required: true
-    default: "4.13.6"
+    default: "4.15.11"
   replicas:
     description: 'Number of replicas for the ROSA cluster'
     required: true
