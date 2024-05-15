@@ -31,7 +31,7 @@ inputs:
   awscli-version:
     description: 'Version of the aws cli to use'
     required: true
-    default: "latest"
+    default: "1.32.105" # TODO: for all versions, update default one with renovate
   oc-version:
     description: 'Version of the oc cli to install'
     required: true

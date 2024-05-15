@@ -20,7 +20,7 @@ inputs:
   awscli-version:
     description: 'Version of the aws cli to use'
     required: true
-    default: "latest"
+    default: "1.32.105"
 
 runs:
   using: 'composite'
