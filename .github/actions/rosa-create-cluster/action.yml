@@ -1,18 +1,11 @@
 name: Deploy ROSA HCP Cluster
 
 description: |
-  This GitHub Action automates the deployment of a ROSA (Red Hat OpenShift Service on AWS) cluster using Terraform.
+  This GitHub Action automates the deployment of a ROSA (Red Hat OpenShift Service on AWS) cluster using Terraform with a dedicated namespace.
+  This action will also install oc, awscli, rosa cli.
+  This action also set the current kube context on the created namespace.
 
 inputs:
-  aws-access-key-id:
-    description: 'AWS Access Key ID'
-    required: true
-  aws-secret-access-key:
-    description: 'AWS Secret Access Key'
-    required: true
-  aws-profile:
-    description: 'AWS profile to use'
-    required: false
   rh-token:
     description: 'Red Hat Hybrid Cloud Console Token'
     required: true
@@ -33,6 +26,10 @@ inputs:
     required: true
   rosa-cli-version:
     description: 'Version of the ROSA CLI to use'
+    required: true
+    default: "latest"
+  awscli-version:
+    description: 'Version of the aws cli to use'
     required: true
     default: "latest"
   oc-version:
@@ -58,7 +55,7 @@ outputs:
 
   openshift-cluster-id:
     description: 'The ID of the deployed ROSA cluster'
-    value: ${{ steps.cluster_id.outputs.cluster_id }}
+    value: ${{ steps.apply.outputs.cluster_id }}
 
   terraform-state-url:
     description: 'URL of the Terraform state file in the S3 bucket'
@@ -102,7 +99,7 @@ runs:
     - name: Install aws-cli
       shell: bash
       run: |
-        python3 -m pip install awscli
+        python3 -m pip install "awscli==${{ inputs.awscli-version }}"
 
     - name: Check if S3 bucket exists
       id: create-s3-bucket
@@ -154,7 +151,7 @@ runs:
         cd .github/actions/rosa-create-cluster/modules/rosa-hcp
         terraform apply -no-color rosa.plan
 
-        export cluster_id=$(terraform output cluster_id)
+        export cluster_id="$(terraform output -raw cluster_id)"
         echo "cluster_id=$cluster_id" >> "$GITHUB_OUTPUT"
 
     - name: Retrieve cluster information
@@ -167,7 +164,7 @@ runs:
       shell: bash
       id: kube_config
       run: |
-        export SERVER_API=$(rosa describe cluster --output=json -c "${{ steps.apply.outputs.cluster_id }}" | jq -r '.api.url')
+        export server_api=$(rosa describe cluster --output=json -c "${{ steps.apply.outputs.cluster_id }}" | jq -r '.api.url')
         echo "server_api=$server_api" >> "$GITHUB_OUTPUT"
 
         oc login --username "${{ inputs.admin-username }}" --password "${{ inputs.admin-password }}" --server=$SERVER_API

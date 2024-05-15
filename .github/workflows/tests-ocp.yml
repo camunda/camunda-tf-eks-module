@@ -47,16 +47,23 @@ jobs:
           aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
-      - name: Launch test
+      - name: Create Cluster
         timeout-minutes: 125
         uses: ./.github/actions/rosa-create-cluster
         with:
-          aws-access-key-id: ${{ steps.secrets.outputs.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ steps.secrets.outputs.AWS_SECRET_KEY }}
           rh-token: ${{ steps.secrets.outputs.RH_OPENSHIFT_TOKEN }}
           cluster-name: "mycluster"
           admin-password: "myPassword1838!!&"
           admin-username: "myadmin"
           aws-region: ${{ env.AWS_REGION }}
           namespace:  "myns"
+          s3-backend-bucket: "378499mybucket"
+
+      - name: Delete Cluster
+        timeout-minutes: 125
+        uses: ./.github/actions/rosa-delete-cluster
+        with:
+          rh-token: ${{ steps.secrets.outputs.RH_OPENSHIFT_TOKEN }}
+          cluster-name: "mycluster"
+          aws-region: ${{ env.AWS_REGION }}
           s3-backend-bucket: "378499mybucket"
