@@ -29,8 +29,6 @@ To start developing or testing the EKS module, follow these steps:
    - Set `CLEAN_CLUSTER_AT_THE_END=false` to prevent automatic cluster deletion in case of errors.
    - Optionally, manually clean up the cluster after testing by reversing this setting.
 
-Understood, here's the updated documentation:
-
 ## Tests in the CI
 
 The tests in the CI can be triggered automatically by modifying terraform or test files.
