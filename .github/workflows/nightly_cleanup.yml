@@ -12,8 +12,8 @@ env:
   # remember to also update tests.yml!
   AWS_REGION: "eu-west-2"
   CLEANUP_NEWER_THAN: "6h"
-  # TODO: renovate this
-  CLOUD_NUKE_VERSION: "v0.35.0"
+  # renovate: datasource=github-tags depName=gruntwork-io/cloud-nuke
+  CLOUD_NUKE_VERSION: v0.35.0
 
 jobs:
   aws-nightly-cleanup:
