@@ -11,7 +11,8 @@ env:
   AWS_PROFILE: "infex"
   # remember to also update tests.yml!
   AWS_REGION: "eu-west-2"
-  CLEANUP_NEWER_THAN: "6 hours"
+  CLEANUP_NEWER_THAN: "6h"
+  # TODO: renovate this
   CLOUD_NUKE_VERSION: "v0.35.0"
 
 jobs:
