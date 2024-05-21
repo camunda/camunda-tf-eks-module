@@ -20,7 +20,7 @@ eksctl 0.177.0
 
 golang 1.22.2
 
-just 1.25.2
+just 1.26.0
 
 opentofu 1.6.2
 
