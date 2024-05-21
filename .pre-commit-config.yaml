@@ -17,12 +17,12 @@ repos:
   - id: detect-private-key
 
 - repo: https://github.com/rhysd/actionlint
-  rev: v1.6.27
+  rev: v1.7.0
   hooks:
     - id: actionlint-docker
 
 - repo: https://github.com/renovatebot/pre-commit-hooks
-  rev: 37.278.0
+  rev: 37.368.10
   hooks:
     - id: renovate-config-validator
       args: ["--strict"]
@@ -35,7 +35,7 @@ repos:
       args: ["--strict" , "--force-scope"]
 
 - repo: https://github.com/antonbabenko/pre-commit-terraform
-  rev: v1.88.4
+  rev: v1.89.1
   hooks:
   - id: terraform_fmt
   - id: terraform_tflint
