@@ -11,14 +11,14 @@ jobs:
     name: links-check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
 
       - name: Get Current Timestamp
         id: timestamp
         run: echo "TIMESTAMP=$(date +%s)" >> "$GITHUB_ENV"
 
       - name: Restore lychee cache
-        uses: actions/cache@e12d46a63a90f2fae62d114769bbf2a179198b5c # v3
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
         with:
           path: .lycheecache
           key: "cache-lychee-${{ env.TIMESTAMP }}"
@@ -33,7 +33,7 @@ jobs:
 
       - name: Create Issue From File
         if: ${{ github.event_name == 'schedule' && env.lychee_exit_code != 0 }}
-        uses: peter-evans/create-issue-from-file@433e51abf769039ee20ba1293a088ca19d573b7f # v4
+        uses: peter-evans/create-issue-from-file@24452a72d85239eacf1468b0f1982a9f3fec4c94 # v5
         with:
           title: Link Checker Report
           content-filepath: ./lychee/out.md
