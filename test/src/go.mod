@@ -7,11 +7,11 @@ toolchain go1.22.3
 require (
 	github.com/aws/aws-sdk-go-v2 v1.27.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.16
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.161.4
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.162.0
 	github.com/aws/aws-sdk-go-v2/service/eks v1.42.5
 	github.com/aws/aws-sdk-go-v2/service/iam v1.32.4
 	github.com/aws/aws-sdk-go-v2/service/kms v1.32.1
-	github.com/aws/aws-sdk-go-v2/service/rds v1.79.2
+	github.com/aws/aws-sdk-go-v2/service/rds v1.79.3
 	github.com/aws/smithy-go v1.20.2
 	github.com/gruntwork-io/terratest v0.46.15
 	github.com/stretchr/testify v1.9.0
