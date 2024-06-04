@@ -154,6 +154,7 @@ jobs:
           name: test-reports
           path: "./test/src/${{ matrix.test_function }}_unit-tests_filtered.xml"
           retention-days: 1
+          merge-multiple: true
 
       - name: Remove profile credentials from ~/.aws/credentials
         if: always()
