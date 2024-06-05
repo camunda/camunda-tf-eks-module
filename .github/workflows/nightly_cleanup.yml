@@ -11,7 +11,7 @@ env:
   AWS_PROFILE: "infex"
   # remember to also update tests.yml!
   AWS_REGION: "eu-west-2"
-  CLEANUP_NEWER_THAN: "6h"
+  CLEANUP_OLDER_THAN: "12h"
   # renovate: datasource=github-tags depName=gruntwork-io/cloud-nuke
   CLOUD_NUKE_VERSION: v0.36.0
 
@@ -57,7 +57,7 @@ jobs:
           ./cloud-nuke_linux_amd64 aws \
           --region ${{ env.AWS_REGION }} \
           --force \
-          --newer-than ${{ env.CLEANUP_NEWER_THAN }} \
+          --older-than ${{ env.CLEANUP_OLDER_THAN }} \
           --exclude-resource-type ec2_dhcp_option \
           --exclude-resource-type cloudtrail || true
 
@@ -75,6 +75,6 @@ jobs:
           ./cloud-nuke_linux_amd64 aws \
           --region ${{ env.AWS_REGION }} \
           --force \
-          --newer-than ${{ env.CLEANUP_NEWER_THAN }} \
+          --older-than ${{ env.CLEANUP_OLDER_THAN }} \
           --exclude-resource-type ec2_dhcp_option \
           --exclude-resource-type cloudtrail
