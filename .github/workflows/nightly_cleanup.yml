@@ -61,6 +61,8 @@ jobs:
           --force \
           --older-than ${{ env.CLEANUP_OLDER_THAN }} \
           --exclude-resource-type ec2_dhcp_option \
+          --exclude-resource-type ec2-keypairs \
+          --exclude-resource-type s3 \
           --exclude-resource-type cloudtrail || true
 
       # Following will delete global resources and things that cloud-nuke does not support
@@ -79,4 +81,6 @@ jobs:
           --force \
           --older-than ${{ env.CLEANUP_OLDER_THAN }} \
           --exclude-resource-type ec2_dhcp_option \
-          --exclude-resource-type cloudtrail
+          --exclude-resource-type cloudtrail \
+          --exclude-resource-type ec2-keypairs \
+          --exclude-resource-type s3
