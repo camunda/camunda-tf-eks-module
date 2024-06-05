@@ -22,8 +22,7 @@ concurrency:
 
 env:
   AWS_PROFILE: "infex"
-  # remember to also update nightly_cleanup.yml!
-  AWS_REGION: "eu-west-2"
+  AWS_REGION: "eu-west-2" # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
   TESTS_TF_BINARY_NAME: "terraform"
 
 jobs:
