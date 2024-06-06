@@ -32,11 +32,6 @@ jobs:
   # If you want to skip tests and have no error, you need to use `testing-ci-not-necessary` as a label on the PR
   configure-tests:
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (
-        github.event_name == 'pull_request' &&
-        !contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')
-      )
     outputs:
       test_functions: ${{ steps.extract_test_functions.outputs.test_functions }}
       cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
