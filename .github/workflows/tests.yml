@@ -32,15 +32,14 @@ jobs:
   # If you want to skip tests and have no error, you need to use `testing-ci-not-necessary` as a label on the PR
   configure-tests:
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (
-        github.event_name == 'pull_request' &&
-        !contains(github.event.pull_request.labels.*.name, 'testing-ci-not-necessary')
-      )
     outputs:
       test_functions: ${{ steps.extract_test_functions.outputs.test_functions }}
       cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
     steps:
+      - name: Get Current Timestamp
+        id: timestamp
+        run: exit 1
+
       - name: Checkout repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
         with:
@@ -180,7 +179,7 @@ jobs:
 
   notify-on-failure:
     runs-on: ubuntu-latest
-    if: always() && failure()
+    if: failure()
     needs:
       - configure-tests
       - integration-tests
@@ -188,7 +187,7 @@ jobs:
     steps:
       - name: Notify in Slack in case of failure
         id: slack-notification
-        if: github.event_name == 'schedule'
+        # if: github.event_name == 'schedule'
         uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@705df1af7d06626b8c6838f58123bb3bf84fc093 # main
         with:
           vault_addr: ${{ secrets.VAULT_ADDR }}
