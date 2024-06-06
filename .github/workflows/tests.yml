@@ -41,6 +41,10 @@ jobs:
       test_functions: ${{ steps.extract_test_functions.outputs.test_functions }}
       cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
     steps:
+      - name: test failure
+        id: timestamp
+        run: exit 1
+
       - name: Checkout repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
         with:
@@ -181,7 +185,7 @@ jobs:
 
   notify-on-failure:
     runs-on: ubuntu-latest
-    if: always() && needs.configure-tests.result == 'failure' || needs.integration-tests.result == 'failure' || needs.test-report.result == 'failure'
+    if: always() && failure()
     needs:
       - configure-tests
       - integration-tests
@@ -189,7 +193,7 @@ jobs:
     steps:
       - name: Notify in Slack in case of failure
         id: slack-notification
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        # if: github.event_name == 'schedule'
         uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@feature/report-failure-action # TODO: change me to main when available
         with:
           vault_addr: ${{ secrets.VAULT_ADDR }}
