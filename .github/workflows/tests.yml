@@ -5,6 +5,7 @@ on:
   schedule:
     - cron: '0 1 * * 2'
   workflow_dispatch:
+  push:
   pull_request:
     # the paths should be synced with ../labeler.yml
     paths:
