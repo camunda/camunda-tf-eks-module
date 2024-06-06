@@ -2,6 +2,7 @@
 name: Terraform modules tests
 
 on:
+  push:
   schedule:
     - cron: '0 1 * * 2'
   workflow_dispatch:
