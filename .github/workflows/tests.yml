@@ -177,3 +177,20 @@ jobs:
         uses: test-summary/action@032c8a9cec6aaa3c20228112cae6ca10a3b29336 # v2
         with:
           paths: /tmp/testreports/**/*.xml
+
+  notify-on-failure:
+    runs-on: ubuntu-latest
+    if: failure()
+    needs:
+      - configure-tests
+      - integration-tests
+      - test-report
+    steps:
+      - name: Notify in Slack in case of failure
+        id: slack-notification
+        if: github.event_name == 'schedule'
+        uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@705df1af7d06626b8c6838f58123bb3bf84fc093 # main
+        with:
+          vault_addr: ${{ secrets.VAULT_ADDR }}
+          vault_role_id: ${{ secrets.VAULT_ROLE_ID }}
+          vault_secret_id: ${{ secrets.VAULT_SECRET_ID }}
