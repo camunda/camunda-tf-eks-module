@@ -42,7 +42,7 @@ jobs:
       cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
@@ -101,7 +101,7 @@ jobs:
         test_function: ${{ fromJson(needs.configure-tests.outputs.test_functions) }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Install tooling using asdf
         uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
@@ -189,7 +189,7 @@ jobs:
       - name: Notify in Slack in case of failure
         id: slack-notification
         if: github.event_name == 'schedule'
-        uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@51197ff5f4af8fa86bd588ea55990aff8c4d31ce # main
+        uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@f790ac06800e531768e27f6905c9dc90183aa3a7 # main
         with:
           vault_addr: ${{ secrets.VAULT_ADDR }}
           vault_role_id: ${{ secrets.VAULT_ROLE_ID }}
