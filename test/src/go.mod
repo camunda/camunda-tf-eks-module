@@ -7,18 +7,18 @@ toolchain go1.22.4
 require (
 	github.com/aws/aws-sdk-go-v2 v1.27.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.18
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.163.1
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.164.1
 	github.com/aws/aws-sdk-go-v2/service/eks v1.43.1
 	github.com/aws/aws-sdk-go-v2/service/iam v1.32.6
-	github.com/aws/aws-sdk-go-v2/service/kms v1.32.3
+	github.com/aws/aws-sdk-go-v2/service/kms v1.33.0
 	github.com/aws/aws-sdk-go-v2/service/rds v1.79.6
 	github.com/aws/smithy-go v1.20.2
 	github.com/gruntwork-io/terratest v0.46.15
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
-	k8s.io/api v0.30.1
-	k8s.io/apimachinery v0.30.1
-	k8s.io/client-go v0.30.1
+	k8s.io/api v0.30.2
+	k8s.io/apimachinery v0.30.2
+	k8s.io/client-go v0.30.2
 	sigs.k8s.io/aws-iam-authenticator v0.6.20
 )
 
