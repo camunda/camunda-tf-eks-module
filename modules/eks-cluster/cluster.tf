@@ -147,4 +147,7 @@ module "eks" {
   }
 
   node_security_group_name = "${var.name}-eks-node-sg"
+
+  authentication_mode = var.authentication_mode
+  access_entries      = var.access_entries
 }

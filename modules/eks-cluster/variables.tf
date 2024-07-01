@@ -65,3 +65,20 @@ variable "cluster_node_ipv4_cidr" {
   description = "The CIDR block for public and private subnets of loadbalancers and nodes. Between /28 and /16."
   type        = string
 }
+
+variable "authentication_mode" {
+  description = "The authentication mode for the cluster."
+  type        = string
+  default     = "API" # can also be API_AND_CONFIG_MAP, but will be API only in v21 of aws eks module
+}
+
+variable "access_entries" {
+  description = "Map of access entries to add to the cluster."
+  type        = any
+  default     = {}
+}
+variable "enable_cluster_creator_admin_permissions" {
+  description = "Indicates whether or not to add the cluster creator (the identity used by Terraform) as an administrator via access entry."
+  type        = bool
+  default     = true
+}
