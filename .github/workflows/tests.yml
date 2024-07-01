@@ -16,9 +16,10 @@ on:
       - .github/workflows/tests.yml
       - justfile
 
-# limit to a single execution per actor of this workflow
+# limit to a single execution per ref of this workflow
 concurrency:
-  group: "${{ github.workflow }}-${{ github.actor }}"
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
 
 env:
   AWS_PROFILE: "infex"
