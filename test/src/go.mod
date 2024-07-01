@@ -1,8 +1,6 @@
 module github.com/camunda/camunda-tf-eks-module
 
-go 1.22.2
-
-toolchain go1.22.4
+go 1.22.4
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.30.1
@@ -13,13 +11,13 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.35.1
 	github.com/aws/aws-sdk-go-v2/service/rds v1.81.2
 	github.com/aws/smithy-go v1.20.3
-	github.com/gruntwork-io/terratest v0.46.15
+	github.com/gruntwork-io/terratest v0.46.16
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.30.2
 	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.30.2
-	sigs.k8s.io/aws-iam-authenticator v0.6.20
+	sigs.k8s.io/aws-iam-authenticator v0.6.21
 )
 
 require (
@@ -30,7 +28,7 @@ require (
 	cloud.google.com/go/storage v1.29.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
-	github.com/aws/aws-sdk-go v1.44.332 // indirect
+	github.com/aws/aws-sdk-go v1.54.6 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.23 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.13 // indirect
@@ -69,7 +67,7 @@ require (
 	github.com/gruntwork-io/go-commons v0.8.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-getter v1.7.4 // indirect
+	github.com/hashicorp/go-getter v1.7.5 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
