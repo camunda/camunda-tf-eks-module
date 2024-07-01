@@ -18,7 +18,7 @@ on:
 
 # limit to a single execution per actor of this workflow
 concurrency:
-  group: "${{ github.workflow }}-${{ github.actor }}"
+  group: "${{ github.workflow }}-${{ github.ref }}"
 
 env:
   AWS_PROFILE: "infex"
