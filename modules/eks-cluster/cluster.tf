@@ -85,19 +85,6 @@ module "eks" {
     }
   }
 
-  manage_aws_auth_configmap = true
-
-  aws_auth_roles = concat(var.aws_auth_roles, [
-    # TODO: related to redoing the role assuming
-    # {
-    #   rolearn  = aws_iam_role.eks_admin_role.arn
-    #   username = aws_iam_role.eks_admin_role.name
-    #   groups   = ["system:masters"]
-    # }
-  ])
-
-  aws_auth_users = var.aws_auth_users
-
   # Extend node-to-node security group rules
   node_security_group_additional_rules = {
     ingress_self_all = {

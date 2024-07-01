@@ -65,23 +65,3 @@ variable "cluster_node_ipv4_cidr" {
   description = "The CIDR block for public and private subnets of loadbalancers and nodes. Between /28 and /16."
   type        = string
 }
-
-variable "aws_auth_roles" {
-  description = "List of objects, allowing to map IAM roles to K8s roles. Further information can be found on aws: https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html"
-  type = list(object({
-    rolearn  = string
-    username = string
-    groups   = list(string)
-  }))
-  default = []
-}
-
-variable "aws_auth_users" {
-  description = "List of objects, allowing to map IAM users to K8s roles. Further information can be found on aws: https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html"
-  type = list(object({
-    userarn  = string
-    username = string
-    groups   = list(string)
-  }))
-  default = []
-}
