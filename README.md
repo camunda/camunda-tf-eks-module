@@ -6,6 +6,8 @@
 
 Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8.
 
+**⚠️ Warning:** This project is not intended for production use but rather for demonstration purposes only. There are no guarantees or warranties provided.
+
 ## Documentation
 
 The related [guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-terraform/) describing a more detailed usage.

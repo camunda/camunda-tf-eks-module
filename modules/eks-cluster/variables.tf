@@ -66,22 +66,19 @@ variable "cluster_node_ipv4_cidr" {
   type        = string
 }
 
-variable "aws_auth_roles" {
-  description = "List of objects, allowing to map IAM roles to K8s roles. Further information can be found on aws: https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html"
-  type = list(object({
-    rolearn  = string
-    username = string
-    groups   = list(string)
-  }))
-  default = []
+variable "authentication_mode" {
+  description = "The authentication mode for the cluster."
+  type        = string
+  default     = "API" # can also be API_AND_CONFIG_MAP, but will be API only in v21 of aws eks module
 }
 
-variable "aws_auth_users" {
-  description = "List of objects, allowing to map IAM users to K8s roles. Further information can be found on aws: https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html"
-  type = list(object({
-    userarn  = string
-    username = string
-    groups   = list(string)
-  }))
-  default = []
+variable "access_entries" {
+  description = "Map of access entries to add to the cluster."
+  type        = any
+  default     = {}
+}
+variable "enable_cluster_creator_admin_permissions" {
+  description = "Indicates whether or not to add the cluster creator (the identity used by Terraform) as an administrator via access entry."
+  type        = bool
+  default     = true
 }
