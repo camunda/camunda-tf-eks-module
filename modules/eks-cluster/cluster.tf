@@ -1,7 +1,6 @@
 /*
 The following 2 data resources are used get around the fact that we have to wait
 for the EKS cluster to be initialised before we can attempt to authenticate.
-Additionally the kubernetes provider is required to configure the aws-auth configmap via terraform
 */
 
 data "aws_eks_cluster" "eks" {
@@ -148,6 +147,7 @@ module "eks" {
 
   node_security_group_name = "${var.name}-eks-node-sg"
 
-  authentication_mode = var.authentication_mode
-  access_entries      = var.access_entries
+  authentication_mode                      = var.authentication_mode
+  access_entries                           = var.access_entries
+  enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 }
