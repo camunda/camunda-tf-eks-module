@@ -88,6 +88,8 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 	// https://gianarb.it/blog/kubernetes-shared-informer
 	// https://stackoverflow.com/questions/60547409/unable-to-obtain-kubeconfig-of-an-aws-eks-cluster-in-go-code/60573982#60573982
 
+	fmt.Printf("Expecting %d nodes to join cluster %s\n", expectedNodesCount, *cluster.Name)
+
 	clientSet, err := NewKubeClientSet(cluster)
 	if err != nil {
 		return err
@@ -104,7 +106,13 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 			fmt.Printf("Worker Node %s has joined the EKS cluster at %s\n", node.Name, node.CreationTimestamp)
 			atomic.AddUint64(&countOfWorkerNodes, 1)
 			if countOfWorkerNodes >= expectedNodesCount {
-				stopChannel <- struct{}{} // send close signal
+				select {
+				case stopChannel <- struct{}{}:
+					// signal successfully sent
+				default:
+					// stopChannel is already closed or full, avoid panic
+					fmt.Printf("Warning: More nodes (%d) than expected (%d) have joined the cluster.\n", countOfWorkerNodes, expectedNodesCount)
+				}
 			}
 		},
 	})
@@ -116,7 +124,7 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 	go func() {
 		// wait to receive a signal to close the channel
 		<-stopChannel
-		close(stopChannel)
+		closeOnce(stopChannel)
 	}()
 
 	select {
@@ -129,6 +137,16 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 		return errors.NewResourceExpired(msg)
 	}
 	return nil
+}
+
+// closeOnce closes the channel only if it's not already closed
+func closeOnce(ch chan struct{}) {
+	select {
+	case <-ch:
+		// channel is already closed
+	default:
+		close(ch)
+	}
 }
 
 // NewKubeClientSet generate a kubernetes.Clientset from an EKS Cluster
