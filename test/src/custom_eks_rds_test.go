@@ -105,7 +105,8 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		})
 	}
 
-	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
+	terraform.InitAndApply(suite.T(), terraformOptions)
 
 	// Wait for the worker nodes to join the cluster
 	sess, err := utils.GetAwsClient()
