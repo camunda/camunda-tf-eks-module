@@ -81,6 +81,8 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 	suite.varTf = map[string]interface{}{
 		"name":                  suite.clusterName,
 		"region":                suite.region,
+		"np_min_node_count":     suite.expectedNodes,
+		"np_max_node_count":     suite.expectedNodes,
 		"np_desired_node_count": suite.expectedNodes,
 	}
 
