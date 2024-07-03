@@ -109,7 +109,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
-	terraform.InitAndApply(suite.T(), terraformOptions)
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
 
 	// Wait for the worker nodes to join the cluster
 	sess, err := utils.GetAwsClient()
@@ -197,7 +197,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
-	terraform.InitAndApply(suite.T(), terraformOptions)
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
 
 	errClusterReady = utils.WaitUntilKubeClusterIsReady(result.Cluster, 5*time.Minute, uint64(suite.expectedNodes))
 	suite.Require().NoError(errClusterReady)
