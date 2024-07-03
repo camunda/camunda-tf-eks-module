@@ -78,8 +78,6 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		"name":   suite.clusterName,
 		"region": suite.region,
 
-		"np_min_node_count":     suite.expectedNodes,
-		"np_max_node_count":     suite.expectedNodes,
 		"np_desired_node_count": suite.expectedNodes,
 
 		"kubernetes_version": suite.kubeVersion,
