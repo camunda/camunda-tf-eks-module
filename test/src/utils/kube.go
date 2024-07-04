@@ -105,14 +105,14 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 			node := obj.(*corev1.Node)
 			fmt.Printf("Worker Node %s has joined the EKS cluster at %s\n", node.Name, node.CreationTimestamp)
 			atomic.AddUint64(&countOfWorkerNodes, 1)
-			if countOfWorkerNodes >= expectedNodesCount {
-				select {
-				case stopChannel <- struct{}{}:
-					// signal successfully sent
-				default:
-					// stopChannel is already closed or full, avoid panic
-					fmt.Printf("Warning: More nodes (%d) than expected (%d) have joined the cluster.\n", countOfWorkerNodes, expectedNodesCount)
-				}
+
+			// this will not prevent race condition, a lock on the
+			// operation would be necessary, in case of too many nodes
+			// joining the cluster, this function will panic
+			if countOfWorkerNodes == expectedNodesCount {
+				stopChannel <- struct{}{}
+			} else if countOfWorkerNodes > expectedNodesCount {
+				fmt.Printf("Warning: More nodes (%d) than expected (%d) have joined the cluster.\n", countOfWorkerNodes, expectedNodesCount)
 			}
 		},
 	})
@@ -124,7 +124,7 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 	go func() {
 		// wait to receive a signal to close the channel
 		<-stopChannel
-		closeOnce(stopChannel)
+		close(stopChannel)
 	}()
 
 	select {
@@ -137,16 +137,6 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 		return errors.NewResourceExpired(msg)
 	}
 	return nil
-}
-
-// closeOnce closes the channel only if it's not already closed
-func closeOnce(ch chan struct{}) {
-	select {
-	case <-ch:
-		// channel is already closed
-	default:
-		close(ch)
-	}
 }
 
 // NewKubeClientSet generate a kubernetes.Clientset from an EKS Cluster
