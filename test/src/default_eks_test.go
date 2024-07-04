@@ -107,7 +107,8 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 		})
 	}
 
-	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
+	terraform.InitAndApply(suite.T(), terraformOptions)
 	suite.baseChecksEKS(terraformOptions)
 }
 
@@ -130,6 +131,7 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "default_security_group_id"))
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "vpc_main_route_table_id"))
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "private_route_table_ids"))
+	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "access_entries"))
 
 	// test IAM roles
 	suite.Assert().Equal(fmt.Sprintf("%s-eks-iam-role", clusterName), terraform.Output(suite.T(), terraformOptions, "cluster_iam_role_name"))

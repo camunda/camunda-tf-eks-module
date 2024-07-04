@@ -1,7 +1,6 @@
 /*
 The following 2 data resources are used get around the fact that we have to wait
 for the EKS cluster to be initialised before we can attempt to authenticate.
-Additionally the kubernetes provider is required to configure the aws-auth configmap via terraform
 */
 
 data "aws_eks_cluster" "eks" {
@@ -33,7 +32,7 @@ provider "kubernetes" {
 # https://github.com/terraform-aws-modules/terraform-aws-eks
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "19.21.0"
+  version = "20.15.0"
 
   cluster_name                    = var.name
   cluster_version                 = var.kubernetes_version
@@ -85,19 +84,6 @@ module "eks" {
     }
   }
 
-  manage_aws_auth_configmap = true
-
-  aws_auth_roles = concat(var.aws_auth_roles, [
-    # TODO: related to redoing the role assuming
-    # {
-    #   rolearn  = aws_iam_role.eks_admin_role.arn
-    #   username = aws_iam_role.eks_admin_role.name
-    #   groups   = ["system:masters"]
-    # }
-  ])
-
-  aws_auth_users = var.aws_auth_users
-
   # Extend node-to-node security group rules
   node_security_group_additional_rules = {
     ingress_self_all = {
@@ -145,6 +131,7 @@ module "eks" {
   # EKS Managed Node Group definitions
   eks_managed_node_groups = {
     services = {
+      labels          = {}
       name            = "services"
       use_name_prefix = false
     }
@@ -160,4 +147,8 @@ module "eks" {
   }
 
   node_security_group_name = "${var.name}-eks-node-sg"
+
+  authentication_mode                      = var.authentication_mode
+  access_entries                           = var.access_entries
+  enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 }

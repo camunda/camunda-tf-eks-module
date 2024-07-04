@@ -88,6 +88,8 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 	// https://gianarb.it/blog/kubernetes-shared-informer
 	// https://stackoverflow.com/questions/60547409/unable-to-obtain-kubeconfig-of-an-aws-eks-cluster-in-go-code/60573982#60573982
 
+	fmt.Printf("Expecting %d nodes to join cluster %s\n", expectedNodesCount, *cluster.Name)
+
 	clientSet, err := NewKubeClientSet(cluster)
 	if err != nil {
 		return err
@@ -103,8 +105,14 @@ func WaitUntilKubeClusterIsReady(cluster *types.Cluster, timeout time.Duration, 
 			node := obj.(*corev1.Node)
 			fmt.Printf("Worker Node %s has joined the EKS cluster at %s\n", node.Name, node.CreationTimestamp)
 			atomic.AddUint64(&countOfWorkerNodes, 1)
-			if countOfWorkerNodes >= expectedNodesCount {
-				stopChannel <- struct{}{} // send close signal
+
+			// this will not prevent race condition, a lock on the
+			// operation would be necessary, in case of too many nodes
+			// joining the cluster, this function will panic
+			if countOfWorkerNodes == expectedNodesCount {
+				stopChannel <- struct{}{}
+			} else if countOfWorkerNodes > expectedNodesCount {
+				fmt.Printf("Warning: More nodes (%d) than expected (%d) have joined the cluster.\n", countOfWorkerNodes, expectedNodesCount)
 			}
 		},
 	})
