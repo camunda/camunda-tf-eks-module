@@ -106,7 +106,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
-	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+	terraform.InitAndApply(suite.T(), terraformOptions)
 
 	// Wait for the worker nodes to join the cluster
 	sess, err := utils.GetAwsClient()
@@ -168,7 +168,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		})
 	}
 
-	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptionsRDS)
+	terraform.InitAndApply(suite.T(), terraformOptionsRDS)
 	auroraEndpoint := terraform.Output(suite.T(), terraformOptionsRDS, "aurora_endpoint")
 	suite.Assert().NotEmpty(auroraEndpoint)
 

@@ -108,7 +108,7 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
-	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+	terraform.InitAndApply(suite.T(), terraformOptions)
 	suite.baseChecksEKS(terraformOptions)
 }
 
