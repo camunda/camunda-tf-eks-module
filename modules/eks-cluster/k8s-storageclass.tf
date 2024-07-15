@@ -13,6 +13,10 @@ resource "kubernetes_storage_class_v1" "ebs_sc" {
     type = "gp3"
   }
   volume_binding_mode = "WaitForFirstConsumer"
+
+  depends_on = [
+    aws_iam_policy.ebs_sc_access
+  ]
 }
 
 # remove default storage class of gp2
@@ -24,7 +28,12 @@ resource "kubernetes_annotations" "default_storageclass" {
   metadata {
     name = "gp2"
   }
+
   annotations = {
     "storageclass.kubernetes.io/is-default-class" = "false"
   }
+
+  depends_on = [
+    aws_iam_policy.ebs_sc_access
+  ]
 }
