@@ -1,6 +1,6 @@
 module github.com/camunda/camunda-tf-eks-module
 
-go 1.22.4
+go 1.22.5
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.30.1
@@ -17,7 +17,7 @@ require (
 	k8s.io/api v0.30.2
 	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.30.2
-	sigs.k8s.io/aws-iam-authenticator v0.6.21
+	sigs.k8s.io/aws-iam-authenticator v0.6.22
 )
 
 require (
