@@ -4,7 +4,7 @@ locals {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "5.8.1"
+  version = "5.9.0"
 
   name = local.vpc_name
   # requires a /16 range, resulting in 2 leftover subnets, which can be used for DBs
