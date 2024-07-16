@@ -15,7 +15,7 @@ resource "kubernetes_storage_class_v1" "ebs_sc" {
   volume_binding_mode = "WaitForFirstConsumer"
 
   depends_on = [
-    module.ebs_cs_role
+    kubernetes_annotations.default_storageclass
   ]
 }
 
@@ -34,6 +34,6 @@ resource "kubernetes_annotations" "default_storageclass" {
   }
 
   depends_on = [
-    module.ebs_cs_role
+    module.eks
   ]
 }
