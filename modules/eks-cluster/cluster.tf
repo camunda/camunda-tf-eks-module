@@ -167,8 +167,4 @@ resource "kubernetes_storage_class_v1" "ebs_sc" {
     type = "gp3" # starting eks 1.30, gp3 is the default
   }
   volume_binding_mode = "WaitForFirstConsumer"
-
-  depends_on = [
-    kubernetes_annotations.default_storageclass
-  ]
 }
