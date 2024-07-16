@@ -34,6 +34,6 @@ resource "kubernetes_annotations" "default_storageclass" {
   }
 
   depends_on = [
-    module.eks
+    provider.kubernetes
   ]
 }
