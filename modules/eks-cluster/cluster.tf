@@ -153,21 +153,6 @@ module "eks" {
   enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 }
 
-# remove default storage class of gp2
-resource "kubernetes_annotations" "default_storageclass" {
-  api_version = "storage.k8s.io/v1"
-  kind        = "StorageClass"
-  force       = "true"
-
-  metadata {
-    name = "gp2"
-  }
-
-  annotations = {
-    "storageclass.kubernetes.io/is-default-class" = "false"
-  }
-}
-
 # gp3 storage class
 resource "kubernetes_storage_class_v1" "ebs_sc" {
   metadata {
@@ -179,11 +164,7 @@ resource "kubernetes_storage_class_v1" "ebs_sc" {
   storage_provisioner = "ebs.csi.aws.com"
   reclaim_policy      = "Retain"
   parameters = {
-    type = "gp3"
+    type = "gp3" # starting eks 1.30, gp3 is the default
   }
   volume_binding_mode = "WaitForFirstConsumer"
-
-  depends_on = [
-    kubernetes_annotations.default_storageclass
-  ]
 }
