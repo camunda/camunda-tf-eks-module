@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,16 +23,17 @@ import (
 
 type UpgradeEKSTestSuite struct {
 	suite.Suite
-	logger         *zap.Logger
-	sugaredLogger  *zap.SugaredLogger
-	clusterName    string
-	expectedNodes  int
-	kubeConfigPath string
-	kubeVersion    string
-	tfDataDir      string
-	tfBinaryName   string
-	region         string
-	varTf          map[string]interface{}
+	logger          *zap.Logger
+	sugaredLogger   *zap.SugaredLogger
+	clusterName     string
+	expectedNodes   int
+	kubeConfigPath  string
+	kubeVersion     string
+	tfDataDir       string
+	tfBinaryName    string
+	region          string
+	varTf           map[string]interface{}
+	tfStateS3Bucket string
 }
 
 func (suite *UpgradeEKSTestSuite) SetupTest() {
@@ -48,6 +48,7 @@ func (suite *UpgradeEKSTestSuite) SetupTest() {
 	suite.expectedNodes = 3
 	suite.kubeVersion = "1.29"
 	var errAbsPath error
+	suite.tfStateS3Bucket = utils.GetEnv("TF_STATE_BUCKET", fmt.Sprintf("tests-eks-tf-state-%s", suite.region))
 	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
 	suite.Require().NoError(errAbsPath)
 	suite.kubeConfigPath = fmt.Sprintf("%s/kubeconfig-upgrade-eks", suite.tfDataDir)
@@ -95,25 +96,28 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		Upgrade:         false,
 		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
 		Vars:            suite.varTf,
+		BackendConfig: map[string]interface{}{
+			"bucket": suite.tfStateS3Bucket,
+			"key":    fmt.Sprintf("terraform/%s/eks/terraform.tfstate", suite.clusterName),
+			"region": suite.region,
+		},
 	}
+
+	// configure bucket backend
+	sess, err := utils.GetAwsClient()
+	suite.Require().NoErrorf(err, "Failed to get aws client")
+	err = utils.CreateS3BucketIfNotExists(sess, suite.tfStateS3Bucket, suite.region)
+	suite.Require().NoErrorf(err, "Failed to create s3 state bucket")
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
 
 	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
-
 	if cleanClusterAtTheEnd == "true" {
-		defer terraform.Destroy(suite.T(), terraformOptions)
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(suite.T(), terraformOptions)
-		})
+		defer utils.DeferCleanup(suite.T(), terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
 	terraform.InitAndApply(suite.T(), terraformOptions)
-
-	// Wait for the worker nodes to join the cluster
-	sess, err := utils.GetAwsClient()
-	suite.Require().NoErrorf(err, "Failed to get aws client")
 
 	// list your services here
 	eksSvc := eks.NewFromConfig(sess)
@@ -190,10 +194,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	suite.sugaredLogger.Infow("Reapply terraform after EKS cluster upgrade...", "extraVars", suite.varTf)
 
 	if cleanClusterAtTheEnd == "true" {
-		defer terraform.Destroy(suite.T(), terraformOptions)
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(suite.T(), terraformOptions)
-		})
+		defer utils.DeferCleanup(suite.T(), terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added

@@ -53,6 +53,11 @@ If you don't want to delete the resources at the end of the test:
 export CLEAN_CLUSTER_AT_THE_END=false
 ```
 
+The tf states are stored by default in a S3 bucket, if you want to configure the bucket name:
+```bash
+export TF_STATE_BUCKET="myBucket"
+```
+
 You can change the default deployment region:
 ```bash
 export TESTS_CLUSTER_REGION="eu-west-1"
