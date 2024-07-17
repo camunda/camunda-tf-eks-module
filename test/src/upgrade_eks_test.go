@@ -189,6 +189,11 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		Upgrade:         false,
 		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
 		Vars:            suite.varTf,
+		BackendConfig: map[string]interface{}{
+			"bucket": suite.tfStateS3Bucket,
+			"key":    fmt.Sprintf("terraform/%s/eks/terraform.tfstate", suite.clusterName),
+			"region": suite.region,
+		},
 	}
 
 	suite.sugaredLogger.Infow("Reapply terraform after EKS cluster upgrade...", "extraVars", suite.varTf)
