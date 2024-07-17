@@ -1,33 +1,5 @@
-/*
-The following 2 data resources are used get around the fact that we have to wait
-for the EKS cluster to be initialised before we can attempt to authenticate.
-*/
 
-data "aws_eks_cluster" "eks" {
-  name = module.eks.cluster_name
 
-  # depend on something of the eks module but nothing that would ever change
-  # workaround to only pull data on a later stage during initial creation
-  depends_on = [
-    module.eks.cluster_name
-  ]
-}
-
-data "aws_eks_cluster_auth" "eks" {
-  name = module.eks.cluster_name
-
-  # depend on something of the eks module but nothing that would ever change
-  # workaround to only pull data on a later stage during initial creation
-  depends_on = [
-    module.eks.cluster_name
-  ]
-}
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.eks.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.eks.token
-}
 
 # https://github.com/terraform-aws-modules/terraform-aws-eks
 module "eks" {
@@ -153,6 +125,29 @@ module "eks" {
   enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 }
 
+# propagation of the IAM can take some time on a freshly created cluster
+resource "time_sleep" "eks_cluster_warmup" {
+  create_duration = "30s"
+
+  triggers = {
+    cluster_name = module.eks.cluster_name
+  }
+
+  depends_on = [module.eks]
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    # This requires the awscli to be installed locally where Terraform is executed
+    args = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+  }
+}
+
 # gp3 storage class
 resource "kubernetes_storage_class_v1" "ebs_sc" {
   metadata {
@@ -167,4 +162,8 @@ resource "kubernetes_storage_class_v1" "ebs_sc" {
     type = "gp3" # starting eks 1.30, gp3 is the default
   }
   volume_binding_mode = "WaitForFirstConsumer"
+
+  depends_on = [
+    time_sleep.eks_cluster_warmup
+  ]
 }
