@@ -46,7 +46,7 @@ func (suite *UpgradeEKSTestSuite) SetupTest() {
 	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "terraform")
 	suite.sugaredLogger.Infow("Terraform binary for the suite", "binary", suite.tfBinaryName)
 	suite.expectedNodes = 3
-	suite.kubeVersion = "1.28"
+	suite.kubeVersion = "1.29"
 	var errAbsPath error
 	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
 	suite.Require().NoError(errAbsPath)

@@ -32,7 +32,7 @@ provider "kubernetes" {
 # https://github.com/terraform-aws-modules/terraform-aws-eks
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.15.0"
+  version = "20.19.0"
 
   cluster_name                    = var.name
   cluster_version                 = var.kubernetes_version
@@ -151,4 +151,20 @@ module "eks" {
   authentication_mode                      = var.authentication_mode
   access_entries                           = var.access_entries
   enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
+}
+
+# gp3 storage class
+resource "kubernetes_storage_class_v1" "ebs_sc" {
+  metadata {
+    name = "ebs-sc"
+    annotations = {
+      "storageclass.kubernetes.io/is-default-class" = "true"
+    }
+  }
+  storage_provisioner = "ebs.csi.aws.com"
+  reclaim_policy      = "Retain"
+  parameters = {
+    type = "gp3" # starting eks 1.30, gp3 is the default
+  }
+  volume_binding_mode = "WaitForFirstConsumer"
 }

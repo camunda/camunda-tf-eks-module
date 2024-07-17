@@ -11,7 +11,8 @@ variable "name" {
 variable "kubernetes_version" {
   type        = string
   description = "Kubernetes version to be used by EKS"
-  default     = "1.28"
+  # renovate: datasource=endoflife-date depName=amazon-eks versioning=semver
+  default = "1.30"
 }
 
 variable "np_min_node_count" {
