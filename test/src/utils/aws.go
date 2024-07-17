@@ -2,11 +2,16 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/eks/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	types2 "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"net/http"
 	"time"
 )
 
@@ -81,5 +86,59 @@ func UpgradeEKS(ctx context.Context, client *eks.Client, clusterName, version st
 	}
 
 	fmt.Println("Update completed successfully")
+	return nil
+}
+
+func CreateS3BucketIfNotExists(sess aws.Config, s3Bucket string, region string) error {
+	s3Client := s3.NewFromConfig(sess)
+
+	// Check if the bucket already exists
+	_, err := s3Client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
+		Bucket: aws.String(s3Bucket),
+	})
+
+	if err == nil {
+		// Bucket already exists
+		fmt.Printf("Bucket %s already exists\n", s3Bucket)
+		return nil
+	} else {
+		var responseError *awshttp.ResponseError
+		if errors.As(err, &responseError) && responseError.ResponseError.HTTPStatusCode() == http.StatusNotFound {
+			fmt.Printf("Bucket %s does not exist\n", s3Bucket)
+		} else {
+			return fmt.Errorf("failed to check if bucket exists: %v", err)
+		}
+	}
+
+	// Create the S3 bucket
+	_, err = s3Client.CreateBucket(context.TODO(), &s3.CreateBucketInput{
+		Bucket: aws.String(s3Bucket),
+		CreateBucketConfiguration: &types2.CreateBucketConfiguration{
+			LocationConstraint: types2.BucketLocationConstraint(region),
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create bucket %s: %v", s3Bucket, err)
+	}
+
+	fmt.Printf("Bucket %s created successfully\n", s3Bucket)
+	return nil
+}
+
+func DeleteObjectFromS3Bucket(sess aws.Config, s3Bucket string, objectToDelete string) error {
+	s3Svc := s3.NewFromConfig(sess)
+
+	deleteObjectInput := &s3.DeleteObjectInput{
+		Bucket: aws.String(s3Bucket),
+		Key:    aws.String(objectToDelete),
+	}
+
+	_, err := s3Svc.DeleteObject(context.TODO(), deleteObjectInput)
+	if err != nil {
+		return fmt.Errorf("failed to delete object %q from bucket %q: %w", objectToDelete, s3Bucket, err)
+	}
+
+	fmt.Printf("Successfully deleted object %q from bucket %q\n", objectToDelete, s3Bucket)
 	return nil
 }

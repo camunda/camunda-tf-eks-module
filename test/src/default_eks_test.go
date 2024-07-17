@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,15 +29,16 @@ import (
 
 type DefaultEKSTestSuite struct {
 	suite.Suite
-	logger         *zap.Logger
-	sugaredLogger  *zap.SugaredLogger
-	clusterName    string
-	expectedNodes  int
-	kubeConfigPath string
-	region         string
-	tfDataDir      string
-	tfBinaryName   string
-	varTf          map[string]interface{}
+	logger          *zap.Logger
+	sugaredLogger   *zap.SugaredLogger
+	clusterName     string
+	expectedNodes   int
+	kubeConfigPath  string
+	region          string
+	tfDataDir       string
+	tfBinaryName    string
+	varTf           map[string]interface{}
+	tfStateS3Bucket string
 }
 
 func (suite *DefaultEKSTestSuite) SetupTest() {
@@ -53,6 +53,7 @@ func (suite *DefaultEKSTestSuite) SetupTest() {
 
 	suite.expectedNodes = 4
 	var errAbsPath error
+	suite.tfStateS3Bucket = utils.GetEnv("TF_STATE_BUCKET", fmt.Sprintf("tests-eks-tf-state-%s", suite.region))
 	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
 	suite.Require().NoError(errAbsPath)
 	suite.kubeConfigPath = fmt.Sprintf("%s/kubeconfig-default-eks", suite.tfDataDir)
@@ -96,15 +97,22 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 		Upgrade:         false,
 		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
 		Vars:            suite.varTf,
+		BackendConfig: map[string]interface{}{
+			"bucket": suite.tfStateS3Bucket,
+			"key":    fmt.Sprintf("terraform/%s/eks/terraform.tfstate", suite.clusterName),
+			"region": suite.region,
+		},
 	}
 
-	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
+	// configure bucket backend
+	sess, err := utils.GetAwsClient()
+	suite.Require().NoErrorf(err, "Failed to get aws client")
+	err = utils.CreateS3BucketIfNotExists(sess, suite.tfStateS3Bucket, suite.region)
+	suite.Require().NoErrorf(err, "Failed to create s3 state bucket")
 
+	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
 	if cleanClusterAtTheEnd == "true" {
-		defer terraform.Destroy(suite.T(), terraformOptions)
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(suite.T(), terraformOptions)
-		})
+		defer utils.DeferCleanup(suite.T(), terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
