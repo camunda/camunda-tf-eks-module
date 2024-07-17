@@ -153,6 +153,17 @@ module "eks" {
   enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 }
 
+# propagation of the IAM can take some time on a freshly created cluster
+resource "time_sleep" "eks_cluster_warmup" {
+  create_duration = "30s"
+
+  triggers = {
+    cluster_name = module.eks.cluster_name
+  }
+
+  depends_on = [module.eks]
+}
+
 # gp3 storage class
 resource "kubernetes_storage_class_v1" "ebs_sc" {
   metadata {
@@ -167,4 +178,8 @@ resource "kubernetes_storage_class_v1" "ebs_sc" {
     type = "gp3" # starting eks 1.30, gp3 is the default
   }
   volume_binding_mode = "WaitForFirstConsumer"
+
+  depends_on = [
+    time_sleep.eks_cluster_warmup
+  ]
 }
