@@ -149,7 +149,7 @@ jobs:
 
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4
         with:
           name: test-reports-${{ matrix.test_function }}
           path: "./test/src/${{ matrix.test_function }}_unit-tests_filtered.xml"
@@ -190,7 +190,7 @@ jobs:
       - name: Notify in Slack in case of failure
         id: slack-notification
         if: github.event_name == 'schedule'
-        uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@a02d7cc991ba9ccda5d27221d02237ccb70964a6 # main
+        uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@dd209181f12ba16a2781cbab8b473adea45538a3 # main
         with:
           vault_addr: ${{ secrets.VAULT_ADDR }}
           vault_role_id: ${{ secrets.VAULT_ROLE_ID }}
