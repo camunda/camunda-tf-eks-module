@@ -66,6 +66,11 @@ output "external_dns_arn" {
   description = "Amazon Resource Name of the external-dns IAM role used for IAM Roles to Service Accounts mappings"
 }
 
+output "oidc_provider_arn" {
+  value       = module.eks.oidc_provider_arn
+  description = "Amazon Resource Name of the OIDC provider for the EKS cluster. Allows to add additional IRSA mappings"
+}
+
 ################################################################################
 # VPC
 ################################################################################
