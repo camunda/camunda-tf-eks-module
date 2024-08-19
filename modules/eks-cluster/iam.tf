@@ -17,8 +17,8 @@ module "ebs_cs_role" {
   }
 
   role_policy_arns = {
-    policy = aws_iam_policy.ebs_sc_access.arn
-    policy = aws_iam_policy.ebs_sc_access_2.arn
+    policy   = aws_iam_policy.ebs_sc_access.arn
+    policy_2 = aws_iam_policy.ebs_sc_access_2.arn
   }
 }
 
