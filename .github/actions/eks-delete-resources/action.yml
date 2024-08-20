@@ -1,0 +1,123 @@
+name: Delete EKS resource
+
+description: |
+  This GitHub Action automates the deletion of a terraform resource of this repository using Terraform.
+  This action will also install awscli.
+
+inputs:
+  module-name:
+    description: 'Name of the resource module'
+    required: true
+  resource-identifier:
+    description: 'Identifier of the resource to delete'
+    required: true
+  aws-region:
+    description: 'AWS region where the resource Terraform state is stored'
+    required: true
+  s3-backend-bucket:
+    description: 'Name of the S3 bucket where the Terraform state is stored'
+    required: true
+  awscli-version:
+    description: 'Version of the aws cli to use'
+    required: true
+    # renovate: datasource=github-releases depName=aws/aws-cli
+    default: "2.15.52"
+  tf-modules-revision:
+    description: 'Git revision of the tf modules to use'
+    default: 'main'
+    required: true
+  tf-modules-path:
+    description: 'Path where the tf modules will be cloned'
+    default: './.action-tf-modules/'
+    required: true
+
+  # inherited from https://github.com/hashicorp/setup-terraform/blob/main/action.yml
+  tf-cli-config-credentials-hostname:
+    description: 'The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file. Defaults to `app.terraform.io`.'
+    default: 'app.terraform.io'
+    required: false
+  tf-cli-config-credentials-token:
+    description: 'The API token for a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file.'
+    required: false
+  tf-terraform-version:
+    description: 'The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.'
+    default: 'latest'
+    required: false
+  tf-terraform-wrapper:
+    description: 'Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.'
+    default: 'true'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v3
+      with:
+        cli_config_credentials_hostname: ${{ inputs.tf-cli-config-credentials-hostname }}
+        cli_config_credentials_token: ${{ inputs.tf-cli-config-credentials-token }}
+        terraform_version: ${{ inputs.tf-terraform-version }}
+        terraform_wrapper: ${{ inputs.tf-terraform-wrapper }}
+
+    - name: Install aws-cli v2
+      shell: bash
+      run: |
+        sudo rm -rf /usr/local/aws-cli
+        mkdir -p /tmp/awscli && cd /tmp/awscli
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${{ inputs.awscli-version }}.zip" -o "awscliv2.zip"
+        unzip -qq awscliv2.zip
+        sudo ./aws/install
+        cd - && rm -Rf /tmp/awscli
+
+    - name: Set Terraform variables
+      shell: bash
+      id: set-terraform-variables
+      run: |
+        export TFSTATE_BUCKET="${{ inputs.s3-backend-bucket }}"
+        export TFSTATE_REGION="${{ inputs.aws-region }}"
+        export TFSTATE_KEY="terraform/${{ inputs.resource-identifier }}/${{ inputs.module-name }}/terraform.tfstate"
+        echo "TFSTATE_BUCKET=${TFSTATE_BUCKET}" >> "$GITHUB_OUTPUT"
+        echo "TFSTATE_REGION=${TFSTATE_REGION}" >> "$GITHUB_OUTPUT"
+        echo "TFSTATE_KEY=${TFSTATE_KEY}" >> "$GITHUB_OUTPUT"
+
+    - name: Checkout Repository rosa modules
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      with:
+        repository: "camunda/camunda-tf-eks-module"
+        ref: ${{ inputs.tf-modules-revision }}
+        path: ${{ inputs.tf-modules-path }}
+        fetch-depth: 0
+
+    - name: Terraform Init
+      shell: bash
+      id: init
+      working-directory: "${{ inputs.tf-modules-path }}/modules/${{ inputs.module-name }}/"
+      run: |
+        terraform version
+        terraform init -backend-config="bucket=${{ steps.set-terraform-variables.outputs.TFSTATE_BUCKET }}" -backend-config="key=${{ steps.set-terraform-variables.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }}"
+        terraform validate -no-color
+
+    - name: Terraform Plan Destroy
+      shell: bash
+      id: plan-destroy
+      working-directory: "${{ inputs.tf-modules-path }}/modules/${{ inputs.module-name }}/"
+      run: |
+        terraform plan -destroy -no-color -out plan-destroy.plan
+
+    - name: Terraform Apply Destroy
+      shell: bash
+      id: apply-destroy
+      working-directory: "${{ inputs.tf-modules-path }}/modules/${{ inputs.module-name }}/"
+      run: |
+        terraform apply -destroy -no-color plan-destroy.plan -var "region="${{ inputs.aws-region }}"" -var "cluster_name=dummy" -var "username=dummy"  -var "password=dummy"  -var "cidr_blocks=[]"  -var "subnet_ids=[]"  -var "cluster_node_ipv4_cidr=dummy"  -var "cluster_service_ipv4_cidr=dummy"  -var "name=dummy"
+
+    - name: Clean up cloned modules
+      shell: bash
+      if: always()
+      run: |
+        rm -rf "${{ inputs.tf-modules-path }}"
+
+    - name: Delete Terraform State
+      shell: bash
+      run: |
+        aws s3 rm s3://${{ steps.set-terraform-variables.outputs.TFSTATE_BUCKET }}/${{ steps.set-terraform-variables.outputs.TFSTATE_KEY }}

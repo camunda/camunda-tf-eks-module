@@ -98,7 +98,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		Vars:            suite.varTf,
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
-			"key":    fmt.Sprintf("terraform/%s/eks/terraform.tfstate", suite.clusterName),
+			"key":    fmt.Sprintf("terraform/%s/TestUpgradeEKSTestSuite/eks/terraform.tfstate", suite.clusterName),
 			"region": suite.region,
 		},
 	}
@@ -191,7 +191,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		Vars:            suite.varTf,
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
-			"key":    fmt.Sprintf("terraform/%s/eks/terraform.tfstate", suite.clusterName),
+			"key":    fmt.Sprintf("terraform/%s/TestUpgradeEKSTestSuite/eks/terraform.tfstate", suite.clusterName),
 			"region": suite.region,
 		},
 	}

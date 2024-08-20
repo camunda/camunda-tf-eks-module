@@ -25,6 +25,7 @@ env:
   AWS_PROFILE: "infex"
   AWS_REGION: "eu-west-2" # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
   TESTS_TF_BINARY_NAME: "terraform"
+  TF_STATE_BUCKET: "tests-eks-tf-state-eu-west-2"
 
 jobs:
 
@@ -40,6 +41,7 @@ jobs:
       )
     outputs:
       test_functions: ${{ steps.extract_test_functions.outputs.test_functions }}
+      modules_list: ${{ steps.extract_modules.outputs.modules_list }}
       cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
     steps:
       - name: Checkout repository
@@ -51,6 +53,15 @@ jobs:
       - name: Get Short GitHub SHA
         id: short_git_sha
         run: echo "short_git_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: List modules in the repository
+        id: extract_modules
+        run: |
+          MODULES=$(ls modules)
+          MODULES_ARRAY=$(echo "$MODULES" | tr '\n' ' ' | jq -R -s -c 'split(" ")[:-1]')
+
+          echo "modules_list=${MODULES_ARRAY}" >> "$GITHUB_OUTPUT"
+          echo "modules_list=${MODULES_ARRAY}"
 
       - name: Extract Test Functions
         id: extract_test_functions
@@ -139,6 +150,9 @@ jobs:
           export TESTS_CLUSTER_ID="${{ needs.configure-tests.outputs.cluster_id }}"
           export TESTS_CLUSTER_REGION="${{ env.AWS_REGION }}"
           export TESTS_TF_BINARY_NAME="${{ env.TESTS_TF_BINARY_NAME }}"
+
+          : # delegate the cleanup the GHA
+          export CLEAN_CLUSTER_AT_THE_END="false"
           just test ${{ matrix.test_function }} "--junitfile ${{ matrix.test_function }}_unit-tests.xml"
 
       # this is a workaround for test report not working as expected due to https://github.com/test-summary/action/issues/5
@@ -179,6 +193,29 @@ jobs:
         with:
           paths: /tmp/testreports/**/*.xml
 
+  cleanup-resources:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - configure-tests
+      - integration-tests
+    strategy:
+      fail-fast: false # don't propagate failing jobs
+      matrix:
+        module: ${{ fromJson(needs.configure-tests.outputs.modules_list) }}
+        test_function: ${{ fromJson(needs.configure-tests.outputs.test_functions) }}
+    steps:
+      - name: Delete resources
+        timeout-minutes: 125
+        if: always()
+        uses: ./.github/actions/eks-delete-resources
+        with:
+          module-name: "${{ matrix.module }}"
+          resource-identifier: "${{ needs.configure-tests.outputs.cluster_id }}/${{ matrix.test_function }}"
+          aws-region: "${{ env.AWS_REGION }}"
+          s3-backend-bucket: "${{ env.TF_STATE_BUCKET }}"
+          tf-modules-path: './.action-tf-modules/${{ needs.configure-tests.outputs.cluster_id }}/${{ matrix.test_function }}/'
+
   notify-on-failure:
     runs-on: ubuntu-latest
     if: failure()
@@ -186,6 +223,7 @@ jobs:
       - configure-tests
       - integration-tests
       - test-report
+      - cleanup-resources
     steps:
       - name: Notify in Slack in case of failure
         id: slack-notification
