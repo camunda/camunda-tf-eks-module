@@ -5,7 +5,7 @@
 
 module "ebs_cs_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.41.0"
+  version = "5.44.0"
 
   role_name = "${var.name}-ebs-cs-role"
 
@@ -17,15 +17,15 @@ module "ebs_cs_role" {
   }
 
   role_policy_arns = {
-    policy = aws_iam_policy.ebs_sc_access.arn
-    policy = aws_iam_policy.ebs_sc_access_2.arn
+    policy   = aws_iam_policy.ebs_sc_access.arn
+    policy_2 = aws_iam_policy.ebs_sc_access_2.arn
   }
 }
 
 # Following role allows cert-manager to do the DNS01 challenge
 module "cert_manager_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.41.0"
+  version = "5.44.0"
 
   role_name = "${var.name}-cert-manager-role"
 
@@ -44,7 +44,7 @@ module "cert_manager_role" {
 # Following role allows external-dns to adjust values in hosted zones
 module "external_dns_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
-  version = "5.41.0"
+  version = "5.44.0"
 
   role_name = "${var.name}-external-dns-role"
 
