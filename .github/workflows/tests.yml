@@ -223,7 +223,7 @@ jobs:
       - name: Delete resources of this run
         timeout-minutes: 125
         if: always()
-        uses: ./.github/actions/eks-delete-resources
+        uses: ./.github/actions/eks-cleanup-resources
         with:
           tf-bucket: "${{ env.TF_STATE_BUCKET }}"
           max-age-hours: "0"

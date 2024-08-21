@@ -90,6 +90,9 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	suite.Require().NoError(errTfDirEKS)
 	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDirEKS)
 
+	errLinkBackend := os.Link("../fixtures/backend.tf", filepath.Join(tfDir, "backend.tf"))
+	suite.Require().NoError(errLinkBackend)
+
 	terraformOptions := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
 		TerraformDir:    tfDir,
@@ -153,11 +156,14 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	}
 
 	tfModuleAurora := "aurora/"
-	fullDirAurora := fmt.Sprintf("%s/%s", suite.tfDataDir, tfMo)
+	fullDirAurora := fmt.Sprintf("%s/%s", suite.tfDataDir, tfModuleAurora)
 	errTfDirAurora := os.MkdirAll(fullDirAurora, os.ModePerm)
 	suite.Require().NoError(errTfDirAurora)
 
 	tfDirAurora := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleAurora, fullDirAurora)
+
+	errLinkBackend = os.Link("../fixtures/backend.tf", filepath.Join(tfDirAurora, "backend.tf"))
+	suite.Require().NoError(errLinkBackend)
 
 	terraformOptionsRDS := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,

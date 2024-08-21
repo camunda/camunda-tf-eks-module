@@ -92,6 +92,9 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 
 	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDir)
 
+	errLinkBackend := os.Link("../fixtures/backend.tf", filepath.Join(tfDir, "backend.tf"))
+	suite.Require().NoError(errLinkBackend)
+
 	terraformOptions := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
 		TerraformDir:    tfDir,
