@@ -109,7 +109,16 @@ runs:
       id: apply-destroy
       working-directory: "${{ inputs.tf-modules-path }}/modules/${{ inputs.module-name }}/"
       run: |
-        terraform apply -destroy -no-color plan-destroy.plan -var "region="${{ inputs.aws-region }}"" -var "cluster_name=dummy" -var "username=dummy"  -var "password=dummy"  -var "cidr_blocks=[]"  -var "subnet_ids=[]"  -var "cluster_node_ipv4_cidr=dummy"  -var "cluster_service_ipv4_cidr=dummy"  -var "name=dummy"
+        terraform apply -destroy -no-color plan-destroy.plan \
+          -var region="${{ inputs.aws-region }}" \
+          -var cluster_name="dummy" \
+          -var username="dummy" \
+          -var password="dummy" \
+          -var cidr_blocks="[]" \
+          -var subnet_ids="[]" \
+          -var cluster_node_ipv4_cidr="dummy" \
+          -var cluster_service_ipv4_cidr="dummy" \
+          -var name="dummy"
 
     - name: Clean up cloned modules
       shell: bash
