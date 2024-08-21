@@ -65,6 +65,9 @@ destroy_resource() {
   mkdir -p "$temp_dir" || return 1
   cp -a "$resource_module_path." "$temp_dir" || return 1
 
+  echo "Copying backend.tf in $temp_dir"
+  cp "${MODULES_DIR}fixtures/backend.tf" "$temp_dir/backend.tf" || return 1
+
   tree "$resource_module_path" "$temp_dir" || return 1
 
   cd "$temp_dir" || return 1
