@@ -103,6 +103,29 @@ jobs:
           echo "test_functions=${test_functions}" >> "$GITHUB_OUTPUT"
           echo "test_functions=${test_functions}"
 
+  cleanup-resources-tmp:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - configure-tests
+    strategy:
+      fail-fast: false # don't propagate failing jobs
+      matrix:
+        module: ${{ fromJson(needs.configure-tests.outputs.modules_list) }}
+        test_function: ${{ fromJson(needs.configure-tests.outputs.test_functions) }}
+    steps:
+      - name: Delete resources
+        timeout-minutes: 125
+        if: always()
+        uses: ./.github/actions/eks-delete-resources@feature/s3-tests-cleanup
+        with:
+          module-name: "${{ matrix.module }}"
+          resource-identifier: "c560ea8/${{ matrix.test_function }}"
+          aws-region: "${{ env.AWS_REGION }}"
+          s3-backend-bucket: "${{ env.TF_STATE_BUCKET }}"
+          tf-modules-path: './.action-tf-modules/c560ea8/${{ matrix.test_function }}/'
+          tf-modules-revision: ${{ github.ref_name }}
+
   integration-tests:
     runs-on: ubuntu-latest
     needs:
@@ -208,13 +231,14 @@ jobs:
       - name: Delete resources
         timeout-minutes: 125
         if: always()
-        uses: ./.github/actions/eks-delete-resources
+        uses: ./.github/actions/eks-delete-resources@feature/s3-tests-cleanup
         with:
           module-name: "${{ matrix.module }}"
           resource-identifier: "${{ needs.configure-tests.outputs.cluster_id }}/${{ matrix.test_function }}"
           aws-region: "${{ env.AWS_REGION }}"
           s3-backend-bucket: "${{ env.TF_STATE_BUCKET }}"
           tf-modules-path: './.action-tf-modules/${{ needs.configure-tests.outputs.cluster_id }}/${{ matrix.test_function }}/'
+          tf-modules-revision: ${{ github.ref_name }}
 
   notify-on-failure:
     runs-on: ubuntu-latest
