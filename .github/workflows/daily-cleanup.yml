@@ -1,0 +1,81 @@
+---
+name: Daily cleanup resources
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_age_hours:
+        description: "Maximum age of clusters in hours"
+        required: true
+        default: "20"
+  pull_request:
+    # the paths should be synced with ../labeler.yml
+    paths:
+      - .github/workflows/daily-cleanup.yml
+      - .github/actions/eks-cleanup-resources/**
+
+  schedule:
+    - cron: '0 1 * * *' # At 01:00 everyday.
+
+env:
+  MAX_AGE_HOURS: "${{ github.event.inputs.max_age_hours || '20' }}"
+  AWS_PROFILE: "infex"
+
+  # please keep those variables synced with tests.yml
+  AWS_REGION: "eu-west-2"
+  TF_STATE_BUCKET: "tests-eks-tf-state-eu-west-2"
+
+jobs:
+
+  cleanup-clusters:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Install tooling using asdf
+        uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
+
+      - name: Use repo .tool-version as global version
+        run: cp .tool-versions ~/.tool-versions
+
+      - name: Import Secrets
+        id: secrets
+        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          exportEnv: false
+          secrets: |
+            secret/data/products/infrastructure-experience/ci/common AWS_ACCESS_KEY;
+            secret/data/products/infrastructure-experience/ci/common AWS_SECRET_KEY;
+
+      # Official action does not support profiles
+      - name: Add profile credentials to ~/.aws/credentials
+        run: |
+          aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
+
+      - name: Delete orphans resources
+        timeout-minutes: 125
+        if: always()
+        uses: ./.github/actions/eks-delete-resources
+        with:
+          tf-bucket: "${{ env.TF_STATE_BUCKET }}"
+          max-age-hours: "${{ env.MAX_AGE_HOURS }}"
+          target: "all"
+
+      - name: Notify in Slack in case of failure
+        id: slack-notification
+        if: failure() && github.event_name == 'schedule'
+        uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@305746fcb09d1b606f32ac365e6cf1f1b66e48fd # main
+        with:
+          vault_addr: ${{ secrets.VAULT_ADDR }}
+          vault_role_id: ${{ secrets.VAULT_ROLE_ID }}
+          vault_secret_id: ${{ secrets.VAULT_SECRET_ID }}

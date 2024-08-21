@@ -84,11 +84,12 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		"kubernetes_version": suite.kubeVersion,
 	}
 
-	fullDir := fmt.Sprintf("%s/eks-cluster/", suite.tfDataDir)
+	tfModuleEKS := "eks-cluster/"
+	fullDir := fmt.Sprintf("%s/%s", suite.tfDataDir, tfModuleEKS)
 	errTfDir := os.MkdirAll(fullDir, os.ModePerm)
 	suite.Require().NoError(errTfDir)
 
-	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDir)
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDir)
 
 	terraformOptions := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
@@ -98,7 +99,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		Vars:            suite.varTf,
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
-			"key":    fmt.Sprintf("terraform/%s/TestUpgradeEKSTestSuite/eks/terraform.tfstate", suite.clusterName),
+			"key":    fmt.Sprintf("terraform/%s/TestUpgradeEKSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleEKS),
 			"region": suite.region,
 		},
 	}
@@ -191,7 +192,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		Vars:            suite.varTf,
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
-			"key":    fmt.Sprintf("terraform/%s/TestUpgradeEKSTestSuite/eks/terraform.tfstate", suite.clusterName),
+			"key":    fmt.Sprintf("terraform/%s/TestUpgradeEKSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleEKS),
 			"region": suite.region,
 		},
 	}

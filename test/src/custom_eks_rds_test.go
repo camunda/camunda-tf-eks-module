@@ -84,10 +84,11 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
 
-	fullDirEKS := fmt.Sprintf("%seks-cluster/", suite.tfDataDir)
+	tfModuleEKS := "eks-cluster/"
+	fullDirEKS := fmt.Sprintf("%s%s", suite.tfDataDir, tfModuleEKS)
 	errTfDirEKS := os.MkdirAll(fullDirEKS, os.ModePerm)
 	suite.Require().NoError(errTfDirEKS)
-	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDirEKS)
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDirEKS)
 
 	terraformOptions := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
@@ -97,7 +98,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		Vars:            suite.varTf,
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
-			"key":    fmt.Sprintf("terraform/%s/TestCustomEKSRDSTestSuite/eks/terraform.tfstate", suite.clusterName),
+			"key":    fmt.Sprintf("terraform/%s/TestCustomEKSRDSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleEKS),
 			"region": suite.region,
 		},
 	}
@@ -151,11 +152,12 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"iam_auth_enabled":      true,
 	}
 
-	fullDirAurora := fmt.Sprintf("%s/aurora/", suite.tfDataDir)
+	tfModuleAurora := "aurora/"
+	fullDirAurora := fmt.Sprintf("%s/%s", suite.tfDataDir, tfMo)
 	errTfDirAurora := os.MkdirAll(fullDirAurora, os.ModePerm)
 	suite.Require().NoError(errTfDirAurora)
 
-	tfDirAurora := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "aurora/", fullDirAurora)
+	tfDirAurora := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleAurora, fullDirAurora)
 
 	terraformOptionsRDS := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
@@ -165,7 +167,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		Vars:            varsConfigAurora,
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
-			"key":    fmt.Sprintf("terraform/%s/TestCustomEKSRDSTestSuite/aurora/terraform.tfstate", suite.clusterName),
+			"key":    fmt.Sprintf("terraform/%s/TestCustomEKSRDSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleAurora),
 			"region": suite.region,
 		},
 	}

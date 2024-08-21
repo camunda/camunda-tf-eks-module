@@ -22,6 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # please keep those variables synced with daily-cleanup.yml
   AWS_PROFILE: "infex"
   AWS_REGION: "eu-west-2" # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
   TESTS_TF_BINARY_NAME: "terraform"
@@ -41,7 +42,6 @@ jobs:
       )
     outputs:
       test_functions: ${{ steps.extract_test_functions.outputs.test_functions }}
-      modules_list: ${{ steps.extract_modules.outputs.modules_list }}
       cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
     steps:
       - name: Checkout repository
@@ -53,15 +53,6 @@ jobs:
       - name: Get Short GitHub SHA
         id: short_git_sha
         run: echo "short_git_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: List modules in the repository
-        id: extract_modules
-        run: |
-          MODULES=$(ls modules)
-          MODULES_ARRAY=$(echo "$MODULES" | tr '\n' ' ' | jq -R -s -c 'split(" ")[:-1]')
-
-          echo "modules_list=${MODULES_ARRAY}" >> "$GITHUB_OUTPUT"
-          echo "modules_list=${MODULES_ARRAY}"
 
       - name: Extract Test Functions
         id: extract_test_functions
@@ -103,61 +94,8 @@ jobs:
           echo "test_functions=${test_functions}" >> "$GITHUB_OUTPUT"
           echo "test_functions=${test_functions}"
 
-  cleanup-resources-tmp:
-    runs-on: ubuntu-latest
-    if: always()
-    needs:
-      - configure-tests
-    strategy:
-      fail-fast: false # don't propagate failing jobs
-      matrix:
-        module: ${{ fromJson(needs.configure-tests.outputs.modules_list) }}
-        test_function: ${{ fromJson(needs.configure-tests.outputs.test_functions) }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-
-      - name: Install tooling using asdf
-        uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
-
-      - name: Import Secrets
-        id: secrets
-        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
-        with:
-          url: ${{ secrets.VAULT_ADDR }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          exportEnv: false
-          secrets: |
-            secret/data/products/infrastructure-experience/ci/common AWS_ACCESS_KEY;
-            secret/data/products/infrastructure-experience/ci/common AWS_SECRET_KEY;
-
-      # Official action does not support profiles
-      - name: Add profile credentials to ~/.aws/credentials
-        run: |
-          aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
-          aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
-          aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
-
-      - name: Delete resources
-        timeout-minutes: 125
-        if: always()
-        uses: ./.github/actions/eks-delete-resources
-        with:
-          module-name: "${{ matrix.module }}"
-          resource-identifier: "c560ea8/${{ matrix.test_function }}"
-          aws-region: "${{ env.AWS_REGION }}"
-          s3-backend-bucket: "${{ env.TF_STATE_BUCKET }}"
-          tf-modules-path: './.action-tf-modules/c560ea8/${{ matrix.test_function }}/'
-          tf-modules-revision: ${{ github.head_ref }}
-
   integration-tests:
     runs-on: ubuntu-latest
-    if: false # todo remove
     needs:
       - configure-tests
     strategy:
@@ -252,11 +190,6 @@ jobs:
     needs:
       - configure-tests
       - integration-tests
-    strategy:
-      fail-fast: false # don't propagate failing jobs
-      matrix:
-        module: ${{ fromJson(needs.configure-tests.outputs.modules_list) }}
-        test_function: ${{ fromJson(needs.configure-tests.outputs.test_functions) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
@@ -264,17 +197,37 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Delete resources
+      - name: Install tooling using asdf
+        uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
+
+      - name: Import Secrets
+        id: secrets
+        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          exportEnv: false
+          secrets: |
+            secret/data/products/infrastructure-experience/ci/common AWS_ACCESS_KEY;
+            secret/data/products/infrastructure-experience/ci/common AWS_SECRET_KEY;
+
+      # Official action does not support profiles
+      - name: Add profile credentials to ~/.aws/credentials
+        run: |
+          aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
+
+      - name: Delete resources of this run
         timeout-minutes: 125
         if: always()
         uses: ./.github/actions/eks-delete-resources
         with:
-          module-name: "${{ matrix.module }}"
-          resource-identifier: "${{ needs.configure-tests.outputs.cluster_id }}/${{ matrix.test_function }}"
-          aws-region: "${{ env.AWS_REGION }}"
-          s3-backend-bucket: "${{ env.TF_STATE_BUCKET }}"
-          tf-modules-path: './.action-tf-modules/${{ needs.configure-tests.outputs.cluster_id }}/${{ matrix.test_function }}/'
-          tf-modules-revision: ${{ github.ref_name }}
+          tf-bucket: "${{ env.TF_STATE_BUCKET }}"
+          max-age-hours: "0"
+          target: "${{ needs.configure-tests.outputs.cluster_id }}"
 
   notify-on-failure:
     runs-on: ubuntu-latest

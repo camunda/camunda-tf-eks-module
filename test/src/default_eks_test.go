@@ -85,11 +85,12 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 		"np_desired_node_count": suite.expectedNodes,
 	}
 
-	fullDir := fmt.Sprintf("%s/eks-cluster/", suite.tfDataDir)
+	tfModuleEKS := "eks-cluster/"
+	fullDir := fmt.Sprintf("%s/%s", suite.tfDataDir, tfModuleEKS)
 	errTfDir := os.MkdirAll(fullDir, os.ModePerm)
 	suite.Require().NoError(errTfDir)
 
-	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDir)
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDir)
 
 	terraformOptions := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
@@ -99,7 +100,7 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 		Vars:            suite.varTf,
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
-			"key":    fmt.Sprintf("terraform/%s/TestDefaultEKSTestSuite/eks/terraform.tfstate", suite.clusterName),
+			"key":    fmt.Sprintf("terraform/%s/TestDefaultEKSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleEKS),
 			"region": suite.region,
 		},
 	}
