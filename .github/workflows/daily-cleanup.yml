@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       max_age_hours:
-        description: "Maximum age of clusters in hours"
+        description: "Maximum age of resources in hours"
         required: true
         default: "20"
   pull_request:
@@ -23,7 +23,7 @@ env:
 
   # please keep those variables synced with tests.yml
   AWS_REGION: "eu-west-2"
-  TF_STATE_BUCKET: "tests-eks-tf-state-eu-west-2"
+  TF_STATE_BUCKET: "tests-eks-tf-states-eu-west-2"
 
 jobs:
 

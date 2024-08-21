@@ -90,7 +90,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	suite.Require().NoError(errTfDirEKS)
 	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDirEKS)
 
-	errLinkBackend := os.Link("../fixtures/backend.tf", filepath.Join(tfDir, "backend.tf"))
+	errLinkBackend := os.Link("../../modules/fixtures/backend.tf", filepath.Join(tfDir, "backend.tf"))
 	suite.Require().NoError(errLinkBackend)
 
 	terraformOptions := &terraform.Options{
@@ -109,7 +109,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	// configure bucket backend
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
-	err = utils.CreateS3BucketIfNotExists(sess, suite.tfStateS3Bucket, suite.region)
+	err = utils.CreateS3BucketIfNotExists(sess, suite.tfStateS3Bucket, utils.TF_BUCKET_DESCRIPTION, suite.region)
 	suite.Require().NoErrorf(err, "Failed to create s3 state bucket")
 
 	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
@@ -162,7 +162,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 
 	tfDirAurora := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleAurora, fullDirAurora)
 
-	errLinkBackend = os.Link("../fixtures/backend.tf", filepath.Join(tfDirAurora, "backend.tf"))
+	errLinkBackend = os.Link("../../modules/fixtures/backend.tf", filepath.Join(tfDirAurora, "backend.tf"))
 	suite.Require().NoError(errLinkBackend)
 
 	terraformOptionsRDS := &terraform.Options{

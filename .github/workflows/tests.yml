@@ -26,7 +26,7 @@ env:
   AWS_PROFILE: "infex"
   AWS_REGION: "eu-west-2" # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
   TESTS_TF_BINARY_NAME: "terraform"
-  TF_STATE_BUCKET: "tests-eks-tf-state-eu-west-2"
+  TF_STATE_BUCKET: "tests-eks-tf-states-eu-west-2"
 
 jobs:
 

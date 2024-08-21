@@ -91,7 +91,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 
 	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDir)
 
-	errLinkBackend := os.Link("../fixtures/backend.tf", filepath.Join(tfDir, "backend.tf"))
+	errLinkBackend := os.Link("../../modules/fixtures/backend.tf", filepath.Join(tfDir, "backend.tf"))
 	suite.Require().NoError(errLinkBackend)
 
 	terraformOptions := &terraform.Options{
@@ -110,7 +110,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	// configure bucket backend
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
-	err = utils.CreateS3BucketIfNotExists(sess, suite.tfStateS3Bucket, suite.region)
+	err = utils.CreateS3BucketIfNotExists(sess, suite.tfStateS3Bucket, utils.TF_BUCKET_DESCRIPTION, suite.region)
 	suite.Require().NoErrorf(err, "Failed to create s3 state bucket")
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)

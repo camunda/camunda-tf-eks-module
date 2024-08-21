@@ -89,7 +89,7 @@ func UpgradeEKS(ctx context.Context, client *eks.Client, clusterName, version st
 	return nil
 }
 
-func CreateS3BucketIfNotExists(sess aws.Config, s3Bucket string, region string) error {
+func CreateS3BucketIfNotExists(sess aws.Config, s3Bucket string, description string, region string) error {
 	s3Client := s3.NewFromConfig(sess)
 
 	// Check if the bucket already exists
@@ -120,6 +120,21 @@ func CreateS3BucketIfNotExists(sess aws.Config, s3Bucket string, region string) 
 
 	if err != nil {
 		return fmt.Errorf("failed to create bucket %s: %v", s3Bucket, err)
+	}
+
+	_, err = s3Client.PutBucketTagging(context.TODO(), &s3.PutBucketTaggingInput{
+		Bucket: aws.String(s3Bucket),
+		Tagging: &types2.Tagging{
+			TagSet: []types2.Tag{
+				{
+					Key:   aws.String("Description"),
+					Value: aws.String(description),
+				},
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to add tags to bucket %s: %v", s3Bucket, err)
 	}
 
 	fmt.Printf("Bucket %s created successfully\n", s3Bucket)
