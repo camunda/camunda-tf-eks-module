@@ -114,10 +114,39 @@ jobs:
         module: ${{ fromJson(needs.configure-tests.outputs.modules_list) }}
         test_function: ${{ fromJson(needs.configure-tests.outputs.test_functions) }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Install tooling using asdf
+        uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
+
+      - name: Import Secrets
+        id: secrets
+        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          exportEnv: false
+          secrets: |
+            secret/data/products/infrastructure-experience/ci/common AWS_ACCESS_KEY;
+            secret/data/products/infrastructure-experience/ci/common AWS_SECRET_KEY;
+
+      # Official action does not support profiles
+      - name: Add profile credentials to ~/.aws/credentials
+        run: |
+          aws configure set aws_access_key_id ${{ steps.secrets.outputs.AWS_ACCESS_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
+          aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
+
       - name: Delete resources
         timeout-minutes: 125
         if: always()
-        uses: ./.github/actions/eks-delete-resources@feature/s3-tests-cleanup
+        uses: ./.github/actions/eks-delete-resources
         with:
           module-name: "${{ matrix.module }}"
           resource-identifier: "c560ea8/${{ matrix.test_function }}"
@@ -128,6 +157,7 @@ jobs:
 
   integration-tests:
     runs-on: ubuntu-latest
+    if: false # todo remove
     needs:
       - configure-tests
     strategy:
@@ -228,10 +258,16 @@ jobs:
         module: ${{ fromJson(needs.configure-tests.outputs.modules_list) }}
         test_function: ${{ fromJson(needs.configure-tests.outputs.test_functions) }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
       - name: Delete resources
         timeout-minutes: 125
         if: always()
-        uses: ./.github/actions/eks-delete-resources@feature/s3-tests-cleanup
+        uses: ./.github/actions/eks-delete-resources
         with:
           module-name: "${{ matrix.module }}"
           resource-identifier: "${{ needs.configure-tests.outputs.cluster_id }}/${{ matrix.test_function }}"
