@@ -63,7 +63,7 @@ jobs:
           aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
       - name: Delete orphans resources
-        timeout-minutes: 125
+        timeout-minutes: 360
         if: always()
         uses: ./.github/actions/eks-cleanup-resources
         with:
