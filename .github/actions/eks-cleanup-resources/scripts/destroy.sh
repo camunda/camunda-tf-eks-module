@@ -51,6 +51,57 @@ ID_OR_ALL=$5
 FAILED=0
 CURRENT_DIR=$(pwd)
 
+
+# Function to check if a folder is empty
+is_empty_folder() {
+    local folder="$1"
+    # List all objects within the folder (excluding subfolders) and count them
+    local file_count
+    file_count=$(aws s3 ls "s3://$BUCKET/$folder" --recursive | grep -v '/$' | wc -l)
+
+    # Check if the command succeeded
+    if [ $? -ne 0 ]; then
+        echo "Error listing contents of s3://$BUCKET/$folder"
+        exit 1
+    fi
+
+    # Return true if the folder is empty
+    [ "$file_count" -eq "0" ]
+}
+
+# Function to list and process all empty folders
+process_empty_folders() {
+    local empty_folders_found=false
+
+    # List all folders and sort them from the deepest to the shallowest
+    empty_folders=$(aws s3 ls "s3://$BUCKET/" --recursive | awk '{print $4}' | grep '/$' | sort -r)
+
+    # Check if the command succeeded
+    if [ $? -ne 0 ]; then
+        echo "Error listing folders in s3://$BUCKET/"
+        exit 1
+    fi
+
+    # Process each folder
+    for folder in $empty_folders; do
+        if is_empty_folder "$folder"; then
+            # If the folder is empty, delete it
+            aws s3 rm "s3://$BUCKET/$folder" --recursive
+
+            # Check if the deletion command succeeded
+            if [ $? -ne 0 ]; then
+                echo "Error deleting folder: s3://$BUCKET/$folder"
+                exit 1
+            else
+                echo "Deleted empty folder: s3://$BUCKET/$folder"
+                empty_folders_found=true
+            fi
+        fi
+    done
+
+    echo $empty_folders_found
+}
+
 # Function to perform terraform destroy
 destroy_resource() {
   local resource_id=$1
@@ -163,6 +214,18 @@ for resource_id in $resources; do
   else
     echo "Skipping resource $resource_id as it does not meet the minimum age requirement of $MIN_AGE_IN_HOURS hours"
   fi
+done
+
+echo "Cleaning up empty folders in s3://$BUCKET"
+# Loop until no empty folders are found
+while true; do
+    # Process folders and check if any empty folders were found and deleted
+    if [ "$(process_empty_folders)" = true ]; then
+        echo "Rechecking for empty folders..."
+    else
+        echo "No more empty folders found."
+        break
+    fi
 done
 
 # Exit with the appropriate status
