@@ -7,7 +7,7 @@
 # is successful, it removes the corresponding S3 objects.
 #
 # Usage:
-# ./destroy_resources.sh <BUCKET> <MODULES_DIR> <TEMP_DIR_PREFIX> <MIN_AGE_IN_HOURS> <ID_OR_ALL>
+# ./destroy.sh <BUCKET> <MODULES_DIR> <TEMP_DIR_PREFIX> <MIN_AGE_IN_HOURS> <ID_OR_ALL>
 #
 # Arguments:
 #   BUCKET: The name of the S3 bucket containing the resource state files.
@@ -55,6 +55,7 @@ CURRENT_DIR=$(pwd)
 destroy_resource() {
   local resource_id=$1
   local terraform_module=$2
+  local cluster_name=$3
   local resource_id_dir
   resource_id_dir=$(dirname "$resource_id")
   local temp_dir="${TEMP_DIR_PREFIX}${resource_id_dir}"
@@ -78,16 +79,16 @@ destroy_resource() {
 
   # Execute the terraform destroy command with appropriate variables (see https://github.com/hashicorp/terraform/issues/23552)
   if [ "$terraform_module" == "eks-cluster" ]; then
-    # disable the refresh as it causes errors with kubernetes provider and is not needed to destroy things
-    if ! terraform destroy -refresh=false -auto-approve \
+    terraform state rm kubernetes_storage_class_v1.ebs_sc
+    if ! terraform destroy -auto-approve \
       -var="region=$AWS_REGION" \
-      -var="name=dummy" \
+      -var="name=$cluster_name" \
       -var="cluster_service_ipv4_cidr=10.190.0.0/16" \
       -var="cluster_node_ipv4_cidr=10.192.0.0/16"; then return 1; fi
 
   elif [ "$terraform_module" == "aurora" ]; then
     if ! terraform destroy -auto-approve \
-      -var="cluster_name=dummy" \
+      -var="cluster_name=$cluster_name" \
       -var="username=dummy" \
       -var="password=dummy" \
       -var="subnet_ids=[]" \
@@ -112,6 +113,13 @@ if [ "$ID_OR_ALL" == "all" ]; then
   resources=$(aws s3 ls "s3://$BUCKET/" --recursive | grep "/terraform.tfstate" | awk '{print $4}')
 else
   resources=$(aws s3 ls "s3://$BUCKET/" --recursive | grep "/terraform.tfstate" | grep "$ID_OR_ALL" | awk '{print $4}')
+fi
+
+# Check the exit code of the aws command
+if [ $? -ne 0 ]; then
+  echo "Error executing the aws s3 ls command:" >&2
+  echo "$resources" >&2
+  exit 1
 fi
 
 current_timestamp=$($date_command +%s)
@@ -143,12 +151,15 @@ for resource_id in $resources; do
   echo "resource $resource_id is $file_age_hours hours old"
 
   if [ $file_age_hours -ge "$MIN_AGE_IN_HOURS" ]; then
-    echo "Destroying resource $resource_id in $terraform_module"
+    # name of the cluster is always after terraform/
+    cluster_name=$(echo "$resource_id" | cut -d'/' -f2)
+    echo "Destroying resource $resource_id in $terraform_module (cluster_name=$cluster_name)"
 
-    if ! destroy_resource "$resource_id" "$terraform_module"; then
+    if ! destroy_resource "$resource_id" "$terraform_module" "$cluster_name"; then
       echo "Error destroying resource $resource_id"
       FAILED=1
     fi
+
   else
     echo "Skipping resource $resource_id as it does not meet the minimum age requirement of $MIN_AGE_IN_HOURS hours"
   fi
