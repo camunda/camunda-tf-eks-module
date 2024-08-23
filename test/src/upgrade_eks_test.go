@@ -110,9 +110,9 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	}
 
 	// configure bucket backend
-	sess, err := utils.GetAwsClient()
+	sessBackend, err := utils.GetAwsClientF(utils.GetAwsProfile(), suite.bucketRegion)
 	suite.Require().NoErrorf(err, "Failed to get aws client")
-	err = utils.CreateS3BucketIfNotExists(sess, suite.tfStateS3Bucket, utils.TF_BUCKET_DESCRIPTION, suite.bucketRegion)
+	err = utils.CreateS3BucketIfNotExists(sessBackend, suite.tfStateS3Bucket, utils.TF_BUCKET_DESCRIPTION, suite.bucketRegion)
 	suite.Require().NoErrorf(err, "Failed to create s3 state bucket")
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
@@ -124,6 +124,9 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
 	terraform.InitAndApply(suite.T(), terraformOptions)
+
+	sess, err := utils.GetAwsClient()
+	suite.Require().NoErrorf(err, "Failed to get aws client")
 
 	// list your services here
 	eksSvc := eks.NewFromConfig(sess)

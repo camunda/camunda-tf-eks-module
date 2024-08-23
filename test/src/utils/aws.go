@@ -25,12 +25,14 @@ func GetAwsRegion() string {
 
 // GetAwsClient returns an aws.Config client from the env variables `AWS_PROFILE` and `AWS_REGION`
 func GetAwsClient() (aws.Config, error) {
-	awsProfile := GetAwsProfile()
-	region := GetAwsRegion()
+	return GetAwsClientF(GetAwsProfile(), GetAwsRegion())
+}
 
+// GetAwsClientF returns an aws.Config client
+func GetAwsClientF(profile, region string) (aws.Config, error) {
 	return config.LoadDefaultConfig(context.TODO(),
 		config.WithRegion(region),
-		config.WithSharedConfigProfile(awsProfile),
+		config.WithSharedConfigProfile(profile),
 	)
 }
 
