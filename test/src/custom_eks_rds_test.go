@@ -104,7 +104,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
 			"key":    fmt.Sprintf("terraform/%s/TestCustomEKSRDSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleEKS),
-			"region": suite.region,
+			"region": suite.bucketRegion,
 		},
 	}
 
@@ -179,7 +179,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		BackendConfig: map[string]interface{}{
 			"bucket": suite.tfStateS3Bucket,
 			"key":    fmt.Sprintf("terraform/%s/TestCustomEKSRDSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleAurora),
-			"region": suite.region,
+			"region": suite.bucketRegion,
 		},
 	}
 
