@@ -111,7 +111,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	// configure bucket backend
 	sessBackend, err := utils.GetAwsClientF(utils.GetAwsProfile(), suite.bucketRegion)
 	suite.Require().NoErrorf(err, "Failed to get aws client")
-	err = utils.CreateS3BucketIfNotExists(sessBackend, suite.tfStateS3Bucket, utils.TF_BUCKET_DESCRIPTION, suite.region)
+	err = utils.CreateS3BucketIfNotExists(sessBackend, suite.tfStateS3Bucket, utils.TF_BUCKET_DESCRIPTION, suite.bucketRegion)
 	suite.Require().NoErrorf(err, "Failed to create s3 state bucket")
 
 	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
