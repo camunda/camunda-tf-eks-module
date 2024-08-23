@@ -17,7 +17,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,15 +26,17 @@ import (
 
 type CustomEKSRDSTestSuite struct {
 	suite.Suite
-	logger         *zap.Logger
-	sugaredLogger  *zap.SugaredLogger
-	clusterName    string
-	expectedNodes  int
-	kubeConfigPath string
-	region         string
-	tfDataDir      string
-	tfBinaryName   string
-	varTf          map[string]interface{}
+	logger          *zap.Logger
+	sugaredLogger   *zap.SugaredLogger
+	clusterName     string
+	expectedNodes   int
+	kubeConfigPath  string
+	region          string
+	bucketRegion    string
+	tfDataDir       string
+	tfBinaryName    string
+	varTf           map[string]interface{}
+	tfStateS3Bucket string
 }
 
 func (suite *CustomEKSRDSTestSuite) SetupTest() {
@@ -45,11 +46,13 @@ func (suite *CustomEKSRDSTestSuite) SetupTest() {
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	suite.clusterName = fmt.Sprintf("cluster-rds-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
+	suite.bucketRegion = utils.GetEnv("TF_STATE_BUCKET_REGION", suite.region)
 	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "terraform")
 	suite.sugaredLogger.Infow("Terraform binary for the suite", "binary", suite.tfBinaryName)
 
 	suite.expectedNodes = 1
 	var errAbsPath error
+	suite.tfStateS3Bucket = utils.GetEnv("TF_STATE_BUCKET", fmt.Sprintf("tests-eks-tf-state-%s", suite.bucketRegion))
 	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
 	suite.Require().NoError(errAbsPath)
 	suite.kubeConfigPath = fmt.Sprintf("%s/kubeconfig-rds-eks", suite.tfDataDir)
@@ -83,10 +86,14 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
 
-	fullDirEKS := fmt.Sprintf("%seks-cluster/", suite.tfDataDir)
+	tfModuleEKS := "eks-cluster/"
+	fullDirEKS := fmt.Sprintf("%s%s", suite.tfDataDir, tfModuleEKS)
 	errTfDirEKS := os.MkdirAll(fullDirEKS, os.ModePerm)
 	suite.Require().NoError(errTfDirEKS)
-	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDirEKS)
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDirEKS)
+
+	errLinkBackend := os.Link("../../modules/fixtures/backend.tf", filepath.Join(tfDir, "backend.tf"))
+	suite.Require().NoError(errLinkBackend)
 
 	terraformOptions := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
@@ -94,21 +101,27 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		Upgrade:         false,
 		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
 		Vars:            suite.varTf,
+		BackendConfig: map[string]interface{}{
+			"bucket": suite.tfStateS3Bucket,
+			"key":    fmt.Sprintf("terraform/%s/TestCustomEKSRDSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleEKS),
+			"region": suite.bucketRegion,
+		},
 	}
 
-	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
+	// configure bucket backend
+	sessBackend, err := utils.GetAwsClientF(utils.GetAwsProfile(), suite.bucketRegion)
+	suite.Require().NoErrorf(err, "Failed to get aws client")
+	err = utils.CreateS3BucketIfNotExists(sessBackend, suite.tfStateS3Bucket, utils.TF_BUCKET_DESCRIPTION, suite.bucketRegion)
+	suite.Require().NoErrorf(err, "Failed to create s3 state bucket")
 
+	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
 	if cleanClusterAtTheEnd == "true" {
-		defer terraform.Destroy(suite.T(), terraformOptions)
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(suite.T(), terraformOptions)
-		})
+		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
 	terraform.InitAndApply(suite.T(), terraformOptions)
 
-	// Wait for the worker nodes to join the cluster
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
 
@@ -147,11 +160,15 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"iam_auth_enabled":      true,
 	}
 
-	fullDirAurora := fmt.Sprintf("%s/aurora/", suite.tfDataDir)
+	tfModuleAurora := "aurora/"
+	fullDirAurora := fmt.Sprintf("%s/%s", suite.tfDataDir, tfModuleAurora)
 	errTfDirAurora := os.MkdirAll(fullDirAurora, os.ModePerm)
 	suite.Require().NoError(errTfDirAurora)
 
-	tfDirAurora := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "aurora/", fullDirAurora)
+	tfDirAurora := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleAurora, fullDirAurora)
+
+	errLinkBackend = os.Link("../../modules/fixtures/backend.tf", filepath.Join(tfDirAurora, "backend.tf"))
+	suite.Require().NoError(errLinkBackend)
 
 	terraformOptionsRDS := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
@@ -159,13 +176,15 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		Upgrade:         false,
 		VarFiles:        []string{"../fixtures/fixtures.default.aurora.tfvars"},
 		Vars:            varsConfigAurora,
+		BackendConfig: map[string]interface{}{
+			"bucket": suite.tfStateS3Bucket,
+			"key":    fmt.Sprintf("terraform/%s/TestCustomEKSRDSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleAurora),
+			"region": suite.bucketRegion,
+		},
 	}
 
 	if cleanClusterAtTheEnd == "true" {
-		defer terraform.Destroy(suite.T(), terraformOptionsRDS)
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(suite.T(), terraformOptionsRDS)
-		})
+		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptionsRDS)
 	}
 
 	terraform.InitAndApply(suite.T(), terraformOptionsRDS)

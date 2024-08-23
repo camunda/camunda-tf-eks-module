@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
-	"k8s.io/apimachinery/pkg/util/runtime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,16 +23,18 @@ import (
 
 type UpgradeEKSTestSuite struct {
 	suite.Suite
-	logger         *zap.Logger
-	sugaredLogger  *zap.SugaredLogger
-	clusterName    string
-	expectedNodes  int
-	kubeConfigPath string
-	kubeVersion    string
-	tfDataDir      string
-	tfBinaryName   string
-	region         string
-	varTf          map[string]interface{}
+	logger          *zap.Logger
+	sugaredLogger   *zap.SugaredLogger
+	clusterName     string
+	expectedNodes   int
+	kubeConfigPath  string
+	kubeVersion     string
+	tfDataDir       string
+	tfBinaryName    string
+	region          string
+	bucketRegion    string
+	varTf           map[string]interface{}
+	tfStateS3Bucket string
 }
 
 func (suite *UpgradeEKSTestSuite) SetupTest() {
@@ -43,11 +44,13 @@ func (suite *UpgradeEKSTestSuite) SetupTest() {
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	suite.clusterName = fmt.Sprintf("cluster-upgrade-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
+	suite.bucketRegion = utils.GetEnv("TF_STATE_BUCKET_REGION", suite.region)
 	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "terraform")
 	suite.sugaredLogger.Infow("Terraform binary for the suite", "binary", suite.tfBinaryName)
 	suite.expectedNodes = 3
 	suite.kubeVersion = "1.29"
 	var errAbsPath error
+	suite.tfStateS3Bucket = utils.GetEnv("TF_STATE_BUCKET", fmt.Sprintf("tests-eks-tf-state-%s", suite.bucketRegion))
 	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
 	suite.Require().NoError(errAbsPath)
 	suite.kubeConfigPath = fmt.Sprintf("%s/kubeconfig-upgrade-eks", suite.tfDataDir)
@@ -83,11 +86,15 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		"kubernetes_version": suite.kubeVersion,
 	}
 
-	fullDir := fmt.Sprintf("%s/eks-cluster/", suite.tfDataDir)
+	tfModuleEKS := "eks-cluster/"
+	fullDir := fmt.Sprintf("%s/%s", suite.tfDataDir, tfModuleEKS)
 	errTfDir := os.MkdirAll(fullDir, os.ModePerm)
 	suite.Require().NoError(errTfDir)
 
-	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", "eks-cluster/", fullDir)
+	tfDir := test_structure.CopyTerraformFolderToDest(suite.T(), "../../modules/", tfModuleEKS, fullDir)
+
+	errLinkBackend := os.Link("../../modules/fixtures/backend.tf", filepath.Join(tfDir, "backend.tf"))
+	suite.Require().NoError(errLinkBackend)
 
 	terraformOptions := &terraform.Options{
 		TerraformBinary: suite.tfBinaryName,
@@ -95,23 +102,29 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		Upgrade:         false,
 		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
 		Vars:            suite.varTf,
+		BackendConfig: map[string]interface{}{
+			"bucket": suite.tfStateS3Bucket,
+			"key":    fmt.Sprintf("terraform/%s/TestUpgradeEKSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleEKS),
+			"region": suite.bucketRegion,
+		},
 	}
+
+	// configure bucket backend
+	sessBackend, err := utils.GetAwsClientF(utils.GetAwsProfile(), suite.bucketRegion)
+	suite.Require().NoErrorf(err, "Failed to get aws client")
+	err = utils.CreateS3BucketIfNotExists(sessBackend, suite.tfStateS3Bucket, utils.TF_BUCKET_DESCRIPTION, suite.bucketRegion)
+	suite.Require().NoErrorf(err, "Failed to create s3 state bucket")
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
 
 	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
-
 	if cleanClusterAtTheEnd == "true" {
-		defer terraform.Destroy(suite.T(), terraformOptions)
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(suite.T(), terraformOptions)
-		})
+		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
 	terraform.InitAndApply(suite.T(), terraformOptions)
 
-	// Wait for the worker nodes to join the cluster
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
 
@@ -185,15 +198,17 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		Upgrade:         false,
 		VarFiles:        []string{"../fixtures/fixtures.default.eks.tfvars"},
 		Vars:            suite.varTf,
+		BackendConfig: map[string]interface{}{
+			"bucket": suite.tfStateS3Bucket,
+			"key":    fmt.Sprintf("terraform/%s/TestUpgradeEKSTestSuite/%sterraform.tfstate", suite.clusterName, tfModuleEKS),
+			"region": suite.bucketRegion,
+		},
 	}
 
 	suite.sugaredLogger.Infow("Reapply terraform after EKS cluster upgrade...", "extraVars", suite.varTf)
 
 	if cleanClusterAtTheEnd == "true" {
-		defer terraform.Destroy(suite.T(), terraformOptions)
-		defer runtime.HandleCrash(func(i interface{}) {
-			terraform.Destroy(suite.T(), terraformOptions)
-		})
+		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
