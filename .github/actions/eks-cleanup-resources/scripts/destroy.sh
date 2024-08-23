@@ -126,6 +126,8 @@ destroy_resource() {
 
   tree "." || return 1
 
+  echo "tf state: bucket=$BUCKET key=${resource_id} region=$AWS_S3_REGION"
+
   if ! terraform init -backend-config="bucket=$BUCKET" -backend-config="key=${resource_id}" -backend-config="region=$AWS_S3_REGION"; then return 1; fi
 
   # Execute the terraform destroy command with appropriate variables (see https://github.com/hashicorp/terraform/issues/23552)
