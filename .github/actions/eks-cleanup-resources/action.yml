@@ -7,6 +7,8 @@ inputs:
   tf-bucket:
     description: 'Bucket containing the resources states'
     required: true
+  tf-bucket-region:
+    description: 'Region of the bucket containing the resources states, if not set, will fallback on AWS_REGION'
   max-age-hours:
     description: 'Maximum age of resources in hours'
     required: false
@@ -27,4 +29,8 @@ runs:
       id: delete_resources
       shell: bash
       run: |
+        if [ -z "${{ inputs.tf-bucket-region }}" ]; then
+          export AWS_S3_REGION="${{ inputs.tf-bucket-region }}"
+        fi
+
         ${{ github.action_path }}/scripts/destroy.sh "${{ inputs.tf-bucket }}" ${{ github.action_path }}/../../../modules/ "${{ inputs.temp-dir }}" ${{ inputs.max-age-hours }} ${{ inputs.target }}

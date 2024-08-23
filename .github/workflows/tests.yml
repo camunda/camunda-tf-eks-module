@@ -26,7 +26,9 @@ env:
   AWS_PROFILE: "infex"
   AWS_REGION: "eu-west-2" # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
   TESTS_TF_BINARY_NAME: "terraform"
-  TF_STATE_BUCKET: "tests-eks-tf-states-eu-west-2"
+
+  TF_STATE_BUCKET: "tests-eks-tf-states-eu-central-1"
+  TF_STATE_BUCKET_REGION: "eu-central-1"
 
 jobs:
 
@@ -223,6 +225,7 @@ jobs:
         uses: ./.github/actions/eks-cleanup-resources
         with:
           tf-bucket: "${{ env.TF_STATE_BUCKET }}"
+          tf-bucket-region: "${{ env.TF_STATE_BUCKET_REGION }}"
           max-age-hours: "0"
           target: "${{ needs.configure-tests.outputs.cluster_id }}"
 

@@ -32,6 +32,7 @@ type CustomEKSRDSTestSuite struct {
 	expectedNodes   int
 	kubeConfigPath  string
 	region          string
+	bucketRegion    string
 	tfDataDir       string
 	tfBinaryName    string
 	varTf           map[string]interface{}
@@ -45,12 +46,13 @@ func (suite *CustomEKSRDSTestSuite) SetupTest() {
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
 	suite.clusterName = fmt.Sprintf("cluster-rds-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
+	suite.bucketRegion = utils.GetEnv("TF_STATE_BUCKET_REGION", suite.region)
 	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "terraform")
 	suite.sugaredLogger.Infow("Terraform binary for the suite", "binary", suite.tfBinaryName)
 
 	suite.expectedNodes = 1
 	var errAbsPath error
-	suite.tfStateS3Bucket = utils.GetEnv("TF_STATE_BUCKET", fmt.Sprintf("tests-eks-tf-state-%s", suite.region))
+	suite.tfStateS3Bucket = utils.GetEnv("TF_STATE_BUCKET", fmt.Sprintf("tests-eks-tf-state-%s", suite.bucketRegion))
 	suite.tfDataDir, errAbsPath = filepath.Abs(fmt.Sprintf("../../test/states/tf-data-%s", suite.clusterName))
 	suite.Require().NoError(errAbsPath)
 	suite.kubeConfigPath = fmt.Sprintf("%s/kubeconfig-rds-eks", suite.tfDataDir)

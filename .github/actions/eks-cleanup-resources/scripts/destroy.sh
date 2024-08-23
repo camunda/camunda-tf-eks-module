@@ -50,7 +50,7 @@ MIN_AGE_IN_HOURS=$4
 ID_OR_ALL=$5
 FAILED=0
 CURRENT_DIR=$(pwd)
-
+AWS_S3_REGION=${AWS_S3_REGION:-$AWS_REGION}
 
 # Function to check if a folder is empty
 is_empty_folder() {
@@ -126,7 +126,7 @@ destroy_resource() {
 
   tree "." || return 1
 
-  if ! terraform init -backend-config="bucket=$BUCKET" -backend-config="key=${resource_id}" -backend-config="region=$AWS_REGION"; then return 1; fi
+  if ! terraform init -backend-config="bucket=$BUCKET" -backend-config="key=${resource_id}" -backend-config="region=$AWS_S3_REGION"; then return 1; fi
 
   # Execute the terraform destroy command with appropriate variables (see https://github.com/hashicorp/terraform/issues/23552)
   if [ "$terraform_module" == "eks-cluster" ]; then
