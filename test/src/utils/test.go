@@ -9,10 +9,10 @@ import (
 
 const TF_BUCKET_DESCRIPTION = "This bucket is used to store tests of the camunda/camunda-tf-eks-module repository. Anything contained in this bucket can be deleted without notice."
 
-func DeferCleanup(t *testing.T, terraformOptions *terraform.Options) {
+func DeferCleanup(t *testing.T, bucketRegion string, terraformOptions *terraform.Options) {
 	fmt.Println("Cleaning up resources")
 
-	sess, err := GetAwsClient()
+	sess, err := GetAwsClientF(GetAwsProfile(), bucketRegion)
 	if err != nil {
 		t.Fatalf("Failed to get AWS client: %v", err)
 	}

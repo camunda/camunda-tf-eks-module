@@ -29,7 +29,7 @@ runs:
       id: delete_resources
       shell: bash
       run: |
-        if [ -z "${{ inputs.tf-bucket-region }}" ]; then
+        if [ -n "${{ inputs.tf-bucket-region }}" ]; then
           export AWS_S3_REGION="${{ inputs.tf-bucket-region }}"
         fi
 

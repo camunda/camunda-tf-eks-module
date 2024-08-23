@@ -119,7 +119,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 
 	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
 	if cleanClusterAtTheEnd == "true" {
-		defer utils.DeferCleanup(suite.T(), terraformOptions)
+		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
@@ -208,7 +208,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	suite.sugaredLogger.Infow("Reapply terraform after EKS cluster upgrade...", "extraVars", suite.varTf)
 
 	if cleanClusterAtTheEnd == "true" {
-		defer utils.DeferCleanup(suite.T(), terraformOptions)
+		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added

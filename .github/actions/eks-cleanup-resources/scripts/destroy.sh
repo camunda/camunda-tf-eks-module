@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 # Description:
 # This script performs a Terraform destroy operation for resources defined in an S3 bucket.
 # It copies the Terraform module directory to a temporary location, initializes Terraform with
@@ -165,17 +167,24 @@ destroy_resource() {
 }
 
 # List objects in the S3 bucket and parse the resource IDs
-if [ "$ID_OR_ALL" == "all" ]; then
-  resources=$(aws s3 ls "s3://$BUCKET/" --recursive | grep "/terraform.tfstate" | awk '{print $4}')
-else
-  resources=$(aws s3 ls "s3://$BUCKET/" --recursive | grep "/terraform.tfstate" | grep "$ID_OR_ALL" | awk '{print $4}')
+all_objects=$(aws s3 ls "s3://$BUCKET/" --recursive)
+aws_exit_code=$?
+
+if [ $aws_exit_code -ne 0 ]; then
+  echo "Error executing the aws s3 ls command (Exit Code: $aws_exit_code):" >&2
+  exit 1
 fi
 
-# Check the exit code of the aws command
-if [ $? -ne 0 ]; then
-  echo "Error executing the aws s3 ls command:" >&2
-  echo "$resources" >&2
-  exit 1
+
+if [ "$ID_OR_ALL" == "all" ]; then
+  resources=$(echo "$all_objects" | grep "/terraform.tfstate" | awk '{print $4}')
+else
+  resources=$(echo "$all_objects" | grep "/terraform.tfstate" | grep "$ID_OR_ALL" | awk '{print $4}')
+fi
+# Check if resources is empty (i.e., no objects found)
+if [ -z "$resources" ]; then
+  echo "No terraform.tfstate objects found in the S3 bucket. Exiting script." >&2
+  exit 0
 fi
 
 current_timestamp=$($date_command +%s)

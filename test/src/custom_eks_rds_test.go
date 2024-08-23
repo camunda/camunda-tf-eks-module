@@ -116,7 +116,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 
 	cleanClusterAtTheEnd := utils.GetEnv("CLEAN_CLUSTER_AT_THE_END", "true")
 	if cleanClusterAtTheEnd == "true" {
-		defer utils.DeferCleanup(suite.T(), terraformOptions)
+		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
 	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
@@ -184,7 +184,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	}
 
 	if cleanClusterAtTheEnd == "true" {
-		defer utils.DeferCleanup(suite.T(), terraformOptionsRDS)
+		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptionsRDS)
 	}
 
 	terraform.InitAndApply(suite.T(), terraformOptionsRDS)
