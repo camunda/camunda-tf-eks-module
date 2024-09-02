@@ -304,7 +304,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	suite.Assert().Equal("db.t3.medium", *describeDBInstanceOutput.DBInstances[0].DBInstanceClass)
 	suite.Assert().Equal(true, *describeDBInstanceOutput.DBInstances[0].AutoMinorVersionUpgrade)
 	suite.Assert().Equal("aurora-postgresql", *describeDBInstanceOutput.DBInstances[0].Engine)
-	suite.Assert().Equal("rds-ca-2019", *describeDBInstanceOutput.DBInstances[0].CertificateDetails.CAIdentifier)
+	suite.Assert().Equal("rds-ca-rsa2048-g1", *describeDBInstanceOutput.DBInstances[0].CertificateDetails.CAIdentifier)
 	suite.Assert().Equal(varsConfigAurora["vpc_id"].(string), *describeDBInstanceOutput.DBInstances[0].DBSubnetGroup.VpcId)
 	suite.Assert().Contains(*describeDBInstanceOutput.DBInstances[0].AvailabilityZone, suite.region)
 
