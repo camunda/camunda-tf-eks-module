@@ -20,7 +20,7 @@ module "eks_cluster" {
 }
 ```
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ## Modules
 
 | Name | Source | Version |
@@ -86,4 +86,4 @@ module "eks_cluster" {
 | <a name="output_public_vpc_cidr_blocks"></a> [public\_vpc\_cidr\_blocks](#output\_public\_vpc\_cidr\_blocks) | Public VPC CIDR blocks |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | VPC id of the cluster |
 | <a name="output_vpc_main_route_table_id"></a> [vpc\_main\_route\_table\_id](#output\_vpc\_main\_route\_table\_id) | The ID of the main route table associated with this VPC |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->

@@ -27,7 +27,7 @@ module "postgresql" {
 }
 ```
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ## Modules
 
 No modules.
@@ -68,4 +68,4 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_aurora_endpoint"></a> [aurora\_endpoint](#output\_aurora\_endpoint) | The endpoint of the Aurora cluster |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->
