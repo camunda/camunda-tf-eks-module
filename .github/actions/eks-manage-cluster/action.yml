@@ -20,10 +20,6 @@ inputs:
     required: true
     # renovate: datasource=endoflife-date depName=amazon-eks versioning=semver
     default: "1.30"
-  node-instance-types:
-    description: 'Instance types for the EKS node group'
-    required: true
-    default: '["t2.medium"]'
   cluster-service-ipv4-cidr:
     description: 'CIDR block for cluster service IPs'
     required: true
@@ -33,22 +29,30 @@ inputs:
     required: true
     default: '10.192.0.0/16'
   np-instance-types:
-    description: 'List of instance types for non-production environments'
+    description: 'List of instance types'
     required: true
     default: '["t2.medium"]'
   np-capacity-type:
     description: 'Capacity type for non-production instances (e.g., SPOT)'
     required: true
     default: 'SPOT'
-  node-desired-count:
+  np-node-desired-count:
     description: 'Desired number of nodes in the EKS node group'
     required: true
     default: "4"
-  node-min-count:
+  np-node-min-count:
     description: 'Minimum number of nodes in the EKS node group'
     required: true
     default: "1"
-  node-max-count:
+  np-disk-size:
+    description: 'Disk size of the nodes on the default node pool'
+    required: true
+    default: "20"
+  np-ami-type:
+    description: 'Amazon Machine Image'
+    required: true
+    default: "AL2_x86_64"
+  np-node-max-count:
     description: 'Maximum number of nodes in the EKS node group'
     required: true
     default: "10"
@@ -206,10 +210,12 @@ runs:
         terraform plan -no-color -out eks.plan -var "name=${{ inputs.cluster-name }}" \
           -var "region=${{ inputs.aws-region }}" \
           -var "kubernetes_version=${{ inputs.kubernetes-version }}" \
-          -var "node_instance_types=${{ inputs.node-instance-types }}" \
-          -var "node_desired_count=${{ inputs.node-desired-count }}" \
-          -var "node_min_count=${{ inputs.node-min-count }}" \
-          -var "node_max_count=${{ inputs.node-max-count }}" \
+          -var "name=${{ inputs.cluster-name }}" \
+          -var "np_desired_node_count=${{ inputs.np-node-desired-count }}" \
+          -var "np_min_node_count=${{ inputs.np-node-min-count }}" \
+          -var "np_max_node_count=${{ inputs.np-node-max-count }}" \
+          -var "np_disk_size=${{ inputs.np-node-disk-size }}" \
+          -var "np_ami_type=${{ inputs.np-node-ami-type }}" \
           -var "cluster_service_ipv4_cidr=${{ inputs.cluster-service-ipv4-cidr }}" \
           -var "cluster_node_ipv4_cidr=${{ inputs.cluster-node-ipv4-cidr }}" \
           -var "np_instance_types=${{ inputs.np-instance-types }}" \
