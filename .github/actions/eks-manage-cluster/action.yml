@@ -109,18 +109,28 @@ runs:
     - name: Install AWS CLI
       shell: bash
       run: |
-        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${{ inputs.awscli-version }}.zip" -o "awscliv2.zip"
-        unzip -qq awscliv2.zip
-        sudo ./aws/install
-        rm -f awscliv2.zip
+        if ! command -v aws &> /dev/null; then
+          echo "AWS CLI not found, installing..."
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${{ inputs.awscli-version }}.zip" -o "awscliv2.zip"
+          unzip -qq awscliv2.zip
+          sudo ./aws/install
+          rm -f awscliv2.zip
+        else
+          echo "Warning: AWS CLI is already installed."
+        fi
 
     - name: Install kubectl
       shell: bash
       run: |
-        curl -LO "https://dl.k8s.io/release/v${{ inputs.kubernetes-version }}/bin/linux/amd64/kubectl"
-        chmod +x ./kubectl
-        sudo mv ./kubectl /usr/local/bin/kubectl
-        kubectl version --client
+        if ! command -v kubectl &> /dev/null; then
+          echo "kubectl not found, installing..."
+          curl -LO "https://dl.k8s.io/release/v${{ inputs.kubernetes-version }}/bin/linux/amd64/kubectl"
+          chmod +x ./kubectl
+          sudo mv ./kubectl /usr/local/bin/kubectl
+          kubectl version --client
+        else
+          echo "Warning: kubectl is already installed."
+        fi
 
     - name: Set Terraform variables
       shell: bash
