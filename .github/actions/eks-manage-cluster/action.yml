@@ -1,0 +1,209 @@
+name: Deploy or Destroy EKS Cluster
+
+description: |
+  This GitHub Action automates the deployment or destruction of an EKS (Amazon Elastic Kubernetes Service) cluster using Terraform.
+  This action will also install Terraform, awscli, and kubectl. The kube context will be set on the created cluster.
+
+inputs:
+  action:
+    description: 'Specify the action to perform: "create" or "destroy" the EKS cluster'
+    required: true
+    default: 'create'
+  aws-region:
+    description: 'AWS region where the EKS cluster will be deployed'
+    required: true
+  cluster-name:
+    description: 'Name of the EKS cluster to deploy'
+    required: true
+  kubernetes-version:
+    description: 'Version of Kubernetes to use for the EKS cluster'
+    required: true
+    # renovate: datasource=endoflife-date depName=amazon-eks versioning=semver
+    default: "1.30"
+  node-instance-types:
+    description: 'Instance types for the EKS node group'
+    required: true
+    # TODO: add spot
+    default: '["t2.micro"]'
+  node-desired-count:
+    description: 'Desired number of nodes in the EKS node group'
+    required: true
+    default: "4"
+  node-min-count:
+    description: 'Minimum number of nodes in the EKS node group'
+    required: true
+    default: "1"
+  node-max-count:
+    description: 'Maximum number of nodes in the EKS node group'
+    required: true
+    default: "10"
+  s3-backend-bucket:
+    description: 'Name of the S3 bucket to store Terraform state'
+    required: true
+  s3-bucket-region:
+    description: 'Region of the bucket containing the resources states, if not set, will fallback on aws-region'
+  tf-modules-revision:
+    description: 'Git revision of the tf modules to use'
+    default: 'main'
+    required: true
+  tf-modules-path:
+    description: 'Path where the tf EKS modules will be cloned'
+    default: './.action-tf-modules/eks/'
+    required: true
+  login:
+    description: 'Authenticate the current kube context on the created cluster'
+    default: "true"
+    required: true
+
+  # inherited from https://github.com/hashicorp/setup-terraform/blob/main/action.yml
+  tf-cli-config-credentials-hostname:
+    description: 'The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file. Defaults to `app.terraform.io`.'
+    default: 'app.terraform.io'
+    required: false
+  tf-cli-config-credentials-token:
+    description: 'The API token for a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file.'
+    required: false
+  tf-terraform-version:
+    description: 'The version of Terraform CLI to install. Instead of full version string you can also specify constraint string starting with "<" (for example `<1.13.0`) to install the latest version satisfying the constraint. A value of `latest` will install the latest version of Terraform CLI. Defaults to `latest`.'
+    default: 'latest'
+    required: false
+  tf-terraform-wrapper:
+    description: 'Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.'
+    default: 'true'
+    required: false
+  awscli-version:
+    description: 'Version of the aws cli to use'
+    required: true
+    # renovate: datasource=github-releases depName=aws/aws-cli
+    default: "2.15.52"
+
+outputs:
+  eks-cluster-endpoint:
+    description: 'The API endpoint of the deployed EKS cluster'
+    value: ${{ steps.cluster_info.outputs.cluster_endpoint }}
+
+  eks-cluster-id:
+    description: 'The ID of the deployed EKS cluster'
+    value: ${{ steps.apply.outputs.cluster_id }}
+
+  terraform-state-url:
+    description: 'URL of the Terraform state file in the S3 bucket'
+    value: ${{ steps.set-terraform-variables.outputs.terraform-state-url }}
+
+  # Add all terraform outputs dynamically
+  all-terraform-outputs:
+    description: 'All outputs from Terraform'
+    value: ${{ steps.fetch_outputs.outputs.all_terraform_outputs }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Terraform
+      uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+      with:
+        cli_config_credentials_hostname: ${{ inputs.tf-cli-config-credentials-hostname }}
+        cli_config_credentials_token: ${{ inputs.tf-cli-config-credentials-token }}
+        terraform_version: ${{ inputs.tf-terraform-version }}
+        terraform_wrapper: ${{ inputs.tf-terraform-wrapper }}
+
+    - name: Install AWS CLI
+      shell: bash
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${{ inputs.awscli-version }}.zip" -o "awscliv2.zip"
+        unzip -qq awscliv2.zip
+        sudo ./aws/install
+        rm -f awscliv2.zip
+
+    - name: Install kubectl
+      shell: bash
+      run: |
+        curl -LO "https://dl.k8s.io/release/v${{ inputs.kubernetes-version }}/bin/linux/amd64/kubectl"
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
+        kubectl version --client
+
+    - name: Set Terraform variables
+      shell: bash
+      id: set-terraform-variables
+      run: |
+        export TFSTATE_BUCKET="${{ inputs.s3-backend-bucket }}"
+        export TFSTATE_KEY="terraform/${{ inputs.cluster-name }}/gha/eks-cluster/terraform.tfstate"
+
+        if [ -z "${{ inputs.s3-bucket-region }}" ]; then
+          export TFSTATE_REGION="${{ inputs.aws-region }}"
+        else
+          export TFSTATE_REGION="${{ inputs.s3-bucket-region }}"
+        fi
+
+        echo "TFSTATE_BUCKET=${TFSTATE_BUCKET}" >> "$GITHUB_OUTPUT"
+        echo "TFSTATE_REGION=${TFSTATE_REGION}" >> "$GITHUB_OUTPUT"
+        echo "TFSTATE_KEY=${TFSTATE_KEY}" >> "$GITHUB_OUTPUT"
+
+        terraform_state_url="s3://${TFSTATE_BUCKET}/${TFSTATE_KEY}"
+        echo "terraform-state-url=${terraform_state_url}" >> "$GITHUB_OUTPUT"
+
+    - name: Check if S3 bucket exists
+      id: create-s3-bucket
+      shell: bash
+      run: |
+        if aws s3api head-bucket --bucket ${{ inputs.s3-backend-bucket }} --region ${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }} 2>/dev/null; then
+          echo "Bucket already exists"
+        else
+          echo "Bucket does not exist, creating..."
+          aws s3api create-bucket --bucket ${{ inputs.s3-backend-bucket }} --region ${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }} --create-bucket-configuration LocationConstraint=${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }}
+        fi
+
+        aws s3api put-public-access-block --bucket ${{ inputs.s3-backend-bucket }} --region ${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }} --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+
+    - name: Checkout Repository EKS modules
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      with:
+        repository: "camunda/camunda-tf-eks-module"
+        ref: ${{ inputs.tf-modules-revision }}
+        path: ${{ inputs.tf-modules-path }}
+        fetch-depth: 0
+
+    - name: Terraform Init
+      shell: bash
+      id: init
+      working-directory: "${{ inputs.tf-modules-path }}/modules/eks-cluster/"
+      run: |
+        terraform version
+        terraform init -backend-config="bucket=${{ steps.set-terraform-variables.outputs.TFSTATE_BUCKET }}" -backend-config="key=${{ steps.set-terraform-variables.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }}"
+        terraform validate -no-color
+
+    - name: Terraform Plan
+      shell: bash
+      id: plan
+      working-directory: "${{ inputs.tf-modules-path }}/modules/eks-cluster/"
+      run: |
+        terraform plan -no-color -out eks.plan -var "name=${{ inputs.cluster-name }}" -var "region=${{ inputs.aws-region }}" -var "kubernetes_version=${{ inputs.kubernetes-version }}" -var "node_instance_types=${{ inputs.node-instance-types }}" -var "node_desired_count=${{ inputs.node-desired-count }}" -var "node_min_count=${{ inputs.node-min-count }}" -var "node_max_count=${{ inputs.node-max-count }}"
+
+    - name: Terraform Apply or Destroy
+      shell: bash
+      id: apply-or-destroy
+      working-directory: "${{ inputs.tf-modules-path }}/modules/eks-cluster/"
+      run: |
+        if [ "${{ inputs.action }}" == "create" ]; then
+          terraform apply -no-color eks.plan
+          export cluster_endpoint="$(terraform output -raw cluster_endpoint)"
+          echo "cluster_endpoint=$cluster_endpoint" >> "$GITHUB_OUTPUT"
+        elif [ "${{ inputs.action }}" == "destroy" ]; then
+          terraform destroy -no-color -auto-approve
+        else
+          echo "Invalid action. Please specify 'create' or 'destroy'."
+          exit 1
+        fi
+
+    - name: Configure kubectl
+      shell: bash
+      id: kube_config
+      if: inputs.login == 'true' && inputs.action == 'create'
+      run: |
+        aws eks --region ${{ inputs.aws-region }} update-kubeconfig --name ${{ inputs.cluster-name }}
+
+    - name: Output Kube Config
+      shell: bash
+      if: inputs.login == 'true' && inputs.action == 'create'
+      run: |
+        kubectl config view
