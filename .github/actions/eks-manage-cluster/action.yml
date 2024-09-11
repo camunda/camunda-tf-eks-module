@@ -31,7 +31,7 @@ inputs:
   np-instance-types:
     description: 'List of instance types'
     required: true
-    default: '["t2.medium"]'
+    default: "['t2.medium']"
   np-capacity-type:
     description: 'Capacity type for non-production instances (e.g., SPOT)'
     required: true
