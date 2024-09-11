@@ -23,8 +23,23 @@ inputs:
   node-instance-types:
     description: 'Instance types for the EKS node group'
     required: true
-    # TODO: add spot
-    default: '["t2.micro"]'
+    default: '["t2.medium"]'
+  cluster-service-ipv4-cidr:
+    description: 'CIDR block for cluster service IPs'
+    required: true
+    default: '10.190.0.0/16'
+  cluster-node-ipv4-cidr:
+    description: 'CIDR block for cluster node IPs'
+    required: true
+    default: '10.192.0.0/16'
+  np-instance-types:
+    description: 'List of instance types for non-production environments'
+    required: true
+    default: '["t2.medium"]'
+  np-capacity-type:
+    description: 'Capacity type for non-production instances (e.g., SPOT)'
+    required: true
+    default: 'SPOT'
   node-desired-count:
     description: 'Desired number of nodes in the EKS node group'
     required: true
@@ -187,7 +202,17 @@ runs:
       id: plan
       working-directory: "${{ inputs.tf-modules-path }}/modules/eks-cluster/"
       run: |
-        terraform plan -no-color -out eks.plan -var "name=${{ inputs.cluster-name }}" -var "region=${{ inputs.aws-region }}" -var "kubernetes_version=${{ inputs.kubernetes-version }}" -var "node_instance_types=${{ inputs.node-instance-types }}" -var "node_desired_count=${{ inputs.node-desired-count }}" -var "node_min_count=${{ inputs.node-min-count }}" -var "node_max_count=${{ inputs.node-max-count }}"
+        terraform plan -no-color -out eks.plan -var "name=${{ inputs.cluster-name }}" \
+          -var "region=${{ inputs.aws-region }}" \
+          -var "kubernetes_version=${{ inputs.kubernetes-version }}" \
+          -var "node_instance_types=${{ inputs.node-instance-types }}" \
+          -var "node_desired_count=${{ inputs.node-desired-count }}" \
+          -var "node_min_count=${{ inputs.node-min-count }}" \
+          -var "node_max_count=${{ inputs.node-max-count }}" \
+          -var "cluster_service_ipv4_cidr=${{ inputs.cluster-service-ipv4-cidr }}" \
+          -var "cluster_node_ipv4_cidr=${{ inputs.cluster-node-ipv4-cidr }}" \
+          -var "np_instance_types=${{ inputs.np-instance-types }}" \
+          -var "np_capacity_type=${{ inputs.np-capacity-type }}"
 
     - name: Terraform Apply or Destroy
       shell: bash
