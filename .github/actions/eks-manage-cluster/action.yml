@@ -193,6 +193,7 @@ runs:
       id: init
       working-directory: "${{ inputs.tf-modules-path }}/modules/eks-cluster/"
       run: |
+        cp ../fixtures/backend.tf ./
         terraform version
         terraform init -backend-config="bucket=${{ steps.set-terraform-variables.outputs.TFSTATE_BUCKET }}" -backend-config="key=${{ steps.set-terraform-variables.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }}"
         terraform validate -no-color
