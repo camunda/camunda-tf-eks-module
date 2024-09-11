@@ -31,7 +31,7 @@ inputs:
   np-instance-types:
     description: 'List of instance types'
     required: true
-    default: "['t2.medium']"
+    default: '["t2.medium"]'
   np-capacity-type:
     description: 'Capacity type for non-production instances (e.g., SPOT)'
     required: true
@@ -218,7 +218,7 @@ runs:
           -var "np_ami_type=${{ inputs.np-node-ami-type }}" \
           -var "cluster_service_ipv4_cidr=${{ inputs.cluster-service-ipv4-cidr }}" \
           -var "cluster_node_ipv4_cidr=${{ inputs.cluster-node-ipv4-cidr }}" \
-          -var "np_instance_types=${{ inputs.np-instance-types }}" \
+          -var 'np_instance_types=${{ inputs.np-instance-types }}' \
           -var "np_capacity_type=${{ inputs.np-capacity-type }}"
 
     - name: Terraform Apply or Destroy
