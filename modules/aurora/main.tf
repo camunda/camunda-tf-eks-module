@@ -73,11 +73,15 @@ resource "aws_security_group" "this" {
 
   vpc_id = var.vpc_id
 
+  count = var.vpc_id != "" ? 1 : 0
+
   tags = var.tags
 }
 
 resource "aws_security_group_rule" "allow_egress" {
   description = "Allow outgoing traffic for the aurora db"
+
+  count = length(var.cidr_blocks) > 0 ? 1 : 0
 
   type        = "egress"
   from_port   = 0
@@ -92,6 +96,8 @@ resource "aws_security_group_rule" "allow_egress" {
 resource "aws_security_group_rule" "allow_ingress" {
   description = "Allow incoming traffic for the aurora db for port 5432"
 
+  count = length(var.cidr_blocks) > 0 ? 1 : 0
+
   type        = "ingress"
   from_port   = 5432
   to_port     = 5432
@@ -102,6 +108,8 @@ resource "aws_security_group_rule" "allow_ingress" {
 }
 
 resource "aws_db_subnet_group" "this" {
+  count = length(var.subnet_ids) > 0 ? 1 : 0
+
   name = var.cluster_name
 
   description = "For Aurora cluster ${var.cluster_name}"
