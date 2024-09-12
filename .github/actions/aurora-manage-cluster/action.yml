@@ -32,10 +32,13 @@ inputs:
     required: true
   vpc-id:
     description: 'VPC ID to create the cluster in'
+    default: ''
   subnet-ids:
     description: 'List of subnet IDs to create the cluster in'
+    default: '[]'
   cidr-blocks:
     description: 'CIDR blocks to allow access from and to'
+    default: '[]'
   tags:
     description: 'Tags to add to the resources'
     default: '{}'
