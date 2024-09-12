@@ -145,8 +145,8 @@ runs:
           -var "username=${{ inputs.username }}" \
           -var "password=${{ inputs.password }}" \
           -var "vpc_id=${{ inputs.vpc-id }}" \
-          -var "subnet_ids=${{ inputs.subnet-ids }}" \
-          -var "cidr_blocks=${{ inputs.cidr-blocks }}"
+          -var 'subnet_ids=${{ inputs.subnet-ids }}' \
+          -var 'cidr_blocks=${{ inputs.cidr-blocks }}'
 
     - name: Terraform Apply
       shell: bash
