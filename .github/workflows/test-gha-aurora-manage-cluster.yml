@@ -123,7 +123,7 @@ jobs:
           if [[ -n "${{ inputs.subnet-ids }}" ]]; then
             subnet_ids="${{ inputs.subnet-ids }}"
           else
-            subnet_ids="$(aws ec2 describe-subnets --filters Name=vpc-id,Values= --query 'Subnets[*].SubnetId' --output json --profile \"${{ env.AWS_PROFILE }}\")"
+            subnet_ids=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${vpc_id}" --query "Subnets[*].SubnetId" --output json --profile "${{ env.AWS_PROFILE }}")
           fi
 
           if [[ -n "${{ inputs.cidr-blocks }}" ]]; then
