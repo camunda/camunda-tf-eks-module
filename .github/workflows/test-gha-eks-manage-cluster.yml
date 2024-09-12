@@ -99,7 +99,6 @@ jobs:
         uses: ./.github/actions/eks-manage-cluster
         id: create_cluster
         with:
-          action: "create"
           cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
           aws-region: ${{ env.AWS_REGION }}
           s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
@@ -109,14 +108,12 @@ jobs:
       - name: Delete Cluster
         timeout-minutes: 125
         if: always() && !(github.event_name == 'workflow_dispatch' && github.event.inputs.delete_cluster == 'false')
-        uses: ./.github/actions/eks-manage-cluster
+        uses: ./.github/actions/eks-cleanup-resources
         with:
-          action: "delete"
-          cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
-          aws-region: ${{ env.AWS_REGION }}
-          s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
-          s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
-          tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}
+          tf-bucket: ${{ env.TF_STATE_BUCKET }}
+          tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
+          max-age-hours: 0
+          target: ${{ steps.commit_info.outputs.cluster_name }}
 
       - name: Notify in Slack in case of failure
         id: slack-notification

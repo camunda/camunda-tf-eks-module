@@ -1,14 +1,10 @@
-name: Deploy or Destroy EKS Cluster
+name: Deploy an EKS Cluster
 
 description: |
-  This GitHub Action automates the deployment or destruction of an EKS (Amazon Elastic Kubernetes Service) cluster using Terraform.
+  This GitHub Action automates the deployment of an EKS (Amazon Elastic Kubernetes Service) cluster using Terraform.
   This action will also install Terraform, awscli, and kubectl. The kube context will be set on the created cluster.
 
 inputs:
-  action:
-    description: 'Specify the action to perform: "create" or "destroy" the EKS cluster'
-    required: true
-    default: 'create'
   aws-region:
     description: 'AWS region where the EKS cluster will be deployed'
     required: true
@@ -221,31 +217,25 @@ runs:
           -var 'np_instance_types=${{ inputs.np-instance-types }}' \
           -var "np_capacity_type=${{ inputs.np-capacity-type }}"
 
-    - name: Terraform Apply or Destroy
+    - name: Terraform Apply
       shell: bash
       id: apply-or-destroy
       working-directory: "${{ inputs.tf-modules-path }}/modules/eks-cluster/"
       run: |
-        if [ "${{ inputs.action }}" == "create" ]; then
-          terraform apply -no-color eks.plan
-          export cluster_endpoint="$(terraform output -raw cluster_endpoint)"
-          echo "cluster_endpoint=$cluster_endpoint" >> "$GITHUB_OUTPUT"
-        elif [ "${{ inputs.action }}" == "destroy" ]; then
-          terraform destroy -no-color -auto-approve
-        else
-          echo "Invalid action. Please specify 'create' or 'destroy'."
-          exit 1
-        fi
+        terraform apply -no-color eks.plan
+        export cluster_endpoint="$(terraform output -raw cluster_endpoint)"
+        echo "cluster_endpoint=$cluster_endpoint" >> "$GITHUB_OUTPUT"
 
     - name: Configure kubectl
       shell: bash
       id: kube_config
-      if: inputs.login == 'true' && inputs.action == 'create'
+      if: inputs.login == 'true'
       run: |
         aws eks --region ${{ inputs.aws-region }} update-kubeconfig --name ${{ inputs.cluster-name }}
 
     - name: Output Kube Config
       shell: bash
-      if: inputs.login == 'true' && inputs.action == 'create'
+      if: inputs.login == 'true'
       run: |
         kubectl config view
+        kubectl get ns
