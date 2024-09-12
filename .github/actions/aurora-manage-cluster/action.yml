@@ -41,7 +41,7 @@ inputs:
     default: '[]'
   tags:
     description: 'Tags to add to the resources'
-    default: '{}'
+    default: ''
     required: false
   s3-backend-bucket:
     description: 'Name of the S3 bucket to store Terraform state'
