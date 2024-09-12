@@ -27,6 +27,7 @@ env:
   AWS_REGION: "eu-west-2" # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
   TESTS_TF_BINARY_NAME: "terraform"
 
+  # please keep test-gha*.yml synced
   TF_STATE_BUCKET: "tests-eks-tf-state-eu-central-1"
   TF_STATE_BUCKET_REGION: "eu-central-1"
 

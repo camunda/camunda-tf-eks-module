@@ -72,6 +72,5 @@ jobs:
 | Output Name                | Description                                                      |
 |----------------------------|------------------------------------------------------------------|
 | `eks-cluster-endpoint`     | The API endpoint of the deployed EKS cluster.                    |
-| `eks-cluster-id`           | The ID of the deployed EKS cluster.                              |
 | `terraform-state-url`      | URL of the Terraform state file in the S3 bucket.                |
 | `all-terraform-outputs`    | All outputs from Terraform.                                      |

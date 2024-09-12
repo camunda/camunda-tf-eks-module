@@ -97,10 +97,6 @@ outputs:
     description: 'The API endpoint of the deployed EKS cluster'
     value: ${{ steps.apply.outputs.cluster_endpoint }}
 
-  eks-cluster-id:
-    description: 'The ID of the deployed EKS cluster'
-    value: ${{ steps.apply.outputs.cluster_id }}
-
   terraform-state-url:
     description: 'URL of the Terraform state file in the S3 bucket'
     value: ${{ steps.utility.outputs.terraform-state-url }}
@@ -181,8 +177,6 @@ runs:
         terraform apply -no-color eks.plan
         export cluster_endpoint="$(terraform output -raw cluster_endpoint)"
         echo "cluster_endpoint=$cluster_endpoint" >> "$GITHUB_OUTPUT"
-        export cluster_id="$(terraform output -raw cluster_id)"
-        echo "cluster_id=$cluster_id" >> "$GITHUB_OUTPUT"
 
     - name: Configure kubectl
       shell: bash

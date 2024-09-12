@@ -1,44 +1,48 @@
----
-name: EKS Cluster creation and destruction test
+name: Aurora Cluster creation and destruction test
 
 on:
   schedule:
-    - cron: '0 1 * * 1' # At 01:00 on Monday.
+    - cron: '0 2 * * 1' # At 02:00 on Monday.
 
   workflow_dispatch:
     inputs:
       cluster_name:
-        description: "Cluster name."
+        description: "Aurora Cluster name."
         required: false
         type: string
       delete_cluster:
-        description: "Whether to delete the cluster."
+        description: "Whether to delete the Aurora cluster."
         required: false
         type: boolean
         default: true
+      db_username:
+        description: "Database username."
+        required: false
+        type: string
+      db_password:
+        description: "Database password."
+        required: false
+        type: string
 
   pull_request:
-    # the paths should be synced with ../labeler.yml
     paths:
       - modules/fixtures/backend.tf
-      - modules/fixtures/fixtures.default.eks.tfvars
-      - modules/eks-cluster/**.tf
+      - modules/fixtures/fixtures.default.aurora.tfvars
+      - modules/aurora/**.tf
       - .tool-versions
-      - .github/workflows/test-gha-eks-manage-cluster.yml
-      - .github/actions/eks-manage-cluster/*.yml
+      - .github/workflows/test-gha-aurora-manage-cluster.yml
+      - .github/actions/aurora-manage-cluster/*.yml
       - justfile
 
-# limit to a single execution per actor of this workflow
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 env:
-
   AWS_PROFILE: "infex"
-  AWS_REGION: "eu-west-2" # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
+  AWS_REGION: "eu-west-2"
 
-    # please keep those synced with tests.yml
+  # please keep those synced with tests.yml
   TF_STATE_BUCKET: "tests-eks-tf-state-eu-central-1"
   TF_STATE_BUCKET_REGION: "eu-central-1"
 
@@ -61,15 +65,27 @@ jobs:
           if [[ -n "${{ github.event.inputs.cluster_name }}" ]]; then
             cluster_name="${{ github.event.inputs.cluster_name }}"
           else
-            cluster_name="cl-$(git rev-parse --short HEAD)"
+            cluster_name="aurora-$(git rev-parse --short HEAD)"
           fi
-          echo "cluster_name=$cluster_name" >> "$GITHUB_OUTPUT"
 
-          # Get the current commit hash for the modules revision
+          if [[ -n "${{ github.event.inputs.db_username }}" ]]; then
+            db_username="${{ github.event.inputs.db_username }}"
+          else
+            db_username="user$(openssl rand -hex 4)"
+          fi
+
+          if [[ -n "${{ github.event.inputs.db_password }}" ]]; then
+            db_password="${{ github.event.inputs.db_password }}"
+          else
+            db_password="$(openssl rand -base64 12)"
+          fi
+
+          echo "cluster_name=$cluster_name" | tee -a "$GITHUB_OUTPUT"
+          echo "db_username=$db_username" | tee -a "$GITHUB_OUTPUT"
+          echo "db_password=$db_password" | tee -a "$GITHUB_OUTPUT"
+
           tf_modules_revision=$(git rev-parse HEAD)
-
-          echo "cluster_name=$cluster_name" >> "$GITHUB_OUTPUT"
-          echo "tf_modules_revision=$tf_modules_revision" >> "$GITHUB_OUTPUT"
+          echo "tf_modules_revision=$tf_modules_revision" | tee -a "$GITHUB_OUTPUT"
 
       - name: Import Secrets
         id: secrets
@@ -90,18 +106,20 @@ jobs:
           aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
-      - name: Create Cluster
+      - name: Create Aurora Cluster
         timeout-minutes: 125
-        uses: ./.github/actions/eks-manage-cluster
+        uses: ./.github/actions/aurora-manage-cluster
         id: create_cluster
         with:
           cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
+          username: ${{ steps.commit_info.outputs.db_username }}
+          password: ${{ steps.commit_info.outputs.db_password }}
           aws-region: ${{ env.AWS_REGION }}
           s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
           s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
           tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}
 
-      - name: Delete Cluster
+      - name: Delete Aurora Cluster
         timeout-minutes: 125
         if: always() && !(github.event_name == 'workflow_dispatch' && github.event.inputs.delete_cluster == 'false')
         uses: ./.github/actions/eks-cleanup-resources
