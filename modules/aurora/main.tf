@@ -16,7 +16,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   iam_roles                           = var.iam_roles # only needed if wanted to grant access from Aurora to e.g. S3
 
   vpc_security_group_ids = [aws_security_group.this.id]
-  db_subnet_group_name   = aws_db_subnet_group.this.name
+  db_subnet_group_name   = aws_db_subnet_group.this[0].name
   skip_final_snapshot    = true
   apply_immediately      = true
   storage_encrypted      = true
@@ -50,7 +50,7 @@ resource "aws_rds_cluster_instance" "aurora_instance" {
   auto_minor_version_upgrade = var.auto_minor_version_upgrade
   instance_class             = var.instance_class
 
-  db_subnet_group_name = aws_db_subnet_group.this.name
+  db_subnet_group_name = aws_db_subnet_group.this[0].name
 
   apply_immediately = true
 
@@ -103,6 +103,8 @@ resource "aws_security_group_rule" "allow_ingress" {
 
 resource "aws_db_subnet_group" "this" {
   name = var.cluster_name
+
+  count = length(var.subnet_ids) > 0 ? 1 : 0
 
   description = "For Aurora cluster ${var.cluster_name}"
   subnet_ids  = var.subnet_ids
