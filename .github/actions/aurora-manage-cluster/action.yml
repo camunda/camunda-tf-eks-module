@@ -39,10 +39,6 @@ inputs:
   cidr-blocks:
     description: 'CIDR blocks to allow access from and to'
     default: '[]'
-  tags:
-    description: 'Tags to add to the resources'
-    default: ''
-    required: false
   s3-backend-bucket:
     description: 'Name of the S3 bucket to store Terraform state'
     required: true
@@ -150,8 +146,7 @@ runs:
           -var "password=${{ inputs.password }}" \
           -var "vpc_id=${{ inputs.vpc-id }}" \
           -var "subnet_ids=${{ inputs.subnet-ids }}" \
-          -var "cidr_blocks=${{ inputs.cidr-blocks }}" \
-          -var "tags=${{ inputs.tags }}"
+          -var "cidr_blocks=${{ inputs.cidr-blocks }}"
 
     - name: Terraform Apply
       shell: bash

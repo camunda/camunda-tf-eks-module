@@ -27,7 +27,6 @@ The following inputs are required for the action:
 | `vpc-id` | VPC ID to create the cluster in. | No | - |
 | `subnet-ids` | List of subnet IDs to create the cluster in. | No | `[]` |
 | `cidr-blocks` | CIDR blocks to allow access from and to. | No | `[]` |
-| `tags` | Tags to add to the resources. | No | `` |
 | `s3-backend-bucket` | Name of the S3 bucket to store Terraform state. | Yes | - |
 | `s3-bucket-region` | Region of the bucket containing the resources states. Fallbacks to `aws-region` if not set. | No | - |
 | `tf-modules-revision` | Git revision of the Terraform modules to use. | Yes | `main` |
