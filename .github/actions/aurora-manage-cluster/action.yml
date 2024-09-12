@@ -98,7 +98,12 @@ runs:
   steps:
     - name: Use Utility Actions
       id: utility
-      uses: ${{ github.action_repository }}/utility-action@${{ github.action_ref }}
+      # seehttps://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
+      # steps.uses  cannot access the github context.
+      # uses: ${{ github.action_repository }}/utility-action@${{ github.action_ref }}
+      # TODO: hard pin this one once it's merged
+      #uses: "camunda/camunda-tf-eks-module/utility-action@main"
+      uses: "./.github/actions/utility-action"
       with:
         awscli-version: '${{ inputs.awscli-version }}'
         terraform-version: '${{ inputs.terraform-version }}'
