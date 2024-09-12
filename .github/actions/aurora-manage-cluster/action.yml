@@ -98,7 +98,7 @@ runs:
   steps:
     - name: Use Utility Actions
       id: utility
-      uses: ./../utility-action
+      uses: ${{ github.action_repository }}/utility-action@${{ github.action_ref }}
       with:
         awscli-version: '${{ inputs.awscli-version }}'
         terraform-version: '${{ inputs.terraform-version }}'

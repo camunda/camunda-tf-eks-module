@@ -115,7 +115,8 @@ runs:
   steps:
     - name: Use Utility Actions
       id: utility
-      uses: ./../utility-action
+      # seehttps://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
+      uses: ${{ github.action_repository }}/utility-action@${{ github.action_ref }}
       with:
         awscli-version: '${{ inputs.awscli-version }}'
         terraform-version: '${{ inputs.terraform-version }}'
