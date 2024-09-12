@@ -50,8 +50,11 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
 
       - name: Install tooling using asdf
         uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
