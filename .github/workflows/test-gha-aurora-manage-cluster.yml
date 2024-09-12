@@ -23,6 +23,21 @@ on:
         description: "Database password."
         required: false
         type: string
+      vpc-id:
+        description: "VPC ID to create the cluster in."
+        required: false
+        type: string
+        default: ''
+      subnet-ids:
+        description: "List of subnet IDs to create the cluster in."
+        required: false
+        type: string
+        default: ''
+      cidr-blocks:
+        description: "CIDR blocks to allow access from and to."
+        required: false
+        type: string
+        default: ''
 
   pull_request:
     paths:
@@ -59,34 +74,6 @@ jobs:
       - name: Install tooling using asdf
         uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
 
-      - name: Get Cluster Info
-        id: commit_info
-        run: |
-          if [[ -n "${{ github.event.inputs.cluster_name }}" ]]; then
-            cluster_name="${{ github.event.inputs.cluster_name }}"
-          else
-            cluster_name="aurora-$(git rev-parse --short HEAD)"
-          fi
-
-          if [[ -n "${{ github.event.inputs.db_username }}" ]]; then
-            db_username="${{ github.event.inputs.db_username }}"
-          else
-            db_username="user$(openssl rand -hex 4)"
-          fi
-
-          if [[ -n "${{ github.event.inputs.db_password }}" ]]; then
-            db_password="${{ github.event.inputs.db_password }}"
-          else
-            db_password="$(openssl rand -base64 12)"
-          fi
-
-          echo "cluster_name=$cluster_name" | tee -a "$GITHUB_OUTPUT"
-          echo "db_username=$db_username" | tee -a "$GITHUB_OUTPUT"
-          echo "db_password=$db_password" | tee -a "$GITHUB_OUTPUT"
-
-          tf_modules_revision=$(git rev-parse HEAD)
-          echo "tf_modules_revision=$tf_modules_revision" | tee -a "$GITHUB_OUTPUT"
-
       - name: Import Secrets
         id: secrets
         uses: hashicorp/vault-action@v3
@@ -106,6 +93,55 @@ jobs:
           aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
+      - name: Get Cluster Info
+        id: commit_info
+        run: |
+          if [[ -n "${{ inputs.cluster_name }}" ]]; then
+            cluster_name="${{ inputs.cluster_name }}"
+          else
+            cluster_name="aurora-$(git rev-parse --short HEAD)"
+          fi
+
+          if [[ -n "${{ inputs.db_username }}" ]]; then
+            db_username="${{ inputs.db_username }}"
+          else
+            db_username="user$(openssl rand -hex 4)"
+          fi
+
+          if [[ -n "${{ inputs.db_password }}" ]]; then
+            db_password="${{ inputs.db_password }}"
+          else
+            db_password="$(openssl rand -base64 12)"
+          fi
+
+          if [[ -n "${{ inputs.vpc-id }}" ]]; then
+            vpc_id="${{ inputs.vpc-id }}"
+          else
+            vpc_id="$(aws ec2 describe-vpcs --query 'Vpcs[?IsDefault].VpcId' --output text --profile ${{ env.AWS_PROFILE }})"
+          fi
+
+          if [[ -n "${{ inputs.subnet-ids }}" ]]; then
+            subnet_ids="${{ inputs.subnet-ids }}"
+          else
+            subnet_ids="$(aws ec2 describe-subnets --filters Name=vpc-id,Values= --query 'Subnets[*].SubnetId' --output json --profile \"${{ env.AWS_PROFILE }}\")"
+          fi
+
+          if [[ -n "${{ inputs.cidr-blocks }}" ]]; then
+            cidr_blocks="${{ inputs.cidr-blocks }}"
+          else
+            cidr_blocks='["0.0.0.0/0"]' # Default CIDR to allow access from anywhere
+          fi
+
+          echo "cluster_name=$cluster_name" | tee -a "$GITHUB_OUTPUT"
+          echo "db_username=$db_username" | tee -a "$GITHUB_OUTPUT"
+          echo "db_password=$db_password" | tee -a "$GITHUB_OUTPUT"
+          echo "vpc_id=$vpc_id" | tee -a "$GITHUB_OUTPUT"
+          echo "subnet_ids=$subnet_ids" | tee -a "$GITHUB_OUTPUT"
+          echo "cidr_blocks=$cidr_blocks" | tee -a "$GITHUB_OUTPUT"
+
+          tf_modules_revision=$(git rev-parse HEAD)
+          echo "tf_modules_revision=$tf_modules_revision" | tee -a "$GITHUB_OUTPUT"
+
       - name: Create Aurora Cluster
         timeout-minutes: 125
         uses: ./.github/actions/aurora-manage-cluster
@@ -118,6 +154,10 @@ jobs:
           s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
           s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
           tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}
+
+          vpc-id: ${{ steps.commit_info.outputs.vpc_id }}
+          subnet-ids: ${{ steps.commit_info.outputs.subnet_ids }}
+          cidr-blocks: ${{ steps.commit_info.outputs.cidr_blocks }}
 
       - name: Delete Aurora Cluster
         timeout-minutes: 125

@@ -32,13 +32,13 @@ inputs:
     required: true
   vpc-id:
     description: 'VPC ID to create the cluster in'
-    default: ''
+    required: true
   subnet-ids:
     description: 'List of subnet IDs to create the cluster in'
-    default: '[]'
+    required: true
   cidr-blocks:
     description: 'CIDR blocks to allow access from and to'
-    default: '[]'
+    required: true
   s3-backend-bucket:
     description: 'Name of the S3 bucket to store Terraform state'
     required: true
