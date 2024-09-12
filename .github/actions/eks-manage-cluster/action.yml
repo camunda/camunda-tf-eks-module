@@ -214,8 +214,8 @@ runs:
           -var "np_desired_node_count=${{ inputs.np-node-desired-count }}" \
           -var "np_min_node_count=${{ inputs.np-node-min-count }}" \
           -var "np_max_node_count=${{ inputs.np-node-max-count }}" \
-          -var "np_disk_size=${{ inputs.np-node-disk-size }}" \
-          -var "np_ami_type=${{ inputs.np-node-ami-type }}" \
+          -var "np_disk_size=${{ inputs.np-disk-size }}" \
+          -var "np_ami_type=${{ inputs.np-ami-type }}" \
           -var "cluster_service_ipv4_cidr=${{ inputs.cluster-service-ipv4-cidr }}" \
           -var "cluster_node_ipv4_cidr=${{ inputs.cluster-node-ipv4-cidr }}" \
           -var 'np_instance_types=${{ inputs.np-instance-types }}' \
