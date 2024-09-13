@@ -162,5 +162,5 @@ runs:
       id: fetch_outputs
       working-directory: "${{ inputs.tf-modules-path }}/modules/aurora/"
       run: |
-        all_outputs=$(terraform output -json)
+        all_outputs=$(terraform output -json | jq -c .)
         echo "all_terraform_outputs=$all_outputs" | tee -a "$GITHUB_OUTPUT"
