@@ -53,6 +53,8 @@ env:
   TF_STATE_BUCKET: "tests-eks-tf-state-eu-central-1"
   TF_STATE_BUCKET_REGION: "eu-central-1"
 
+  CREATE_DB: "${{ github.event.inputs.create_db || 'true' }}"
+
 jobs:
   action-test:
     runs-on: ubuntu-latest
@@ -69,8 +71,8 @@ jobs:
       - name: Get Cluster Info
         id: commit_info
         run: |
-          if [[ -n "${{ github.event.inputs.cluster_name }}" ]]; then
-            cluster_name="${{ github.event.inputs.cluster_name }}"
+          if [[ -n "${{ inputs.cluster_name }}" ]]; then
+            cluster_name="${{ inputs.cluster_name }}"
           else
             cluster_name="cl-$(git rev-parse --short HEAD)"
           fi
@@ -140,7 +142,7 @@ jobs:
         timeout-minutes: 125
         uses: ./.github/actions/aurora-manage-cluster
         id: create_aurora_cluster
-        if: inputs.create_db == 'true'
+        if: env.CREATE_DB == 'true'
         with:
           cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
           username: ${{ steps.commit_info.outputs.db_username }}
