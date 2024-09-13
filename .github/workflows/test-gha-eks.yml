@@ -13,12 +13,10 @@ on:
         type: string
       create_db:
         description: "Should the aurora db be created"
-        type: boolean
-        default: true
+        default: "true"
       delete_cluster:
         description: "Whether to delete the cluster."
-        type: boolean
-        default: true
+        default: "true"
       db_username:
         description: "Database username."
         required: false
@@ -156,9 +154,9 @@ jobs:
           subnet-ids: ${{ steps.prepare_aurora_cluster.outputs.private_subnet_ids }}
           cidr-blocks: ${{ steps.prepare_aurora_cluster.outputs.private_vpc_cidr_blocks }}
 
-      - name: Delete Cluster
+      - name: Delete Clusters
         timeout-minutes: 125
-        if: always() && !(github.event_name == 'workflow_dispatch' && github.event.inputs.delete_cluster == 'false')
+        if: always() && !(github.event_name == 'workflow_dispatch' && inputs.delete_cluster == 'false')
         uses: ./.github/actions/eks-cleanup-resources
         with:
           tf-bucket: ${{ env.TF_STATE_BUCKET }}
