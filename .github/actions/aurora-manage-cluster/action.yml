@@ -8,37 +8,71 @@ inputs:
   aws-region:
     description: 'AWS region where the RDS Aurora cluster will be deployed'
     required: true
+
   cluster-name:
     description: 'Name of the RDS Aurora cluster to deploy'
     required: true
+
   engine-version:
     description: 'Version of the Aurora engine to use'
     required: true
     # TODO: renovate
     default: "15.4"
+
   instance-class:
     description: 'Instance class for the Aurora cluster'
     required: true
     default: "db.t3.medium"
+
   num-instances:
     description: 'Number of instances in the Aurora cluster'
     required: true
     default: "1"
+
   username:
     description: 'Username for the PostgreSQL admin user'
     required: true
+
   password:
     description: 'Password for the PostgreSQL admin user'
     required: true
+
   vpc-id:
     description: 'VPC ID to create the cluster in'
     required: true
+
   subnet-ids:
     description: 'List of subnet IDs to create the cluster in'
     required: true
+
   cidr-blocks:
     description: 'CIDR blocks to allow access from and to'
     required: true
+
+  auto-minor-version-upgrade:
+    description: 'If true, minor engine upgrades will be applied automatically to the DB instance during the maintenance window'
+    default: "true" # Default value from variable.tf
+
+  availability-zones:
+    description: 'Array of availability zones to use for the Aurora cluster'
+    default: ''
+
+  iam-roles:
+    description: 'Allows propagating additional IAM roles to the Aurora cluster to allow e.g. access to S3'
+    default: "[]" # Default value from variable.tf
+
+  iam-auth-enabled:
+    description: 'Determines whether IAM auth should be activated for IRSA usage'
+    default: "false" # Default value from variable.tf
+
+  ca-cert-identifier:
+    description: 'Specifies the identifier of the CA certificate for the DB instance'
+    default: 'rds-ca-rsa2048-g1' # Default value from variable.tf
+
+  default-database-name:
+    description: 'The name for the automatically created database on cluster creation.'
+    default: 'camunda' # Default value from variable.tf
+
   s3-backend-bucket:
     description: 'Name of the S3 bucket to store Terraform state'
     required: true
@@ -48,6 +82,7 @@ inputs:
     description: 'Git revision of the tf modules to use'
     default: 'main'
     required: true
+
   tf-modules-path:
     description: 'Path where the tf Aurora modules will be cloned'
     default: './.action-tf-modules/aurora/'
@@ -143,7 +178,14 @@ runs:
           -var "instance_class=${{ inputs.instance-class }}" \
           -var "num_instances=${{ inputs.num-instances }}" \
           -var "username=${{ inputs.username }}" \
+          -var "region=${{ inputs.aws-region }}" \
           -var "password=${{ inputs.password }}" \
+          -var "auto_minor_version_upgrade=${{ inputs.auto-minor-version-upgrade }}" \
+          -var 'availability_zones=${{ inputs.availability-zones }}' \
+          -var 'iam_roles=${{ inputs.iam-roles }}' \
+          -var "iam_auth_enabled=${{ inputs.iam-auth-enabled }}" \
+          -var "ca_cert_identifier=${{ inputs.ca-cert-identifier }}" \
+          -var "default_database_name=${{ inputs.default-database-name }}" \
           -var "vpc_id=${{ inputs.vpc-id }}" \
           -var 'subnet_ids=${{ inputs.subnet-ids }}' \
           -var 'cidr_blocks=${{ inputs.cidr-blocks }}'

@@ -138,6 +138,9 @@ jobs:
           private_vpc_cidr_blocks=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -c -r '.private_vpc_cidr_blocks.value')
           echo "private_vpc_cidr_blocks=$private_vpc_cidr_blocks" | tee -a "$GITHUB_OUTPUT"
 
+          availability_zones=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${vpc_id}" --query 'Subnets[].AvailabilityZone' --output json | jq '.'  -c)
+          echo "availability_zones=$availability_zones" | tee -a "$GITHUB_OUTPUT"
+
       - name: Create Aurora Cluster
         timeout-minutes: 125
         uses: ./.github/actions/aurora-manage-cluster
@@ -155,6 +158,8 @@ jobs:
           vpc-id: ${{ steps.prepare_aurora_cluster.outputs.vpc_id }}
           subnet-ids: ${{ steps.prepare_aurora_cluster.outputs.private_subnet_ids }}
           cidr-blocks: ${{ steps.prepare_aurora_cluster.outputs.private_vpc_cidr_blocks }}
+
+          availability-zones: ${{ steps.prepare_aurora_cluster.outputs.availability_zones }}
 
       - name: Delete Clusters
         timeout-minutes: 125
