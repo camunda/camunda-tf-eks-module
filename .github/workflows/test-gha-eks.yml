@@ -47,7 +47,8 @@ concurrency:
 env:
 
   AWS_PROFILE: "infex"
-  AWS_REGION: "eu-west-2" # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
+  AWS_REGION: "eu-west-2"
+    # /!\ always use one of the available test region https://github.com/camunda/infraex-common-config
 
     # please keep those synced with tests.yml
   TF_STATE_BUCKET: "tests-eks-tf-state-eu-central-1"
@@ -60,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
@@ -98,7 +99,7 @@ jobs:
 
       - name: Import Secrets
         id: secrets
-        uses: hashicorp/vault-action@v3
+        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3
         with:
           url: ${{ secrets.VAULT_ADDR }}
           method: approle
@@ -174,7 +175,7 @@ jobs:
       - name: Notify in Slack in case of failure
         id: slack-notification
         if: failure() && github.event_name == 'schedule'
-        uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@main
+        uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@fe25bf36edcc03717275a4e05969cdb5483388df # main
         with:
           vault_addr: ${{ secrets.VAULT_ADDR }}
           vault_role_id: ${{ secrets.VAULT_ROLE_ID }}

@@ -12,7 +12,7 @@ inputs:
   engine-version:
     description: 'Version of the Aurora engine to use'
     required: true
-    # TODO: renovate
+    # renovate: datasource=endoflife-date depName=amazon-rds-postgresql versioning=semver
     default: "15.4"
 
   instance-class:
