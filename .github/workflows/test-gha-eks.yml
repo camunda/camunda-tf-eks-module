@@ -1,5 +1,5 @@
 ---
-name: EKS Cluster creation and destruction test
+name: EKS Cluster with an AuroraDB creation and destruction test
 
 on:
   schedule:
@@ -11,18 +11,31 @@ on:
         description: "Cluster name."
         required: false
         type: string
-      delete_cluster:
-        description: "Whether to delete the cluster."
-        required: false
+      create_db:
+        description: "Should the aurora db be created"
         type: boolean
         default: true
+      delete_cluster:
+        description: "Whether to delete the cluster."
+        type: boolean
+        default: true
+      db_username:
+        description: "Database username."
+        required: false
+        type: string
+      db_password:
+        description: "Database password."
+        required: false
+        type: string
 
   pull_request:
     # the paths should be synced with ../labeler.yml
     paths:
       - modules/fixtures/backend.tf
       - modules/fixtures/fixtures.default.eks.tfvars
+      - modules/fixtures/fixtures.default.aurora.tfvars
       - modules/eks-cluster/**.tf
+      - modules/aurora/**.tf
       - .tool-versions
       - .github/workflows/test-gha-eks-manage-cluster.yml
       - .github/actions/eks-manage-cluster/*.yml
@@ -63,13 +76,25 @@ jobs:
           else
             cluster_name="cl-$(git rev-parse --short HEAD)"
           fi
-          echo "cluster_name=$cluster_name" >> "$GITHUB_OUTPUT"
+          echo "cluster_name=$cluster_name" | tee -a "$GITHUB_OUTPUT"
+
+          if [[ -n "${{ inputs.db_username }}" ]]; then
+            db_username="${{ inputs.db_username }}"
+          else
+            db_username="user$(openssl rand -hex 4)"
+          fi
+          echo "db_username=$db_username" | tee -a "$GITHUB_OUTPUT"
+
+          if [[ -n "${{ inputs.db_password }}" ]]; then
+            db_password="${{ inputs.db_password }}"
+          else
+            db_password="$(openssl rand -base64 12)"
+          fi
+          echo "db_password=$db_password" | tee -a "$GITHUB_OUTPUT"
 
           # Get the current commit hash for the modules revision
           tf_modules_revision=$(git rev-parse HEAD)
-
-          echo "cluster_name=$cluster_name" >> "$GITHUB_OUTPUT"
-          echo "tf_modules_revision=$tf_modules_revision" >> "$GITHUB_OUTPUT"
+          echo "tf_modules_revision=$tf_modules_revision" | tee -a "$GITHUB_OUTPUT"
 
       - name: Import Secrets
         id: secrets
@@ -90,16 +115,46 @@ jobs:
           aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
           aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
-      - name: Create Cluster
+      - name: Create EKS Cluster
         timeout-minutes: 125
         uses: ./.github/actions/eks-manage-cluster
-        id: create_cluster
+        id: create_eks_cluster
         with:
           cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
           aws-region: ${{ env.AWS_REGION }}
           s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
           s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
           tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}
+
+      - name: Prepare Aurora Cluster
+        id: prepare_aurora_cluster
+        run: |
+          vpc_id=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -r '.vpc_id')
+          echo "vpc_id=$vpc_id" | tee -a "$GITHUB_OUTPOUT"
+
+          private_subnet_ids=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -r '.private_subnet_ids')
+          echo "private_subnet_ids=$private_subnet_ids" | tee -a "$GITHUB_OUTPOUT"
+
+          private_vpc_cidr_blocks=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -r '.private_vpc_cidr_blocks')
+          echo "private_vpc_cidr_blocks=$private_vpc_cidr_blocks" | tee -a "$GITHUB_OUTPOUT"
+
+      - name: Create Aurora Cluster
+        timeout-minutes: 125
+        uses: ./.github/actions/aurora-manage-cluster
+        id: create_aurora_cluster
+        if: inputs.create_db == 'true'
+        with:
+          cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
+          username: ${{ steps.commit_info.outputs.db_username }}
+          password: ${{ steps.commit_info.outputs.db_password }}
+          aws-region: ${{ env.AWS_REGION }}
+          s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
+          s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
+          tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}
+
+          vpc-id: ${{ steps.prepare_aurora_cluster.outputs.vpc_id }}
+          subnet-ids: ${{ steps.prepare_aurora_cluster.outputs.private_subnet_ids }}
+          cidr-blocks: ${{ steps.prepare_aurora_cluster.outputs.private_vpc_cidr_blocks }}
 
       - name: Delete Cluster
         timeout-minutes: 125
