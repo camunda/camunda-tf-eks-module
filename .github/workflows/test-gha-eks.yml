@@ -138,7 +138,7 @@ jobs:
           private_vpc_cidr_blocks=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -c -r '.private_vpc_cidr_blocks.value')
           echo "private_vpc_cidr_blocks=$private_vpc_cidr_blocks" | tee -a "$GITHUB_OUTPUT"
 
-          availability_zones=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${vpc_id}" --query 'Subnets[].AvailabilityZone' --output json | jq '.'  -c)
+          availability_zones=$(aws ec2 describe-subnets --filters "Name=vpc-id,Values=${vpc_id}" --query 'Subnets[].AvailabilityZone' --output json | jq 'unique'  -c)
           echo "availability_zones=$availability_zones" | tee -a "$GITHUB_OUTPUT"
 
       - name: Create Aurora Cluster
@@ -150,7 +150,7 @@ jobs:
           cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
           username: ${{ steps.commit_info.outputs.db_username }}
           password: ${{ steps.commit_info.outputs.db_password }}
-          aws-region: ${{ env.AWS_REGION }}
+
           s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
           s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
           tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}
