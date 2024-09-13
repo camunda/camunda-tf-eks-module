@@ -55,7 +55,7 @@ No modules.
 | <a name="input_engine"></a> [engine](#input\_engine) | The engine type e.g. aurora, aurora-mysql, aurora-postgresql, ... | `string` | `"aurora-postgresql"` | no |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | The DB engine version for Postgres to use. | `string` | `"15.4"` | no |
 | <a name="input_iam_auth_enabled"></a> [iam\_auth\_enabled](#input\_iam\_auth\_enabled) | Determines whether IAM auth should be activated for IRSA usage | `bool` | `false` | no |
-| <a name="input_iam_roles"></a> [iam\_roles](#input\_iam\_roles) | Allows propagating additional IAM roles to the Aurora cluster to allow e.g. access to S3 | `list` | `[]` | no |
+| <a name="input_iam_roles"></a> [iam\_roles](#input\_iam\_roles) | Allows propagating additional IAM roles to the Aurora cluster to allow e.g. access to S3 | `list(string)` | `[]` | no |
 | <a name="input_instance_class"></a> [instance\_class](#input\_instance\_class) | The instance type of the Aurora instances | `string` | `"db.t3.medium"` | no |
 | <a name="input_num_instances"></a> [num\_instances](#input\_num\_instances) | Number of instances | `string` | `"1"` | no |
 | <a name="input_password"></a> [password](#input\_password) | The password for the postgres admin user. Important: secret value! | `string` | n/a | yes |

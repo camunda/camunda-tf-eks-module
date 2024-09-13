@@ -55,7 +55,7 @@ inputs:
 
   iam-roles:
     description: 'Allows propagating additional IAM roles to the Aurora cluster to allow e.g. access to S3'
-    default: "" # Default value from variable.tf
+    default: "[]" # Default value from variable.tf
 
   iam-auth-enabled:
     description: 'Determines whether IAM auth should be activated for IRSA usage'

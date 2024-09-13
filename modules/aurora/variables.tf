@@ -69,6 +69,7 @@ variable "vpc_id" {
 
 # Allows adding additional iam roles to grant access from Aurora to e.g. S3
 variable "iam_roles" {
+  type        = list(string)
   default     = []
   description = "Allows propagating additional IAM roles to the Aurora cluster to allow e.g. access to S3"
 }
