@@ -28,7 +28,7 @@ The following inputs are required or optional for the action:
 | `cidr-blocks` | CIDR blocks to allow access from and to. | Yes | - |
 | `auto-minor-version-upgrade` | If true, minor engine upgrades will be applied automatically to the DB instance during the maintenance window. | No | `true` |
 | `availability-zones` | Array of availability zones to use for the Aurora cluster. | No | `[]` |
-| `iam-roles` | Allows propagating additional IAM roles to the Aurora cluster for features like access to S3. | No | `[]` |
+| `iam-roles` | Allows propagating additional IAM roles to the Aurora cluster for features like access to S3. | No | `` |
 | `iam-auth-enabled` | Determines whether IAM authentication should be activated for IRSA usage. | No | `false` |
 | `ca-cert-identifier` | Specifies the identifier of the CA certificate for the DB instance. | No | `rds-ca-rsa2048-g1` |
 | `default-database-name` | The name for the automatically created database on cluster creation. | No | `camunda` |
