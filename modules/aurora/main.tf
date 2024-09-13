@@ -16,7 +16,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   iam_roles                           = var.iam_roles # only needed if wanted to grant access from Aurora to e.g. S3
 
   vpc_security_group_ids = [aws_security_group.this.id]
-  db_subnet_group_name   = aws_db_subnet_group.this[0].name
+  db_subnet_group_name   = aws_db_subnet_group.this.name
   skip_final_snapshot    = true
   apply_immediately      = true
   storage_encrypted      = true
