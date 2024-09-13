@@ -129,13 +129,13 @@ jobs:
       - name: Prepare Aurora Cluster
         id: prepare_aurora_cluster
         run: |
-          vpc_id=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -r '.vpc_id')
+          vpc_id=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -c -r '.vpc_id.value')
           echo "vpc_id=$vpc_id" | tee -a "$GITHUB_OUTPUT"
 
-          private_subnet_ids=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -r '.private_subnet_ids')
+          private_subnet_ids=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -c -r '.private_subnet_ids.value')
           echo "private_subnet_ids=$private_subnet_ids" | tee -a "$GITHUB_OUTPUT"
 
-          private_vpc_cidr_blocks=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -r '.private_vpc_cidr_blocks')
+          private_vpc_cidr_blocks=$(echo '${{ steps.create_eks_cluster.outputs.all-terraform-outputs }}' | jq -c -r '.private_vpc_cidr_blocks.value')
           echo "private_vpc_cidr_blocks=$private_vpc_cidr_blocks" | tee -a "$GITHUB_OUTPUT"
 
       - name: Create Aurora Cluster
