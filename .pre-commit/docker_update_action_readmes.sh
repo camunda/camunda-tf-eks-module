@@ -1,9 +1,13 @@
 #!/bin/bash
 
+USER_ID=$(id -u)
+GROUP_ID=$(id -g)
+
 # Run a single Docker container to handle the README.md updates
 docker run --rm \
     -v "$PWD":/workspace \
     -w /workspace \
+    -u "$USER_ID:$GROUP_ID" \
     node:22 \
     bash -c '
         npm install -g action-docs
