@@ -10,32 +10,41 @@ description: |
 inputs:
   awscli-version:
     description: 'Version of the AWS CLI to install'
-    required: true
     # renovate: datasource=github-releases depName=aws/aws-cli
     default: '2.15.52'
+
   terraform-version:
     description: 'Version of Terraform to install'
-    required: true
     default: 'latest'
+
   s3-backend-bucket:
     description: 'Name of the S3 bucket to store Terraform state'
     required: true
+
   s3-bucket-region:
     description: 'Region of the bucket containing the resources states, if not set, will fallback on aws-region'
+    required: false
+
   aws-region:
     description: 'AWS region to use for S3 bucket operations'
     required: true
+
   name:
     description: 'Name of resource instance (e.g., uid)'
     required: true
+
   module-name:
     description: 'Name of the Terraform module (e.g., eks-cluster, aurora)'
     required: true
+
   tf-cli-config-credentials-hostname:
     description: 'The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file'
     default: 'app.terraform.io'
+
   tf-cli-config-credentials-token:
     description: 'The API token for a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file'
+    required: false
+
   tf-terraform-wrapper:
     description: 'Whether or not to install a wrapper for Terraform CLI'
     default: 'true'

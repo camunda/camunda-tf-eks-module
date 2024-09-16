@@ -32,8 +32,8 @@ The action supports the following input parameters:
 
 | Input Name         | Description                                                                               | Required | Default                    |
 |--------------------|-------------------------------------------------------------------------------------------|----------|----------------------------|
-| `tf-bucket`        | The S3 bucket containing the resources' state files.                                       | Yes      | N/A                        |
+| `tf-bucket`        | The S3 bucket containing the resources' state files.                                       | Yes      | -                        |
 | `tf-bucket-region` | The region of the S3 bucket containing the resources state files. Falls back to `AWS_REGION` if not set. | No       | AWS_REGION                 |
 | `max-age-hours`    | The maximum age (in hours) for resources to be deleted.                                    | No       | "20"                       |
-| `target`           | Specifies an ID to destroy specific resources or "all" to destroy all resources.           | Yes      | "all"                      |
+| `target`           | Specifies an ID to destroy specific resources or "all" to destroy all resources.           | No      | "all"                      |
 | `temp-dir`         | Temporary directory prefix used for storing resource data during processing.               | No       | "./tmp/eks-cleanup/"       |
