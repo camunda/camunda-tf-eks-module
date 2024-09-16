@@ -1,6 +1,8 @@
 ---
 name: Utility Actions
 
+# TODO: this action should be extracted and made available as a global reusable action (see https://github.com/camunda/camunda-tf-eks-module/pull/112#discussion_r1761274718)
+
 description: |
     A set of utility steps to be used across different workflows, including:
     - Installing Terraform
@@ -33,10 +35,6 @@ inputs:
 
     tf-state-key:
         description: 'Key use to store the tfstate file (e.g.: /tfstates/terraform.tfstate)'
-        required: true
-
-    module-name:
-        description: Name of the Terraform module (e.g., eks-cluster, aurora)
         required: true
 
     tf-cli-config-credentials-hostname:

@@ -19,7 +19,6 @@ A set of utility steps to be used across different workflows, including:
 | `s3-bucket-region` | <p>Region of the bucket containing the resources states, if not set, will fallback on aws-region</p> | `false` | `""` |
 | `aws-region` | <p>AWS region to use for S3 bucket operations</p> | `true` | `""` |
 | `tf-state-key` | <p>Key use to store the tfstate file (e.g.: /tfstates/terraform.tfstate)</p> | `true` | `""` |
-| `module-name` | <p>Name of the Terraform module (e.g., eks-cluster, aurora)</p> | `true` | `""` |
 | `tf-cli-config-credentials-hostname` | <p>The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file</p> | `false` | `app.terraform.io` |
 | `tf-cli-config-credentials-token` | <p>The API token for a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file</p> | `false` | `""` |
 | `tf-terraform-wrapper` | <p>Whether or not to install a wrapper for Terraform CLI</p> | `false` | `true` |
@@ -76,12 +75,6 @@ This action is a `composite` action.
 
     tf-state-key:
     # Key use to store the tfstate file (e.g.: /tfstates/terraform.tfstate)
-    #
-    # Required: true
-    # Default: ""
-
-    module-name:
-    # Name of the Terraform module (e.g., eks-cluster, aurora)
     #
     # Required: true
     # Default: ""
