@@ -12,16 +12,7 @@ This action will also install Terraform, awscli, and kubectl. The kube context w
 | --- | --- | --- | --- |
 | `aws-region` | <p>AWS region where the EKS cluster will be deployed</p> | `true` | `""` |
 | `cluster-name` | <p>Name of the EKS cluster to deploy</p> | `true` | `""` |
-| `kubernetes-version` | <p>Version of Kubernetes to use for the EKS cluster</p> | `false` | `1.30` |
-| `cluster-service-ipv4-cidr` | <p>CIDR block for cluster service IPs</p> | `false` | `10.190.0.0/16` |
-| `cluster-node-ipv4-cidr` | <p>CIDR block for cluster node IPs</p> | `false` | `10.192.0.0/16` |
-| `np-instance-types` | <p>List of instance types</p> | `false` | `["t2.medium"]` |
-| `np-capacity-type` | <p>Capacity type for non-production instances (e.g., SPOT)</p> | `false` | `SPOT` |
-| `np-node-desired-count` | <p>Desired number of nodes in the EKS node group</p> | `false` | `4` |
-| `np-node-min-count` | <p>Minimum number of nodes in the EKS node group</p> | `false` | `1` |
-| `np-disk-size` | <p>Disk size of the nodes on the default node pool</p> | `false` | `20` |
-| `np-ami-type` | <p>Amazon Machine Image</p> | `false` | `AL2_x86_64` |
-| `np-node-max-count` | <p>Maximum number of nodes in the EKS node group</p> | `false` | `10` |
+| `additional-terraform-vars` | <p>JSON object containing additional Terraform variables</p> | `false` | `{}` |
 | `s3-backend-bucket` | <p>Name of the S3 bucket to store Terraform state</p> | `true` | `""` |
 | `s3-bucket-region` | <p>Region of the bucket containing the resources states, if not set, will fallback on aws-region</p> | `false` | `""` |
 | `tf-modules-revision` | <p>Git revision of the tf modules to use</p> | `false` | `main` |
@@ -64,65 +55,11 @@ This action is a `composite` action.
     # Required: true
     # Default: ""
 
-    kubernetes-version:
-    # Version of Kubernetes to use for the EKS cluster
+    additional-terraform-vars:
+    # JSON object containing additional Terraform variables
     #
     # Required: false
-    # Default: 1.30
-
-    cluster-service-ipv4-cidr:
-    # CIDR block for cluster service IPs
-    #
-    # Required: false
-    # Default: 10.190.0.0/16
-
-    cluster-node-ipv4-cidr:
-    # CIDR block for cluster node IPs
-    #
-    # Required: false
-    # Default: 10.192.0.0/16
-
-    np-instance-types:
-    # List of instance types
-    #
-    # Required: false
-    # Default: ["t2.medium"]
-
-    np-capacity-type:
-    # Capacity type for non-production instances (e.g., SPOT)
-    #
-    # Required: false
-    # Default: SPOT
-
-    np-node-desired-count:
-    # Desired number of nodes in the EKS node group
-    #
-    # Required: false
-    # Default: 4
-
-    np-node-min-count:
-    # Minimum number of nodes in the EKS node group
-    #
-    # Required: false
-    # Default: 1
-
-    np-disk-size:
-    # Disk size of the nodes on the default node pool
-    #
-    # Required: false
-    # Default: 20
-
-    np-ami-type:
-    # Amazon Machine Image
-    #
-    # Required: false
-    # Default: AL2_x86_64
-
-    np-node-max-count:
-    # Maximum number of nodes in the EKS node group
-    #
-    # Required: false
-    # Default: 10
+    # Default: {}
 
     s3-backend-bucket:
     # Name of the S3 bucket to store Terraform state

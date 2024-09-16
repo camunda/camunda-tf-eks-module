@@ -5,9 +5,9 @@ repos:
     - repo: local
       hooks:
         # TODO: extract this pre-commit in common config
-          - id: update-action-readmes
+          - id: update-action-readmes-docker
             name: Update GitHub Action READMEs
-            entry: bash .pre-commit/update_action_readmes.sh
+            entry: bash .pre-commit/docker_update_action_readmes.sh
             language: system
           # Only runs when action files are modified
             files: ^\.github/actions/.+\.(yml|yaml)$

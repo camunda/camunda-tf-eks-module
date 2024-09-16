@@ -122,6 +122,9 @@ jobs:
               with:
                   cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
                   aws-region: ${{ env.AWS_REGION }}
+
+                  additional-terraform-vars: '{"np_capacity_type": "SPOT", "np_instance_types": ["t2.medium"]}'
+
                   s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
                   s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
                   tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}

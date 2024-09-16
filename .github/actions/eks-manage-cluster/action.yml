@@ -15,46 +15,10 @@ inputs:
         description: Name of the EKS cluster to deploy
         required: true
 
-    kubernetes-version:
-        description: Version of Kubernetes to use for the EKS cluster
-        # renovate: datasource=endoflife-date depName=amazon-eks versioning=semver
-        default: '1.30'
-
-    cluster-service-ipv4-cidr:
-        description: CIDR block for cluster service IPs
-        default: 10.190.0.0/16
-
-    cluster-node-ipv4-cidr:
-        description: CIDR block for cluster node IPs
-        default: 10.192.0.0/16
-
-    np-instance-types:
-        description: List of instance types
-        default: '["t2.medium"]'
-
-    np-capacity-type:
-        description: Capacity type for non-production instances (e.g., SPOT)
-        default: SPOT
-
-    np-node-desired-count:
-        description: Desired number of nodes in the EKS node group
-        default: '4'
-
-    np-node-min-count:
-        description: Minimum number of nodes in the EKS node group
-        default: '1'
-
-    np-disk-size:
-        description: Disk size of the nodes on the default node pool
-        default: '20'
-
-    np-ami-type:
-        description: Amazon Machine Image
-        default: AL2_x86_64
-
-    np-node-max-count:
-        description: Maximum number of nodes in the EKS node group
-        default: '10'
+    additional-terraform-vars:
+        description: JSON object containing additional Terraform variables
+        required: false
+        default: '{}'
 
     s3-backend-bucket:
         description: Name of the S3 bucket to store Terraform state
@@ -167,17 +131,8 @@ runs:
           run: |
               terraform plan -no-color -out eks.plan -var "name=${{ inputs.cluster-name }}" \
                 -var "region=${{ inputs.aws-region }}" \
-                -var "kubernetes_version=${{ inputs.kubernetes-version }}" \
                 -var "name=${{ inputs.cluster-name }}" \
-                -var "np_desired_node_count=${{ inputs.np-node-desired-count }}" \
-                -var "np_min_node_count=${{ inputs.np-node-min-count }}" \
-                -var "np_max_node_count=${{ inputs.np-node-max-count }}" \
-                -var "np_disk_size=${{ inputs.np-disk-size }}" \
-                -var "np_ami_type=${{ inputs.np-ami-type }}" \
-                -var "cluster_service_ipv4_cidr=${{ inputs.cluster-service-ipv4-cidr }}" \
-                -var "cluster_node_ipv4_cidr=${{ inputs.cluster-node-ipv4-cidr }}" \
-                -var 'np_instance_types=${{ inputs.np-instance-types }}' \
-                -var "np_capacity_type=${{ inputs.np-capacity-type }}"
+                -var-file=<(echo '${{ inputs.additional-terraform-vars }}')
 
         - name: Terraform Apply
           shell: bash
