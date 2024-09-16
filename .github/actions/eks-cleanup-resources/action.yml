@@ -4,6 +4,7 @@ name: Delete EKS resources
 description: |
     This GitHub Action automates the deletion of EKS resources using a shell script.
 
+
 inputs:
     tf-bucket:
         description: Bucket containing the resources states

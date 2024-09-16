@@ -8,6 +8,7 @@ description: |
     - Setting Terraform variables
     - Checking/Creating an S3 bucket
 
+
 inputs:
     awscli-version:
         description: Version of the AWS CLI to install

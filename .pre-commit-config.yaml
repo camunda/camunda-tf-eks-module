@@ -2,6 +2,16 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
+    - repo: local
+      hooks:
+        # TODO: extract this pre-commit in common config
+          - id: update-action-readmes
+            name: Update GitHub Action READMEs
+            entry: bash .pre-commit/update_action_readmes.sh
+            language: system
+          # Only runs when action files are modified
+            files: ^\.github/actions/.+\.(yml|yaml)$
+            pass_filenames: false # ensure single run
 
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.6.0

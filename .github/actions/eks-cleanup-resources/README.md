@@ -1,39 +1,57 @@
-# Delete EKS Resources
+# Delete EKS resources
 
-This GitHub Action automates the deletion of AWS resources using a shell script. It helps you manage and clean up modules of this repository as resources by specifying a target or deleting resources based on age criteria.
+## Description
 
-## Usage
+This GitHub Action automates the deletion of EKS resources using a shell script.
 
-To use this action, include it in your workflow file (e.g., `.github/workflows/delete-eks-resources.yml`):
-
-```yaml
-name: Delete EKS Resources
-
-on:
-  workflow_dispatch:
-
-jobs:
-  cleanup:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete EKS resources
-        uses: camunda/camunda-tf-eks-module/eks-cleanup-resources@main
-        with:
-          tf-bucket: 'your-s3-bucket-name'
-          tf-bucket-region: 'your-region'
-          max-age-hours: 24
-          target: 'all'
-          temp-dir: './tmp/eks-cleanup/'
-```
 
 ## Inputs
 
-The action supports the following input parameters:
+| name | description | required | default |
+| --- | --- | --- | --- |
+| `tf-bucket` | <p>Bucket containing the resources states</p> | `true` | `""` |
+| `tf-bucket-region` | <p>Region of the bucket containing the resources states, if not set, will fallback on AWS_REGION</p> | `false` | `""` |
+| `max-age-hours` | <p>Maximum age of resources in hours</p> | `false` | `20` |
+| `target` | <p>Specify an ID to destroy specific resources or "all" to destroy all resources</p> | `false` | `all` |
+| `temp-dir` | <p>Temporary directory prefix used for storing resource data during processing</p> | `false` | `./tmp/eks-cleanup/` |
 
-| Input Name         | Description                                                                               | Required | Default                    |
-|--------------------|-------------------------------------------------------------------------------------------|----------|----------------------------|
-| `tf-bucket`        | The S3 bucket containing the resources' state files.                                       | Yes      | -                        |
-| `tf-bucket-region` | The region of the S3 bucket containing the resources state files. Falls back to `AWS_REGION` if not set. | No       | AWS_REGION                 |
-| `max-age-hours`    | The maximum age (in hours) for resources to be deleted.                                    | No       | "20"                       |
-| `target`           | Specifies an ID to destroy specific resources or "all" to destroy all resources.           | No      | "all"                      |
-| `temp-dir`         | Temporary directory prefix used for storing resource data during processing.               | No       | "./tmp/eks-cleanup/"       |
+
+## Runs
+
+This action is a `composite` action.
+
+## Usage
+
+```yaml
+- uses: ***PROJECT***@***VERSION***
+  with:
+    tf-bucket:
+    # Bucket containing the resources states
+    #
+    # Required: true
+    # Default: ""
+
+    tf-bucket-region:
+    # Region of the bucket containing the resources states, if not set, will fallback on AWS_REGION
+    #
+    # Required: false
+    # Default: ""
+
+    max-age-hours:
+    # Maximum age of resources in hours
+    #
+    # Required: false
+    # Default: 20
+
+    target:
+    # Specify an ID to destroy specific resources or "all" to destroy all resources
+    #
+    # Required: false
+    # Default: all
+
+    temp-dir:
+    # Temporary directory prefix used for storing resource data during processing
+    #
+    # Required: false
+    # Default: ./tmp/eks-cleanup/
+```
