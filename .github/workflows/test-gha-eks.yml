@@ -82,14 +82,14 @@ jobs:
           if [[ -n "${{ inputs.db_username }}" ]]; then
             db_username="${{ inputs.db_username }}"
           else
-            db_username="user$(openssl rand -hex 4)"
+            db_username="user$(openssl rand -hex 4 | tr -d '/@" ')"
           fi
           echo "db_username=$db_username" | tee -a "$GITHUB_OUTPUT"
 
           if [[ -n "${{ inputs.db_password }}" ]]; then
             db_password="${{ inputs.db_password }}"
           else
-            db_password="$(openssl rand -base64 12)"
+            db_password="$(openssl rand -base64 12 | tr -d '/@" ')"
           fi
           echo "db_password=$db_password" | tee -a "$GITHUB_OUTPUT"
 
