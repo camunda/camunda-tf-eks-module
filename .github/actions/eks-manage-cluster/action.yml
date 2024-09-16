@@ -135,8 +135,7 @@ runs:
               s3-backend-bucket: ${{ inputs.s3-backend-bucket }}
               s3-bucket-region: ${{ inputs.s3-bucket-region }}
 
-              name: ${{ inputs.cluster-name }}
-              module-name: eks-cluster
+              tf-state-key: terraform/${{ inputs.cluster-name }}/gha/eks-cluster/terraform.tfstate
 
               tf-cli-config-credentials-hostname: ${{ inputs.tf-cli-config-credentials-hostname }}
               tf-cli-config-credentials-token: ${{ inputs.tf-cli-config-credentials-token }}

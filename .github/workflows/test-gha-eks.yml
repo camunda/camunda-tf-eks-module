@@ -116,7 +116,7 @@ jobs:
                   aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
             - name: Create EKS Cluster
-              timeout-minutes: 125
+              timeout-minutes: 45
               uses: ./.github/actions/eks-manage-cluster
               id: create_eks_cluster
               with:
@@ -142,7 +142,7 @@ jobs:
                   echo "availability_zones=$availability_zones" | tee -a "$GITHUB_OUTPUT"
 
             - name: Create Aurora Cluster
-              timeout-minutes: 125
+              timeout-minutes: 20
               uses: ./.github/actions/aurora-manage-cluster
               id: create_aurora_cluster
               if: env.CREATE_DB == 'true'
@@ -162,7 +162,7 @@ jobs:
                   availability-zones: ${{ steps.prepare_aurora_cluster.outputs.availability_zones }}
 
             - name: Delete Clusters
-              timeout-minutes: 125
+              timeout-minutes: 60
               if: always() && !(github.event_name == 'workflow_dispatch' && inputs.delete_cluster == 'false')
               uses: ./.github/actions/eks-cleanup-resources
               with:
