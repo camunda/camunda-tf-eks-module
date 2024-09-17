@@ -2,6 +2,10 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
+    # - repo: https://github.com/camunda/infraex-common-config
+    #   rev: 0d3d66656b774d1cd906e379df10b601f25ba946 # TODO: replace with main onced it's merged
+    #   hooks:
+    #       - id: update-action-readmes-docker
     - repo: local
       hooks:
         # TODO: extract this pre-commit in common config
