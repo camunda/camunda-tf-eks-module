@@ -141,14 +141,15 @@ runs:
           id: plan
           working-directory: ${{ inputs.tf-modules-path }}/modules/aurora/
           run: |
-              terraform plan -no-color -out aurora.plan -var "cluster_name=${{ inputs.cluster-name }}" \
+              terraform plan -no-color -out aurora.plan \
+                -var-file=<(echo '${{ inputs.additional-terraform-vars }}') \
+                -var "cluster_name=${{ inputs.cluster-name }}" \
                 -var "username=${{ inputs.username }}" \
                 -var "password=${{ inputs.password }}" \
                 -var 'availability_zones=${{ inputs.availability-zones }}' \
                 -var "vpc_id=${{ inputs.vpc-id }}" \
                 -var 'subnet_ids=${{ inputs.subnet-ids }}' \
-                -var 'cidr_blocks=${{ inputs.cidr-blocks }}' \
-                -var-file=<(echo '${{ inputs.additional-terraform-vars }}')
+                -var 'cidr_blocks=${{ inputs.cidr-blocks }}'
 
         - name: Terraform Apply
           shell: bash

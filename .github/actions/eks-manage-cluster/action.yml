@@ -129,10 +129,11 @@ runs:
           id: plan
           working-directory: ${{ inputs.tf-modules-path }}/modules/eks-cluster/
           run: |
-              terraform plan -no-color -out eks.plan -var "name=${{ inputs.cluster-name }}" \
-                -var "region=${{ inputs.aws-region }}" \
+              terraform plan -no-color -out eks.plan \
+                -var-file=<(echo '${{ inputs.additional-terraform-vars }}') \
                 -var "name=${{ inputs.cluster-name }}" \
-                -var-file=<(echo '${{ inputs.additional-terraform-vars }}')
+                -var "region=${{ inputs.aws-region }}" \
+                -var "name=${{ inputs.cluster-name }}"
 
         - name: Terraform Apply
           shell: bash
