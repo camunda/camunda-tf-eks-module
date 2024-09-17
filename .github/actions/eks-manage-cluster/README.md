@@ -41,7 +41,7 @@ This action is a `composite` action.
 ## Usage
 
 ```yaml
-- uses: ***PROJECT***@***VERSION***
+- uses: camunda/camunda-tf-eks-module/eks-manage-cluster@main
   with:
     aws-region:
     # AWS region where the EKS cluster will be deployed

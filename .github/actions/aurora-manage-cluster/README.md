@@ -45,7 +45,7 @@ This action is a `composite` action.
 ## Usage
 
 ```yaml
-- uses: ***PROJECT***@***VERSION***
+- uses: camunda/camunda-tf-eks-module/aurora-manage-cluster@main
   with:
     cluster-name:
     # Name of the RDS Aurora cluster to deploy

@@ -23,7 +23,7 @@ This action is a `composite` action.
 ## Usage
 
 ```yaml
-- uses: ***PROJECT***@***VERSION***
+- uses: camunda/camunda-tf-eks-module/eks-cleanup-resources@main
   with:
     tf-bucket:
     # Bucket containing the resources states

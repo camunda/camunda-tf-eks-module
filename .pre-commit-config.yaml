@@ -2,20 +2,10 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
-    # - repo: https://github.com/camunda/infraex-common-config
-    #   rev: 0d3d66656b774d1cd906e379df10b601f25ba946 # TODO: replace with main onced it's merged
-    #   hooks:
-    #       - id: update-action-readmes-docker
-    - repo: local
+    - repo: https://github.com/camunda/infraex-common-config
+      rev: 5a264b0 # TODO: replace with main onced it's merged
       hooks:
-        # TODO: extract this pre-commit in common config
           - id: update-action-readmes-docker
-            name: Update GitHub Action READMEs
-            entry: bash .pre-commit/docker_update_action_readmes.sh
-            language: system
-          # Only runs when action files are modified
-            files: ^\.github/actions/.+\.(yml|yaml)$
-            pass_filenames: false # ensure single run
 
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.6.0
