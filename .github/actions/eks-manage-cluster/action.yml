@@ -130,7 +130,7 @@ runs:
           working-directory: ${{ inputs.tf-modules-path }}/modules/eks-cluster/
           run: |
               echo '${{ inputs.additional-terraform-vars }}' > /tmp/var.tfvars.json
-              terraform plan -no-color -out aurora.plan \
+              terraform plan -no-color -out eks.plan \
                 -var-file=/tmp/var.tfvars.json \
                 -var "name=${{ inputs.cluster-name }}" \
                 -var "region=${{ inputs.aws-region }}" \
