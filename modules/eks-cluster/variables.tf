@@ -62,11 +62,13 @@ variable "np_capacity_type" {
 variable "cluster_service_ipv4_cidr" {
   description = "The CIDR block to assign Kubernetes service IP addresses from. Between /24 and /12."
   type        = string
+  default     = "10.190.0.0/16"
 }
 
 variable "cluster_node_ipv4_cidr" {
   description = "The CIDR block for public and private subnets of loadbalancers and nodes. Between /28 and /16."
   type        = string
+  default     = "10.192.0.0/16"
 }
 
 variable "authentication_mode" {

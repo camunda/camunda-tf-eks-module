@@ -3,17 +3,17 @@
 name: lint
 
 on:
-  push:
-  workflow_dispatch:
+    push:
+    workflow_dispatch:
 
 
 jobs:
-  lint:
-    name: pre-commit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Install tooling using asdf
-        uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
+    lint:
+        name: pre-commit
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+            - name: Install tooling using asdf
+              uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
 
-      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+            - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
