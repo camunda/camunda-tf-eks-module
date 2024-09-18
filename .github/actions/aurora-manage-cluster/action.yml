@@ -55,7 +55,7 @@ inputs:
         description: Path where the tf Aurora modules will be cloned
         default: ./.action-tf-modules/aurora/
 
-    # inherited from https://github.com/hashicorp/setup-terraform/blob/main/action.yml
+  # inherited from https://github.com/hashicorp/setup-terraform/blob/main/action.yml
     tf-cli-config-credentials-hostname:
         description: The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration
             file. Defaults to `app.terraform.io`.
@@ -89,7 +89,7 @@ outputs:
         description: URL of the Terraform state file in the S3 bucket
         value: ${{ steps.utility.outputs.terraform-state-url }}
 
-    # Add all terraform outputs dynamically
+  # Add all terraform outputs dynamically
     all-terraform-outputs:
         description: All outputs from Terraform
         value: ${{ steps.fetch_outputs.outputs.all_terraform_outputs }}
@@ -99,12 +99,9 @@ runs:
     steps:
         - name: Use Utility Actions
           id: utility
-          # see https://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
-          # steps.uses  cannot access the github context.
-          # uses: ${{ github.action_repository }}/utility-action@${{ github.action_ref }}
-          # TODO: hard pin this one once it's merged
-          #uses: "camunda/camunda-tf-eks-module/utility-action@main"
-          uses: ./.github/actions/utility-action
+        # see https://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
+        # steps.uses  cannot access the github context.
+          uses: camunda/camunda-tf-eks-module/utility-action@0471f79273b42e0056f780ac854292e763604443 # main
           with:
               awscli-version: ${{ inputs.awscli-version }}
               terraform-version: ${{ inputs.terraform-version }}

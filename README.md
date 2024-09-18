@@ -4,20 +4,20 @@
 [![tests](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml)
 [![License](https://img.shields.io/github/license/camunda/camunda-tf-eks-module)](LICENSE)
 
-Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8.
+Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8 and an AWS Aurora RDS cluster.
 
 **⚠️ Warning:** This project is not intended for production use but rather for demonstration purposes only. There are no guarantees or warranties provided.
 
 ## Documentation
 
-The related [guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-terraform/) describing a more detailed usage.
-Consider installing Camunda 8 via [following guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-helm/) after having deployed the AWS EKS cluster.
+The related [guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-terraform/) describes more detailed usage.
+Consider installing Camunda 8 via [this guide](https://docs.camunda.io/docs/next/self-managed/setup/deploy/amazon/amazon-eks/eks-helm/) after deploying the AWS EKS cluster.
 
 ## Usage
 
-Following is a simple example configuration and should be adjusted as required.
+Below is a simple example configuration for deploying both an EKS cluster and an Aurora PostgreSQL database.
 
-See [AWS EKS Cluster inputs](./modules/eks-cluster/README.md#inputs) and [AWS Aurora RDS inputs](./modules/aurora/README.md#inputs) for further configuration options and how they affect the cluster creation.
+See [AWS EKS Cluster inputs](./modules/eks-cluster/README.md#inputs) and [AWS Aurora RDS inputs](./modules/aurora/README.md#inputs) for further configuration options and how they affect the cluster and database creation.
 
 ```hcl
 module "eks_cluster" {
@@ -49,6 +49,14 @@ module "postgresql" {
   depends_on = [module.eks_cluster]
 }
 ```
+
+#### GitHub Actions
+
+You can automate the deployment and deletion of the EKS cluster and Aurora database using GitHub Actions. Below are examples of GitHub Actions workflows for deploying and deleting these resources.
+
+For more details, refer to the corresponding [EKS Actions README](https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/actions/eks-manage-cluster/README.md) and [Aurora Actions README](https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/actions/aurora-manage-cluster/README.md), [Cleanup Actions README](https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/actions/eks-cleanup-resources/README.md).
+
+An example workflow can be found in https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/workflows/test-gha-eks.yml.
 
 ## Support
 
