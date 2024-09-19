@@ -3,8 +3,6 @@
 ## Description
 
 This GitHub Action automates the deployment of an EKS (Amazon Elastic Kubernetes Service) cluster using Terraform.
-This action will also install Terraform, awscli, and kubectl. The kube context will be set on the created cluster.
-
 
 ## Inputs
 
