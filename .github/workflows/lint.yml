@@ -10,7 +10,5 @@ on:
 jobs:
     lint:
         uses: camunda/infraex-common-config/.github/workflows/lint-global.yml@feature/auto-update-renovate-doc
-      # TODO: pin and change autofix actor
-        with:
-            autofix-actor: leiicamundi
+            # TODO: pin the version on main
         secrets: inherit
