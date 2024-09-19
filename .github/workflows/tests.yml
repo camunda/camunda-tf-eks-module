@@ -73,7 +73,8 @@ jobs:
                   : # If all tests are marked to be skipped, then clear the test_functions list completely
                   if [ "$skipped_tests" == "all" ]; then
                     test_functions=""
-                    echo "Skipping all tests (skip-tests:all found), this workflow will fail. If you want to skip-tests for a PR, please use the label 'testing-ci-not-necessary'"
+                    echo "Skipping all tests (skip-tests:all found), this workflow will fail. \
+                      If you want to skip-tests for a PR, please use the label 'testing-ci-not-necessary'"
                   else
                     : # Otherwise, remove the tests marked to be skipped from the test_functions list
                     if [ -n "$skipped_tests" ]; then
@@ -150,7 +151,9 @@ jobs:
             - name: Filter logger.go from the test report (too large)
               if: always()
               run: |
-                  sed 's/&#xA;/\n/g' < "./test/src/${{ matrix.test_function }}_unit-tests.xml" | grep -E -v '^.*logger\.go.*$' | sed 's/\n/&#xA;/g' > "./test/src/${{ matrix.test_function }}_unit-tests_filtered.xml"
+                  sed 's/&#xA;/\n/g' < "./test/src/${{ matrix.test_function }}_unit-tests.xml" |
+                  grep -E -v '^.*logger\.go.*$' |
+                  sed 's/\n/&#xA;/g' > "./test/src/${{ matrix.test_function }}_unit-tests_filtered.xml"
 
             - name: Upload test reports
               if: always()
