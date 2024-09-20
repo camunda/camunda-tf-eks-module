@@ -22,7 +22,9 @@ spec:
                         apt-get update && \
                         apt-get install -y python3 python3-pip build-essential postgresql-client && \
                         echo "Creating IRSA db user" && \
-                        mkdir -p /tmp/scripts  && cp /scripts/create_aurora_pg_db.sh /tmp/scripts/create_aurora_pg_db.sh && chmod +x /tmp/scripts/create_aurora_pg_db.sh && /tmp/scripts/create_aurora_pg_db.sh
+                        mkdir -p /tmp/scripts  && \
+                        cp /scripts/create_aurora_pg_db.sh /tmp/scripts/create_aurora_pg_db.sh && \
+                        chmod +x /tmp/scripts/create_aurora_pg_db.sh && /tmp/scripts/create_aurora_pg_db.sh
 
                         EOF
                   volumeMounts:

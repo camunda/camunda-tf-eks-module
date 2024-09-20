@@ -120,13 +120,15 @@ This action is a `composite` action.
     # Default: ./.action-tf-modules/aurora/
 
     tf-cli-config-credentials-hostname:
-    # The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file. Defaults to `app.terraform.io`.
+    # The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block
+    # of the Terraform CLI configuration file. Defaults to `app.terraform.io`.
     #
     # Required: false
     # Default: app.terraform.io
 
     tf-cli-config-credentials-token:
-    # The API token for a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file.
+    # The API token for a HCP Terraform/Terraform Enterprise instance to place
+    # within the credentials block of the Terraform CLI configuration file.
     #
     # Required: false
     # Default: ""
@@ -138,7 +140,9 @@ This action is a `composite` action.
     # Default: latest
 
     tf-terraform-wrapper:
-    # Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary and expose its STDOUT, STDERR, and exit code as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.
+    # Whether or not to install a wrapper to wrap subsequent calls of the `terraform` binary
+    # and expose its STDOUT, STDERR, and exit code
+    # as outputs named `stdout`, `stderr`, and `exitcode` respectively. Defaults to `true`.
     #
     # Required: false
     # Default: true

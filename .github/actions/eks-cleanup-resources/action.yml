@@ -37,4 +37,5 @@ runs:
                 export AWS_S3_REGION="${{ inputs.tf-bucket-region }}"
               fi
 
-              ${{ github.action_path }}/scripts/destroy.sh "${{ inputs.tf-bucket }}" ${{ github.action_path }}/../../../modules/ "${{ inputs.temp-dir }}" ${{ inputs.max-age-hours }} ${{ inputs.target }}
+              ${{ github.action_path }}/scripts/destroy.sh "${{ inputs.tf-bucket }}" ${{ github.action_path }}/../../../modules/ \
+                "${{ inputs.temp-dir }}" ${{ inputs.max-age-hours }} ${{ inputs.target }}

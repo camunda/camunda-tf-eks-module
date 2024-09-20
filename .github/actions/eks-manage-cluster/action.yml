@@ -39,7 +39,7 @@ inputs:
         description: Authenticate the current kube context on the created cluster
         default: 'true'
 
-  # inherited from https://github.com/hashicorp/setup-terraform/blob/main/action.yml
+    # inherited from https://github.com/hashicorp/setup-terraform/blob/main/action.yml
     tf-cli-config-credentials-hostname:
         description: The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration
             file. Defaults to `app.terraform.io`.
@@ -75,7 +75,7 @@ outputs:
         description: URL of the Terraform state file in the S3 bucket
         value: ${{ steps.utility.outputs.terraform-state-url }}
 
-  # Add all terraform outputs dynamically
+    # Add all terraform outputs dynamically
     all-terraform-outputs:
         description: All outputs from Terraform
         value: ${{ steps.fetch_outputs.outputs.all_terraform_outputs }}
@@ -85,9 +85,9 @@ runs:
     steps:
         - name: Use Utility Actions
           id: utility
-        # see https://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
-        # steps.uses  cannot access the github context.
-        # uses: ${{ github.action_repository }}/utility-action@${{ github.action_ref }}
+          # see https://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
+          # steps.uses  cannot access the github context.
+          # uses: ${{ github.action_repository }}/utility-action@${{ github.action_ref }}
           uses: camunda/camunda-tf-eks-module/.github/actions/utility-action@0471f79273b42e0056f780ac854292e763604443 # main
           with:
               awscli-version: ${{ inputs.awscli-version }}
@@ -118,7 +118,8 @@ runs:
           run: |
               cp ../fixtures/backend.tf ./
               terraform version
-              terraform init -backend-config="bucket=${{ steps.utility.outputs.TFSTATE_BUCKET }}" -backend-config="key=${{ steps.utility.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.utility.outputs.TFSTATE_REGION }}"
+              terraform init -backend-config="bucket=${{ steps.utility.outputs.TFSTATE_BUCKET }}" \
+                -backend-config="key=${{ steps.utility.outputs.TFSTATE_KEY }}" -backend-config="region=${{ steps.utility.outputs.TFSTATE_REGION }}"
               terraform validate -no-color
 
         - name: Terraform Plan
