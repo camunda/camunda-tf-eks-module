@@ -7,5 +7,6 @@ on:
 
 jobs:
     lint:
+        # TODO: pin the version
         uses: camunda/infraex-common-config/.github/workflows/automerge-global.yml@feature/renovate-automerge-ci
         secrets: inherit
