@@ -10,6 +10,6 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    lint:
+    renovate-automerge:
         uses: camunda/infraex-common-config/.github/workflows/automerge-global.yml@102b2d46c2c3961ee04eb78fcf00f150d938422e # 1.2.2
         secrets: inherit
