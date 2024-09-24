@@ -13,7 +13,7 @@
 # check it with
 # diff <(sed '/^#/d; /^$/d' .tool-versions | sort) <(sed '/^#/d; /^$/d' .tool-versions) && echo ".tool-versions is sorted correctly" || echo ".tool-versions is not sorted correctly"
 
-awscli 2.17.51
+awscli 2.17.57
 
 # renovate: datasource=github-tags depName=eksctl-io/eksctl
 eksctl 0.190.0
@@ -26,7 +26,7 @@ opentofu 1.8.2
 
 pre-commit 3.8.0
 
-terraform 1.9.5
+terraform 1.9.6
 
 terraform-docs 0.19.0
 
