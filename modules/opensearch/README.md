@@ -8,7 +8,7 @@ Below is a simple example configuration that demonstrates how to use this module
 
 ```hcl
 module "opensearch_domain" {
-  source = "path-to-your-module"
+  source = "github.com/camunda/camunda-tf-eks-module/modules/opensearch"
 
   domain_name     = "my-opensearch-domain"
   engine_version  = "OpenSearch_1.0"
