@@ -1,6 +1,9 @@
 ---
 name: Terraform modules tests
 
+# TODO: add opensearch
+
+
 on:
     schedule:
         - cron: 0 1 * * 2

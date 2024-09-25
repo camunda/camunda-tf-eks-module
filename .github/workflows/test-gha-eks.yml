@@ -1,6 +1,8 @@
 ---
 name: EKS Cluster with an AuroraDB creation and destruction test
 
+# TODO: add opensearch
+
 on:
     schedule:
         - cron: 0 1 * * 2 # At 01:00 on Tuesday.
