@@ -46,8 +46,8 @@ on:
             - modules/eks-cluster/**.tf
             - modules/aurora/**.tf
             - .tool-versions
-            - .github/workflows/test-gha-eks-manage-cluster.yml
-            - .github/actions/eks-manage-cluster/*.yml
+            - .github/workflows/test-gha-eks.yml
+            - .github/actions/*/*.yml
 
 # limit to a single execution per actor of this workflow
 concurrency:
