@@ -14,6 +14,11 @@ variable "subnet_ids" {
   required    = true
 }
 
+variable "cidr_blocks" {
+  type        = list(string)
+  description = "The CIDR blocks to allow acces from and to."
+}
+
 variable "security_group_ids" {
   type        = list(string)
   description = "Security groups used by the domain."
@@ -143,20 +148,9 @@ variable "advanced_security_anonymous_auth_enabled" {
   default     = false
 }
 
-variable "encrypt_at_rest_enabled" {
-  description = "Configuration block for encrypt at rest options. Only available for certain instance types."
-  default     = true
-}
-
-
-variable "encrypt_at_rest_kms_key_id" {
-  description = "KMS key id used to encrypt at rest."
-}
-
 variable "access_policies" {
   description = "IAM policy document specifying the access policies for the domain."
 }
-
 
 variable "create_timeout" {
   description = "How much time to wait for the creation before timing out."
@@ -212,4 +206,22 @@ variable "ip_address_type" {
 variable "off_peak_window_options" {
   description = "Configuration to add Off Peak update options"
   default     = { "enabled" : true, "off_peak_window" : { "hours" : 7 } }
+}
+
+variable "kms_key_delete_window_in_days" {
+  description = "The number of days before the KMS key is deleted after being disabled."
+  type        = number
+  default     = 7
+}
+
+variable "kms_key_enable_key_rotation" {
+  description = "Specifies whether automatic key rotation is enabled for the KMS key."
+  type        = bool
+  default     = true
+}
+
+variable "kms_key_tags" {
+  description = "The tags to associate with the KMS key."
+  type        = map(string)
+  default     = {}
 }

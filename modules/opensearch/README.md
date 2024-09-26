@@ -68,7 +68,11 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [aws_kms_key.key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 | [aws_opensearch_domain.opensearch_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/opensearch_domain) | resource |
+| [aws_security_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
+| [aws_security_group_rule.allow_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.allow_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 ## Inputs
 
 | Name | Description | Type | Default | Required |
@@ -84,6 +88,7 @@ No modules.
 | <a name="input_auto_tune_options"></a> [auto\_tune\_options](#input\_auto\_tune\_options) | Configuration block for the Auto-Tune options of the domain | `any` | <pre>{<br/>  "desired_state": "ENABLED",<br/>  "rollback_on_disable": "NO_ROLLBACK"<br/>}</pre> | no |
 | <a name="input_automated_snapshot_start_hour"></a> [automated\_snapshot\_start\_hour](#input\_automated\_snapshot\_start\_hour) | Hour during which the service takes an automated daily snapshot of the indices in the domain. | `number` | `0` | no |
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | Availability zones used by the domain. | `list(string)` | n/a | yes |
+| <a name="input_cidr_blocks"></a> [cidr\_blocks](#input\_cidr\_blocks) | The CIDR blocks to allow acces from and to. | `list(string)` | n/a | yes |
 | <a name="input_cold_storage_enabled"></a> [cold\_storage\_enabled](#input\_cold\_storage\_enabled) | Indicates cold storage is enabled. | `bool` | `false` | no |
 | <a name="input_create_timeout"></a> [create\_timeout](#input\_create\_timeout) | How much time to wait for the creation before timing out. | `string` | `"2h"` | no |
 | <a name="input_dedicated_master_count"></a> [dedicated\_master\_count](#input\_dedicated\_master\_count) | Number of dedicated master nodes in the cluster. | `number` | `1` | no |
@@ -97,12 +102,13 @@ No modules.
 | <a name="input_ebs_volume_size"></a> [ebs\_volume\_size](#input\_ebs\_volume\_size) | Type of EBS volumes attached to data nodes. | `number` | `64` | no |
 | <a name="input_ebs_volume_type"></a> [ebs\_volume\_type](#input\_ebs\_volume\_type) | Type of EBS volumes attached to data nodes. | `string` | `"gp3"` | no |
 | <a name="input_enable_access_policy"></a> [enable\_access\_policy](#input\_enable\_access\_policy) | Determines whether an access policy will be applied to the domain | `bool` | `true` | no |
-| <a name="input_encrypt_at_rest_enabled"></a> [encrypt\_at\_rest\_enabled](#input\_encrypt\_at\_rest\_enabled) | Configuration block for encrypt at rest options. Only available for certain instance types. | `bool` | `true` | no |
-| <a name="input_encrypt_at_rest_kms_key_id"></a> [encrypt\_at\_rest\_kms\_key\_id](#input\_encrypt\_at\_rest\_kms\_key\_id) | KMS key id used to encrypt at rest. | `any` | n/a | yes |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | OpenSearch version for the domain. | `any` | n/a | yes |
 | <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of instances in the cluster. | `number` | `1` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | Instance type of data nodes in the cluster. | `string` | `"t3.small.search"` | no |
 | <a name="input_ip_address_type"></a> [ip\_address\_type](#input\_ip\_address\_type) | The IP address type for the endpoint. Valid values are ipv4 and dualstack | `any` | n/a | yes |
+| <a name="input_kms_key_delete_window_in_days"></a> [kms\_key\_delete\_window\_in\_days](#input\_kms\_key\_delete\_window\_in\_days) | The number of days before the KMS key is deleted after being disabled. | `number` | `7` | no |
+| <a name="input_kms_key_enable_key_rotation"></a> [kms\_key\_enable\_key\_rotation](#input\_kms\_key\_enable\_key\_rotation) | Specifies whether automatic key rotation is enabled for the KMS key. | `bool` | `true` | no |
+| <a name="input_kms_key_tags"></a> [kms\_key\_tags](#input\_kms\_key\_tags) | The tags to associate with the KMS key. | `map(string)` | `{}` | no |
 | <a name="input_multi_az_with_standby_enabled"></a> [multi\_az\_with\_standby\_enabled](#input\_multi\_az\_with\_standby\_enabled) | Whether a multi-AZ domain is turned on with a standby AZ. | `bool` | `false` | no |
 | <a name="input_node_to_node_encryption_enabled"></a> [node\_to\_node\_encryption\_enabled](#input\_node\_to\_node\_encryption\_enabled) | Whether node to node encryption is enabled. | `bool` | `true` | no |
 | <a name="input_off_peak_window_options"></a> [off\_peak\_window\_options](#input\_off\_peak\_window\_options) | Configuration to add Off Peak update options | `map` | <pre>{<br/>  "enabled": true,<br/>  "off_peak_window": {<br/>    "hours": 7<br/>  }<br/>}</pre> | no |

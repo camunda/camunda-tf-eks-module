@@ -1,5 +1,4 @@
 resource "aws_opensearch_domain" "opensearch_cluster" {
-
   tags = var.tags
 
   domain_name    = var.domain_name
@@ -10,7 +9,7 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
   vpc_options {
     vpc_id             = var.vpc_id
     subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_group_ids
+    security_group_ids = concat([aws_security_group.this.id], var.security_group_ids)
     availability_zones = var.availability_zones
   }
 
@@ -58,8 +57,8 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
   }
 
   encrypt_at_rest {
-    enabled    = var.encrypt_at_rest_enabled
-    kms_key_id = var.encrypt_at_rest_kms_key_id
+    enabled    = true
+    kms_key_id = aws_kms_key.kms.key_id
   }
 
   node_to_node_encryption {
@@ -93,4 +92,47 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
 
 }
 
-# TODO: add kms key, security group, subnet, inspire on aurora
+resource "aws_kms_key" "key" {
+  description             = "${var.cluster_name}-key"
+  deletion_window_in_days = var.kms_key_delete_window_in_days
+  enable_key_rotation     = var.kms_key_enable_key_rotation
+
+  tags = var.kms_key_tags
+}
+
+resource "aws_security_group" "this" {
+  name        = "${var.cluster_name}-allow-all-internal-access"
+  description = "Security group managing access to ${var.cluster_name}"
+
+  vpc_id = var.vpc_id
+
+  tags = var.tags
+}
+
+resource "aws_security_group_rule" "allow_egress" {
+  description = "Allow outgoing traffic for the OpenSearch"
+
+  type        = "egress"
+  from_port   = 0
+  to_port     = 0
+  protocol    = "-1"
+  cidr_blocks = var.cidr_blocks
+
+  security_group_id = aws_security_group.this.id
+}
+
+resource "aws_security_group_rule" "allow_ingress" {
+  for_each = [9200, 9300]
+
+  description = "Allow incoming traffic for the OpenSearch on port ${each.value}"
+
+  type        = "ingress"
+  from_port   = each.value
+  to_port     = each.value
+  protocol    = "tcp"
+  cidr_blocks = var.cidr_blocks
+
+  security_group_id = aws_security_group.this.id
+}
+
+# TODO: test backup
