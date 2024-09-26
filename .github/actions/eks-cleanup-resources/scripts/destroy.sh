@@ -152,6 +152,14 @@ destroy_resource() {
       -var="subnet_ids=[]" \
       -var="cidr_blocks=[]" \
       -var="vpc_id=vpc-dummy"; then return 1; fi
+
+  elif [ "$terraform_module" == "opensearch" ]; then
+    if ! terraform destroy -auto-approve \
+      -var="domain_name=$cluster_name" \
+      -var="vpc_id=vpc-dummy" \
+      -var="cidr_blocks=[]" \
+      -var="subnet_ids=[]"; then return 1; fi
+
   else
     echo "Unsupported module: $terraform_module"
     return 1

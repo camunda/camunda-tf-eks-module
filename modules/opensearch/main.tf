@@ -2,7 +2,7 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
   tags = var.tags
 
   domain_name    = var.domain_name
-  engine_version = var.engine_version
+  engine_version = "OpenSearch_${var.engine_version}"
 
   ip_address_type = var.ip_address_type
 

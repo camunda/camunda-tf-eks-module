@@ -1,3 +1,5 @@
+# ! Developer: if you are adding a variable without a default value, please ensure to reference it in the cleanup script (.github/actions/eks-cleanup-resources/scripts/destroy.sh)
+
 variable "domain_name" {
   type        = string
   description = "Name of the domain."
@@ -7,7 +9,8 @@ variable "domain_name" {
 variable "engine_version" {
   type        = string
   description = "OpenSearch version for the domain."
-  required    = true
+  # TODO: add renovate
+  default = "2.15"
 }
 
 variable "subnet_ids" {
@@ -21,12 +24,6 @@ variable "cidr_blocks" {
   description = "The CIDR blocks to allow access from and to."
 }
 
-variable "security_group_ids" {
-  type        = list(string)
-  description = "Security groups used by the domain."
-  default     = []
-}
-
 variable "vpc_id" {
   type        = string
   description = "VPC used by the domain."
@@ -35,8 +32,14 @@ variable "vpc_id" {
 
 variable "availability_zones" {
   type        = list(string)
-  description = "Availability zones used by the domain."
+  description = "Availability zones used by the domain (should match the VPC)."
   required    = true
+}
+
+variable "security_group_ids" {
+  type        = list(string)
+  description = "Additional security groups used by the domain."
+  default     = []
 }
 
 variable "instance_type" {
