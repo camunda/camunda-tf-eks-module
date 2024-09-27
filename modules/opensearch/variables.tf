@@ -41,7 +41,7 @@ variable "instance_type" {
 
 variable "instance_count" {
   type        = number
-  default     = 1
+  default     = 4
   description = "Number of instances in the cluster."
 }
 
@@ -84,13 +84,13 @@ variable "zone_awareness_enabled" {
 variable "zone_awareness_availability_zone_count" {
   type        = number
   description = "Number of availability zones used."
-  default     = 2
+  default     = 3
 }
 
 variable "warm_enabled" {
   type        = bool
   description = "Warm storage is enabled."
-  default     = true
+  default     = false
 }
 
 variable "warm_count" {
@@ -217,7 +217,7 @@ variable "enable_access_policy" {
 variable "auto_tune_options" {
   type        = any
   description = "Configuration block for the Auto-Tune options of the domain"
-  default     = { "desired_state" : "ENABLED", "rollback_on_disable" : "NO_ROLLBACK" }
+  default     = { "desired_state" : "DISABLED", "rollback_on_disable" : "NO_ROLLBACK" }
 }
 
 variable "domain_endpoint_options" {

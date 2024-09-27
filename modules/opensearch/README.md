@@ -88,7 +88,7 @@ No modules.
 | <a name="input_advanced_security_master_user_name"></a> [advanced\_security\_master\_user\_name](#input\_advanced\_security\_master\_user\_name) | Main user's username, which is stored in the Amazon Elasticsearch Service domain's internal database. Only specify if `advanced_security_internal_user_database_enabled` is set to true. | `string` | `"opensearch-admin"` | no |
 | <a name="input_advanced_security_master_user_password"></a> [advanced\_security\_master\_user\_password](#input\_advanced\_security\_master\_user\_password) | Main user's password, which is stored in the Amazon Elasticsearch Service domain's internal database. Only specify if `advanced_security_internal_user_database_enabled` is set to true. | `string` | n/a | yes |
 | <a name="input_auto_software_update_enabled"></a> [auto\_software\_update\_enabled](#input\_auto\_software\_update\_enabled) | Software update auto for the domain. | `bool` | `false` | no |
-| <a name="input_auto_tune_options"></a> [auto\_tune\_options](#input\_auto\_tune\_options) | Configuration block for the Auto-Tune options of the domain | `any` | <pre>{<br/>  "desired_state": "ENABLED",<br/>  "rollback_on_disable": "NO_ROLLBACK"<br/>}</pre> | no |
+| <a name="input_auto_tune_options"></a> [auto\_tune\_options](#input\_auto\_tune\_options) | Configuration block for the Auto-Tune options of the domain | `any` | <pre>{<br/>  "desired_state": "DISABLED",<br/>  "rollback_on_disable": "NO_ROLLBACK"<br/>}</pre> | no |
 | <a name="input_automated_snapshot_start_hour"></a> [automated\_snapshot\_start\_hour](#input\_automated\_snapshot\_start\_hour) | Hour during which the service takes an automated daily snapshot of the indices in the domain. | `number` | `0` | no |
 | <a name="input_cidr_blocks"></a> [cidr\_blocks](#input\_cidr\_blocks) | The CIDR blocks to allow access from and to. | `list(string)` | n/a | yes |
 | <a name="input_cold_storage_enabled"></a> [cold\_storage\_enabled](#input\_cold\_storage\_enabled) | Indicates cold storage is enabled. | `bool` | `false` | no |
@@ -107,7 +107,7 @@ No modules.
 | <a name="input_enable_access_policy"></a> [enable\_access\_policy](#input\_enable\_access\_policy) | Determines whether an access policy will be applied to the domain | `bool` | `true` | no |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | OpenSearch version for the domain. | `string` | `"2.15"` | no |
 | <a name="input_iam_role_trust_policy"></a> [iam\_role\_trust\_policy](#input\_iam\_role\_trust\_policy) | Assume role trust policy for OpenSearch role | `string` | `"          {\n            \"Version\": \"2012-10-17\",\n            \"Statement\": [\n              {\n                \"Effect\": \"Allow\",\n                \"Principal\": {\n                  \"Federated\": \"arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>\"\n                },\n                \"Action\": \"sts:AssumeRoleWithWebIdentity\",\n                \"Condition\": {\n                  \"StringEquals\": {\n                    \"oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub\": \"system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>\"\n                  }\n                }\n              }\n            ]\n          }\n\n"` | no |
-| <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of instances in the cluster. | `number` | `1` | no |
+| <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of instances in the cluster. | `number` | `4` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | Instance type of data nodes in the cluster. | `string` | `"t3.small.search"` | no |
 | <a name="input_ip_address_type"></a> [ip\_address\_type](#input\_ip\_address\_type) | The IP address type for the endpoint. Valid values are ipv4 and dualstack | `string` | `"ipv4"` | no |
 | <a name="input_kms_key_delete_window_in_days"></a> [kms\_key\_delete\_window\_in\_days](#input\_kms\_key\_delete\_window\_in\_days) | The number of days before the KMS key is deleted after being disabled. | `number` | `7` | no |
@@ -123,9 +123,9 @@ No modules.
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags assigned to the domain. | `map(string)` | `{}` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC used by the domain. | `string` | n/a | yes |
 | <a name="input_warm_count"></a> [warm\_count](#input\_warm\_count) | Number of warm nodes in the cluster. | `number` | `2` | no |
-| <a name="input_warm_enabled"></a> [warm\_enabled](#input\_warm\_enabled) | Warm storage is enabled. | `bool` | `true` | no |
+| <a name="input_warm_enabled"></a> [warm\_enabled](#input\_warm\_enabled) | Warm storage is enabled. | `bool` | `false` | no |
 | <a name="input_warm_type"></a> [warm\_type](#input\_warm\_type) | Instance type for the OpenSearch cluster's warm nodes. | `string` | `"ultrawarm1.medium.search"` | no |
-| <a name="input_zone_awareness_availability_zone_count"></a> [zone\_awareness\_availability\_zone\_count](#input\_zone\_awareness\_availability\_zone\_count) | Number of availability zones used. | `number` | `2` | no |
+| <a name="input_zone_awareness_availability_zone_count"></a> [zone\_awareness\_availability\_zone\_count](#input\_zone\_awareness\_availability\_zone\_count) | Number of availability zones used. | `number` | `3` | no |
 | <a name="input_zone_awareness_enabled"></a> [zone\_awareness\_enabled](#input\_zone\_awareness\_enabled) | Indicates whether zone awareness is enabled. | `bool` | `true` | no |
 ## Outputs
 
