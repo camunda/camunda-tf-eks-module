@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/eks v1.49.1
 	github.com/aws/aws-sdk-go-v2/service/iam v1.36.1
 	github.com/aws/aws-sdk-go-v2/service/kms v1.36.1
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.40.2
 	github.com/aws/aws-sdk-go-v2/service/rds v1.84.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.63.1
 	github.com/aws/smithy-go v1.21.0
