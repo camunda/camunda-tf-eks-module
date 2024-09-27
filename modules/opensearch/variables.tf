@@ -3,7 +3,6 @@
 variable "domain_name" {
   type        = string
   description = "Name of the domain."
-  required    = true
 }
 
 variable "engine_version" {
@@ -16,7 +15,6 @@ variable "engine_version" {
 variable "subnet_ids" {
   type        = list(string)
   description = "The subnet IDs to create the cluster in. For easier usage we are passing through the subnet IDs from the AWS EKS Cluster module."
-  required    = true
 }
 
 variable "cidr_blocks" {
@@ -27,13 +25,11 @@ variable "cidr_blocks" {
 variable "vpc_id" {
   type        = string
   description = "VPC used by the domain."
-  required    = true
 }
 
 variable "availability_zones" {
   type        = list(string)
   description = "Availability zones used by the domain (should match the VPC)."
-  required    = true
 }
 
 variable "security_group_ids" {
@@ -211,7 +207,6 @@ variable "ebs_volume_type" {
 variable "ebs_volume_size" {
   type        = number
   description = "Size of EBS volumes attached to data nodes."
-  required    = true
   default     = 64
 }
 
