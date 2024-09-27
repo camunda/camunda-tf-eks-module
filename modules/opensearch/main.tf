@@ -7,13 +7,13 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
   ip_address_type = var.ip_address_type
 
   vpc_options {
-    vpc_id             = var.vpc_id
     subnet_ids         = var.subnet_ids
     security_group_ids = concat([aws_security_group.this.id], var.security_group_ids)
-    availability_zones = var.availability_zones
   }
 
-  off_peak_window_options = var.off_peak_window_options
+  off_peak_window_options {
+    enabled = var.off_peak_window_enabled
+  }
 
   # TODO: integrate logwatch in this component but also in the other for production ready solution
 
@@ -40,7 +40,7 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
     zone_awareness_enabled = var.zone_awareness_enabled
   }
 
-  software_update_options = {
+  software_update_options {
     auto_software_update_enabled = var.auto_software_update_enabled
   }
 
@@ -77,14 +77,19 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
     automated_snapshot_start_hour = var.automated_snapshot_start_hour
   }
 
-  auto_tune_options = var.auto_tune_options
+  auto_tune_options {
+    desired_state       = var.auto_tune_options.desired_state
+    rollback_on_disable = var.auto_tune_options.rollback_on_disable
+  }
 
   advanced_options = var.advanced_options
 
-  enable_access_policy = var.enable_access_policy
-  access_policies      = var.access_policies
+  access_policies = var.enable_access_policy ? var.access_policies : null
 
-  domain_endpoint_options = var.domain_endpoint_options
+  domain_endpoint_options {
+    enforce_https       = var.domain_endpoint_options.enforce_https
+    tls_security_policy = var.domain_endpoint_options.tls_security_policy
+  }
 
   timeouts {
     create = var.create_timeout
@@ -92,8 +97,8 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
 
 }
 
-resource "aws_kms_key" "key" {
-  description             = "${var.cluster_name}-key"
+resource "aws_kms_key" "kms" {
+  description             = "${var.domain_name}-key"
   deletion_window_in_days = var.kms_key_delete_window_in_days
   enable_key_rotation     = var.kms_key_enable_key_rotation
 
@@ -101,8 +106,8 @@ resource "aws_kms_key" "key" {
 }
 
 resource "aws_security_group" "this" {
-  name        = "${var.cluster_name}-allow-all-internal-access"
-  description = "Security group managing access to ${var.cluster_name}"
+  name        = "${var.domain_name}-allow-all-internal-access"
+  description = "Security group managing access to ${var.domain_name}"
 
   vpc_id = var.vpc_id
 
@@ -122,13 +127,13 @@ resource "aws_security_group_rule" "allow_egress" {
 }
 
 resource "aws_security_group_rule" "allow_ingress" {
-  for_each = [9200, 9300]
+  for_each = toset(["9200", "9300"])
 
-  description = "Allow incoming traffic for the OpenSearch on port ${each.value}"
+  description = "Allow incoming traffic for the OpenSearch on port ${each.key}"
 
   type        = "ingress"
-  from_port   = each.value
-  to_port     = each.value
+  from_port   = tonumber(each.key)
+  to_port     = tonumber(each.key)
   protocol    = "tcp"
   cidr_blocks = var.cidr_blocks
 

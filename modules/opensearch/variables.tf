@@ -12,6 +12,11 @@ variable "engine_version" {
   default = "2.15"
 }
 
+variable "vpc_id" {
+  type        = string
+  description = "VPC used by the domain."
+}
+
 variable "subnet_ids" {
   type        = list(string)
   description = "The subnet IDs to create the cluster in. For easier usage we are passing through the subnet IDs from the AWS EKS Cluster module."
@@ -20,16 +25,6 @@ variable "subnet_ids" {
 variable "cidr_blocks" {
   type        = list(string)
   description = "The CIDR blocks to allow access from and to."
-}
-
-variable "vpc_id" {
-  type        = string
-  description = "VPC used by the domain."
-}
-
-variable "availability_zones" {
-  type        = list(string)
-  description = "Availability zones used by the domain (should match the VPC)."
 }
 
 variable "security_group_ids" {
@@ -71,7 +66,7 @@ variable "dedicated_master_type" {
 variable "dedicated_master_count" {
   type        = number
   description = "Number of dedicated master nodes in the cluster."
-  default     = 1
+  default     = 4
 }
 
 variable "multi_az_with_standby_enabled" {
@@ -89,7 +84,7 @@ variable "zone_awareness_enabled" {
 variable "zone_awareness_availability_zone_count" {
   type        = number
   description = "Number of availability zones used."
-  default     = 1
+  default     = 2
 }
 
 variable "warm_enabled" {
@@ -101,13 +96,13 @@ variable "warm_enabled" {
 variable "warm_count" {
   type        = number
   description = "Number of warm nodes in the cluster."
-  default     = 1
+  default     = 2
 }
 
 variable "warm_type" {
   type        = string
   description = "Instance type for the OpenSearch cluster's warm nodes."
-  default     = ""
+  default     = "ultrawarm1.medium.search"
 }
 
 variable "tags" {
@@ -173,6 +168,7 @@ variable "advanced_security_anonymous_auth_enabled" {
 
 variable "access_policies" {
   type        = string
+  default     = "{}"
   description = "IAM policy document specifying the access policies for the domain."
 }
 
@@ -190,11 +186,13 @@ variable "ebs_enabled" {
 
 variable "ebs_iops" {
   type        = number
+  default     = 3000
   description = "Baseline input/output (I/O) performance of EBS volumes attached to data nodes. Applicable only for the GP3 and Provisioned IOPS EBS volume types."
 }
 
 variable "ebs_throughput" {
   type        = number
+  default     = 125
   description = "(Required if `ebs_volume_type` is set to gp3) Specifies the throughput (in MiB/s) of the EBS volumes attached to data nodes. Applicable only for the gp3 volume type."
 }
 
@@ -230,13 +228,14 @@ variable "domain_endpoint_options" {
 
 variable "ip_address_type" {
   type        = string
+  default     = "ipv4"
   description = "The IP address type for the endpoint. Valid values are ipv4 and dualstack"
 }
 
-variable "off_peak_window_options" {
-  type        = any
-  description = "Configuration to add Off Peak update options"
-  default     = { "enabled" : true, "off_peak_window" : { "hours" : 7 } }
+variable "off_peak_window_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether to enable off peak update"
 }
 
 variable "kms_key_delete_window_in_days" {
@@ -255,4 +254,63 @@ variable "kms_key_tags" {
   type        = map(string)
   description = "The tags to associate with the KMS key."
   default     = {}
+}
+
+variable "create_opensearch_role" {
+  description = "Flag to determine if the OpenSearch role should be created"
+  type        = bool
+  default     = true
+}
+
+variable "opensearch_role_name" {
+  description = "Name of the OpenSearch IAM role"
+  type        = string
+  default     = "OpenSearchRole"
+}
+
+variable "iam_role_trust_policy" {
+  description = "Assume role trust policy for OpenSearch role"
+  type        = string
+  default     = <<EOF
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
+                  }
+                }
+              }
+            ]
+          }
+
+EOF
+}
+
+variable "opensearch_access_policy" {
+  description = "Access policy for OpenSearch allowing access"
+  type        = string
+  default     = <<EOF
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "es:ESHttpGet",
+                    "es:ESHttpPut",
+                    "es:ESHttpPost"
+                  ],
+                  "Resource": "arn:aws:es:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:domain/<YOUR-DOMAIN-NAME>/*"
+                }
+              ]
+            }
+
+EOF
 }

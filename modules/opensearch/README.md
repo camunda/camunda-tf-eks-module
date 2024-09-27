@@ -68,7 +68,10 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [aws_kms_key.key](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
+| [aws_iam_policy.opensearch_access_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.opensearch](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.attach_opensearch_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_kms_key.kms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key) | resource |
 | [aws_opensearch_domain.opensearch_cluster](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/opensearch_domain) | resource |
 | [aws_security_group.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group_rule.allow_egress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
@@ -77,7 +80,7 @@ No modules.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_access_policies"></a> [access\_policies](#input\_access\_policies) | IAM policy document specifying the access policies for the domain. | `string` | n/a | yes |
+| <a name="input_access_policies"></a> [access\_policies](#input\_access\_policies) | IAM policy document specifying the access policies for the domain. | `string` | `"{}"` | no |
 | <a name="input_advanced_options"></a> [advanced\_options](#input\_advanced\_options) | Key-value string pairs to specify advanced configuration options. | `map(any)` | <pre>{<br/>  "rest.action.multi.allow_explicit_index": true<br/>}</pre> | no |
 | <a name="input_advanced_security_anonymous_auth_enabled"></a> [advanced\_security\_anonymous\_auth\_enabled](#input\_advanced\_security\_anonymous\_auth\_enabled) | Whether the anonymous auth is enabled. | `bool` | `false` | no |
 | <a name="input_advanced_security_enabled"></a> [advanced\_security\_enabled](#input\_advanced\_security\_enabled) | Whether advanced security is enabled. | `bool` | `false` | no |
@@ -87,39 +90,42 @@ No modules.
 | <a name="input_auto_software_update_enabled"></a> [auto\_software\_update\_enabled](#input\_auto\_software\_update\_enabled) | Software update auto for the domain. | `bool` | `false` | no |
 | <a name="input_auto_tune_options"></a> [auto\_tune\_options](#input\_auto\_tune\_options) | Configuration block for the Auto-Tune options of the domain | `any` | <pre>{<br/>  "desired_state": "ENABLED",<br/>  "rollback_on_disable": "NO_ROLLBACK"<br/>}</pre> | no |
 | <a name="input_automated_snapshot_start_hour"></a> [automated\_snapshot\_start\_hour](#input\_automated\_snapshot\_start\_hour) | Hour during which the service takes an automated daily snapshot of the indices in the domain. | `number` | `0` | no |
-| <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | Availability zones used by the domain (should match the VPC). | `list(string)` | n/a | yes |
 | <a name="input_cidr_blocks"></a> [cidr\_blocks](#input\_cidr\_blocks) | The CIDR blocks to allow access from and to. | `list(string)` | n/a | yes |
 | <a name="input_cold_storage_enabled"></a> [cold\_storage\_enabled](#input\_cold\_storage\_enabled) | Indicates cold storage is enabled. | `bool` | `false` | no |
+| <a name="input_create_opensearch_role"></a> [create\_opensearch\_role](#input\_create\_opensearch\_role) | Flag to determine if the OpenSearch role should be created | `bool` | `true` | no |
 | <a name="input_create_timeout"></a> [create\_timeout](#input\_create\_timeout) | How much time to wait for the creation before timing out. | `string` | `"2h"` | no |
-| <a name="input_dedicated_master_count"></a> [dedicated\_master\_count](#input\_dedicated\_master\_count) | Number of dedicated master nodes in the cluster. | `number` | `1` | no |
+| <a name="input_dedicated_master_count"></a> [dedicated\_master\_count](#input\_dedicated\_master\_count) | Number of dedicated master nodes in the cluster. | `number` | `4` | no |
 | <a name="input_dedicated_master_enabled"></a> [dedicated\_master\_enabled](#input\_dedicated\_master\_enabled) | Indicates whether dedicated master nodes are enabled for the cluster. | `bool` | `true` | no |
 | <a name="input_dedicated_master_type"></a> [dedicated\_master\_type](#input\_dedicated\_master\_type) | Instance type of the dedicated master nodes in the cluster. | `string` | `""` | no |
 | <a name="input_domain_endpoint_options"></a> [domain\_endpoint\_options](#input\_domain\_endpoint\_options) | Configuration block for domain endpoint HTTP(S) related options | `any` | <pre>{<br/>  "enforce_https": true,<br/>  "tls_security_policy": "Policy-Min-TLS-1-2-2019-07"<br/>}</pre> | no |
 | <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | Name of the domain. | `string` | n/a | yes |
 | <a name="input_ebs_enabled"></a> [ebs\_enabled](#input\_ebs\_enabled) | Whether EBS volumes are attached to data nodes in the domain. | `bool` | `true` | no |
-| <a name="input_ebs_iops"></a> [ebs\_iops](#input\_ebs\_iops) | Baseline input/output (I/O) performance of EBS volumes attached to data nodes. Applicable only for the GP3 and Provisioned IOPS EBS volume types. | `number` | n/a | yes |
-| <a name="input_ebs_throughput"></a> [ebs\_throughput](#input\_ebs\_throughput) | (Required if `ebs_volume_type` is set to gp3) Specifies the throughput (in MiB/s) of the EBS volumes attached to data nodes. Applicable only for the gp3 volume type. | `number` | n/a | yes |
+| <a name="input_ebs_iops"></a> [ebs\_iops](#input\_ebs\_iops) | Baseline input/output (I/O) performance of EBS volumes attached to data nodes. Applicable only for the GP3 and Provisioned IOPS EBS volume types. | `number` | `3000` | no |
+| <a name="input_ebs_throughput"></a> [ebs\_throughput](#input\_ebs\_throughput) | (Required if `ebs_volume_type` is set to gp3) Specifies the throughput (in MiB/s) of the EBS volumes attached to data nodes. Applicable only for the gp3 volume type. | `number` | `125` | no |
 | <a name="input_ebs_volume_size"></a> [ebs\_volume\_size](#input\_ebs\_volume\_size) | Size of EBS volumes attached to data nodes. | `number` | `64` | no |
 | <a name="input_ebs_volume_type"></a> [ebs\_volume\_type](#input\_ebs\_volume\_type) | Type of EBS volumes attached to data nodes. | `string` | `"gp3"` | no |
 | <a name="input_enable_access_policy"></a> [enable\_access\_policy](#input\_enable\_access\_policy) | Determines whether an access policy will be applied to the domain | `bool` | `true` | no |
 | <a name="input_engine_version"></a> [engine\_version](#input\_engine\_version) | OpenSearch version for the domain. | `string` | `"2.15"` | no |
+| <a name="input_iam_role_trust_policy"></a> [iam\_role\_trust\_policy](#input\_iam\_role\_trust\_policy) | Assume role trust policy for OpenSearch role | `string` | `"          {\n            \"Version\": \"2012-10-17\",\n            \"Statement\": [\n              {\n                \"Effect\": \"Allow\",\n                \"Principal\": {\n                  \"Federated\": \"arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>\"\n                },\n                \"Action\": \"sts:AssumeRoleWithWebIdentity\",\n                \"Condition\": {\n                  \"StringEquals\": {\n                    \"oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub\": \"system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>\"\n                  }\n                }\n              }\n            ]\n          }\n\n"` | no |
 | <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of instances in the cluster. | `number` | `1` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | Instance type of data nodes in the cluster. | `string` | `"t3.small.search"` | no |
-| <a name="input_ip_address_type"></a> [ip\_address\_type](#input\_ip\_address\_type) | The IP address type for the endpoint. Valid values are ipv4 and dualstack | `string` | n/a | yes |
+| <a name="input_ip_address_type"></a> [ip\_address\_type](#input\_ip\_address\_type) | The IP address type for the endpoint. Valid values are ipv4 and dualstack | `string` | `"ipv4"` | no |
 | <a name="input_kms_key_delete_window_in_days"></a> [kms\_key\_delete\_window\_in\_days](#input\_kms\_key\_delete\_window\_in\_days) | The number of days before the KMS key is deleted after being disabled. | `number` | `7` | no |
 | <a name="input_kms_key_enable_key_rotation"></a> [kms\_key\_enable\_key\_rotation](#input\_kms\_key\_enable\_key\_rotation) | Specifies whether automatic key rotation is enabled for the KMS key. | `bool` | `true` | no |
 | <a name="input_kms_key_tags"></a> [kms\_key\_tags](#input\_kms\_key\_tags) | The tags to associate with the KMS key. | `map(string)` | `{}` | no |
 | <a name="input_multi_az_with_standby_enabled"></a> [multi\_az\_with\_standby\_enabled](#input\_multi\_az\_with\_standby\_enabled) | Whether a multi-AZ domain is turned on with a standby AZ. | `bool` | `false` | no |
 | <a name="input_node_to_node_encryption_enabled"></a> [node\_to\_node\_encryption\_enabled](#input\_node\_to\_node\_encryption\_enabled) | Whether node to node encryption is enabled. | `bool` | `true` | no |
-| <a name="input_off_peak_window_options"></a> [off\_peak\_window\_options](#input\_off\_peak\_window\_options) | Configuration to add Off Peak update options | `any` | <pre>{<br/>  "enabled": true,<br/>  "off_peak_window": {<br/>    "hours": 7<br/>  }<br/>}</pre> | no |
+| <a name="input_off_peak_window_enabled"></a> [off\_peak\_window\_enabled](#input\_off\_peak\_window\_enabled) | Whether to enable off peak update | `bool` | `true` | no |
+| <a name="input_opensearch_access_policy"></a> [opensearch\_access\_policy](#input\_opensearch\_access\_policy) | Access policy for OpenSearch allowing access | `string` | `"            {\n              \"Version\": \"2012-10-17\",\n              \"Statement\": [\n                {\n                  \"Effect\": \"Allow\",\n                  \"Action\": [\n                    \"es:ESHttpGet\",\n                    \"es:ESHttpPut\",\n                    \"es:ESHttpPost\"\n                  ],\n                  \"Resource\": \"arn:aws:es:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:domain/<YOUR-DOMAIN-NAME>/*\"\n                }\n              ]\n            }\n\n"` | no |
+| <a name="input_opensearch_role_name"></a> [opensearch\_role\_name](#input\_opensearch\_role\_name) | Name of the OpenSearch IAM role | `string` | `"OpenSearchRole"` | no |
 | <a name="input_security_group_ids"></a> [security\_group\_ids](#input\_security\_group\_ids) | Additional security groups used by the domain. | `list(string)` | `[]` | no |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | The subnet IDs to create the cluster in. For easier usage we are passing through the subnet IDs from the AWS EKS Cluster module. | `list(string)` | n/a | yes |
 | <a name="input_tags"></a> [tags](#input\_tags) | Tags assigned to the domain. | `map(string)` | `{}` | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | VPC used by the domain. | `string` | n/a | yes |
-| <a name="input_warm_count"></a> [warm\_count](#input\_warm\_count) | Number of warm nodes in the cluster. | `number` | `1` | no |
+| <a name="input_warm_count"></a> [warm\_count](#input\_warm\_count) | Number of warm nodes in the cluster. | `number` | `2` | no |
 | <a name="input_warm_enabled"></a> [warm\_enabled](#input\_warm\_enabled) | Warm storage is enabled. | `bool` | `true` | no |
-| <a name="input_warm_type"></a> [warm\_type](#input\_warm\_type) | Instance type for the OpenSearch cluster's warm nodes. | `string` | `""` | no |
-| <a name="input_zone_awareness_availability_zone_count"></a> [zone\_awareness\_availability\_zone\_count](#input\_zone\_awareness\_availability\_zone\_count) | Number of availability zones used. | `number` | `1` | no |
+| <a name="input_warm_type"></a> [warm\_type](#input\_warm\_type) | Instance type for the OpenSearch cluster's warm nodes. | `string` | `"ultrawarm1.medium.search"` | no |
+| <a name="input_zone_awareness_availability_zone_count"></a> [zone\_awareness\_availability\_zone\_count](#input\_zone\_awareness\_availability\_zone\_count) | Number of availability zones used. | `number` | `2` | no |
 | <a name="input_zone_awareness_enabled"></a> [zone\_awareness\_enabled](#input\_zone\_awareness\_enabled) | Indicates whether zone awareness is enabled. | `bool` | `true` | no |
 ## Outputs
 
@@ -131,6 +137,9 @@ No modules.
 | <a name="output_opensearch_domain_arn"></a> [opensearch\_domain\_arn](#output\_opensearch\_domain\_arn) | The ARN of the OpenSearch domain |
 | <a name="output_opensearch_domain_endpoint"></a> [opensearch\_domain\_endpoint](#output\_opensearch\_domain\_endpoint) | The endpoint of the OpenSearch domain |
 | <a name="output_opensearch_domain_id"></a> [opensearch\_domain\_id](#output\_opensearch\_domain\_id) | The ID of the OpenSearch domain |
+| <a name="output_opensearch_policy_arn"></a> [opensearch\_policy\_arn](#output\_opensearch\_policy\_arn) | The ARN of the OpenSearch access policy |
+| <a name="output_opensearch_role_arn"></a> [opensearch\_role\_arn](#output\_opensearch\_role\_arn) | The ARN of the OpenSearch IAM role |
+| <a name="output_opensearch_role_name"></a> [opensearch\_role\_name](#output\_opensearch\_role\_name) | The name of the OpenSearch IAM role |
 | <a name="output_security_group_id"></a> [security\_group\_id](#output\_security\_group\_id) | The ID of the security group used by OpenSearch |
 | <a name="output_security_group_rule_egress"></a> [security\_group\_rule\_egress](#output\_security\_group\_rule\_egress) | Egress rule information for OpenSearch security group |
 | <a name="output_security_group_rule_ingress"></a> [security\_group\_rule\_ingress](#output\_security\_group\_rule\_ingress) | Ingress rule information for OpenSearch security group |

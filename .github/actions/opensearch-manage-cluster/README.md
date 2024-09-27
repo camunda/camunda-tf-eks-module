@@ -15,7 +15,6 @@ It will also install Terraform and awscli. It will output the OpenSearch domain 
 | `vpc-id` | <p>VPC ID to create the domain in</p> | `true` | `""` |
 | `subnet-ids` | <p>List of subnet IDs to create the domain in</p> | `true` | `""` |
 | `cidr-blocks` | <p>CIDR blocks to allow access from and to</p> | `true` | `""` |
-| `availability-zones` | <p>Array of availability zones to use for the OpenSearch domain</p> | `true` | `""` |
 | `instance-type` | <p>Instance type for the OpenSearch cluster</p> | `false` | `t3.small.search` |
 | `instance-count` | <p>Number of instances in the cluster</p> | `false` | `1` |
 | `additional-terraform-vars` | <p>JSON object containing additional Terraform variables</p> | `false` | `{}` |
@@ -74,12 +73,6 @@ This action is a `composite` action.
 
     cidr-blocks:
     # CIDR blocks to allow access from and to
-    #
-    # Required: true
-    # Default: ""
-
-    availability-zones:
-    # Array of availability zones to use for the OpenSearch domain
     #
     # Required: true
     # Default: ""

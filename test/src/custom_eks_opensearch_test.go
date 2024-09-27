@@ -6,7 +6,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/opensearch"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/camunda/camunda-tf-eks-module/utils"
+	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
@@ -122,30 +124,89 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	eksSvc := eks.NewFromConfig(sess)
 	opensearchSvc := opensearch.NewFromConfig(sess)
+	stsSvc := sts.NewFromConfig(sess)
 
 	inputEKS := &eks.DescribeClusterInput{
 		Name: aws.String(suite.clusterName),
 	}
 
 	result, err := eksSvc.DescribeCluster(context.Background(), inputEKS)
+	suite.sugaredLogger.Infow("eks describe cluster result", "result", result, "err", err)
 	suite.Assert().NoError(err)
+
+	_, errKubeClient := utils.NewKubeClientSet(result.Cluster)
+	suite.Require().NoError(errKubeClient)
+	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
 
 	// Spawn OpenSearch within the EKS VPC/subnet
 	publicBlocks := strings.Fields(strings.Trim(terraform.Output(suite.T(), terraformOptions, "public_vpc_cidr_blocks"), "[]"))
 	privateBlocks := strings.Fields(strings.Trim(terraform.Output(suite.T(), terraformOptions, "private_vpc_cidr_blocks"), "[]"))
 
-	opensearchDomainName := fmt.Sprintf("opensearch-%s", suite.clusterName)
+	opensearchDomainName := fmt.Sprintf("os-%s", suite.clusterName)
 	opensearchMasterUserName := "opensearch-admin"
 	opensearchMasterUserPassword := "password"
+
+	// Extract OIDC issuer and create the IRSA role with OpenSearch access
+	oidcProvider := *result.Cluster.Identity.Oidc.Issuer
+	stsIdentity, err := stsSvc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
+	suite.Require().NoError(err, "Failed to get AWS account ID")
+	accountId := *stsIdentity.Account
+	openSearchArn := fmt.Sprintf("arn:aws:es:%s:%s:domain/%s/*", suite.region, accountId, opensearchDomainName)
+	suite.sugaredLogger.Infow("OpenSearch infos", "accountId", accountId, "openSearchArn", openSearchArn)
+
+	// Create namespace and associated service account in EKS
+	openSearchNamespace := "opensearch"
+	openSearchServiceAccount := "opensearch-access-sa"
+	openSearchRole := "opensearch-role"
+	openSearchKubectlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, openSearchNamespace)
+	utils.CreateIfNotExistsNamespace(suite.T(), openSearchKubectlOptions, openSearchNamespace)
+	utils.CreateIfNotExistsServiceAccount(suite.T(), openSearchKubectlOptions, openSearchServiceAccount, map[string]string{
+		"eks.amazonaws.com/role-arn": fmt.Sprintf("arn:aws:iam::%s:role/%s", accountId, openSearchRole),
+	})
+
+	openSearchAccessPolicy := fmt.Sprintf(`{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "es:ESHttpGet",
+        "es:ESHttpPut",
+        "es:ESHttpPost"
+      ],
+      "Resource": "arn:aws:es:%s:%s:domain/%s/*"
+    }
+  ]
+}`, suite.region, accountId, opensearchDomainName)
+
+	iamRoleTrustPolicy := fmt.Sprintf(`{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::%s:oidc-provider/oidc.eks.%s.amazonaws.com/id/%s"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.%s.amazonaws.com/id/%s:sub": "system:serviceaccount:%s:%s"
+        }
+      }
+    }
+  ]
+}`, accountId, suite.region, oidcProvider, suite.region, oidcProvider, openSearchNamespace, openSearchServiceAccount)
 
 	varsConfigOpenSearch := map[string]interface{}{
 		"domain_name":                            opensearchDomainName,
 		"advanced_security_master_user_name":     opensearchMasterUserName,
 		"advanced_security_master_user_password": opensearchMasterUserPassword,
 		"subnet_ids":                             result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"vpc_id":                                 *result.Cluster.ResourcesVpcConfig.VpcId,
-		"availability_zones":                     []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
 		"cidr_blocks":                            append(publicBlocks, privateBlocks...),
+		"opensearch_access_policy":               openSearchAccessPolicy,
+		"iam_role_trust_policy":                  iamRoleTrustPolicy,
+		"opensearch_role_name":                   openSearchRole,
+		"vpc_id":                                 *result.Cluster.ResourcesVpcConfig.VpcId,
 	}
 
 	tfModuleOpenSearch := "opensearch/"
@@ -189,6 +250,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	}
 	describeDomainOutput, err := opensearchSvc.DescribeDomain(context.Background(), describeDomainInput)
 	suite.Require().NoError(err)
+	suite.sugaredLogger.Infow("Domain info", "domain", describeDomainOutput)
 
 	// Perform assertions on the OpenSearch domain configuration
 

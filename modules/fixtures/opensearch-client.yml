@@ -1,0 +1,56 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: opensearch-client
+    labels:
+        app: opensearch-client
+spec:
+    backoffLimit: 0
+    template:
+        spec:
+            serviceAccountName: opensearch-access-sa
+            restartPolicy: Never
+            containers:
+                - name: opensearch-client
+                  image: amazonlinux:latest
+                  command:
+                      - sh
+                      - -c
+                      - |
+                        /bin/bash <<'EOF'
+                        set -e
+
+                        echo "Installing dependencies..."
+                        yum install -y python3-pip curl unzip
+
+                        echo "Installing AWS CLI..."
+                        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                        unzip awscliv2.zip
+                        ./aws/install
+
+                        echo "Testing OpenSearch connection using IRSA..."
+                        export AWS_OPENSEARCH_PASSWORD=$(aws opensearch get-signature-v4-auth-token \
+                          --region $AWS_REGION \
+                          --host $OPENSEARCH_ENDPOINT \
+                          --username $OPENSEARCH_USERNAME)
+
+                        curl -XGET -u "admin:$AWS_OPENSEARCH_PASSWORD" "https://$OPENSEARCH_ENDPOINT/_cluster/health?pretty"
+
+                        EOF
+                  env:
+                      - name: OPENSEARCH_ENDPOINT
+                        valueFrom:
+                            configMapKeyRef:
+                                name: opensearch-config
+                                key: opensearch_endpoint
+                      - name: OPENSEARCH_USERNAME
+                        valueFrom:
+                            configMapKeyRef:
+                                name: opensearch-config
+                                key: opensearch_username
+                      - name: AWS_REGION
+                        valueFrom:
+                            configMapKeyRef:
+                                name: opensearch-config
+                                key: aws_region

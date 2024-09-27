@@ -74,6 +74,28 @@ func CreateIfNotExistsNamespace(t *testing.T, kubeCtlOptions *k8s.KubectlOptions
 	}
 }
 
+func CreateIfNotExistsServiceAccount(t *testing.T, kubeCtlOptions *k8s.KubectlOptions, serviceAccountName string, annotations map[string]string) {
+	_, errFindSA := k8s.GetServiceAccountE(t, kubeCtlOptions, serviceAccountName)
+	if errFindSA != nil {
+		if errors.IsNotFound(errFindSA) {
+			// Create service account with annotations if it does not exist
+			serviceAccount := &corev1.ServiceAccount{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        serviceAccountName,
+					Namespace:   kubeCtlOptions.Namespace,
+					Annotations: annotations,
+				},
+			}
+			clientset, errClient := k8s.GetKubernetesClientFromOptionsE(t, kubeCtlOptions)
+			require.NoError(t, errClient)
+			_, errSA := clientset.CoreV1().ServiceAccounts(kubeCtlOptions.Namespace).Create(context.Background(), serviceAccount, metav1.CreateOptions{})
+			require.NoError(t, errSA)
+		} else {
+			require.NoError(t, errFindSA)
+		}
+	}
+}
+
 func GenerateKubeConfigFromAWS(t *testing.T, region, clusterName, awsProfile, configOutputPath string) {
 	cmd := exec.Command("aws", "eks", "--region", region, "update-kubeconfig", "--name", clusterName, "--profile", awsProfile, "--kubeconfig", configOutputPath)
 	_, errCmdKubeProfile := cmd.Output()
