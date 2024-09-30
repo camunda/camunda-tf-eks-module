@@ -63,7 +63,8 @@ jobs:
                   aws configure set aws_secret_access_key ${{ steps.secrets.outputs.AWS_SECRET_KEY }} --profile ${{ env.AWS_PROFILE }}
                   aws configure set region ${{ env.AWS_REGION }} --profile ${{ env.AWS_PROFILE }}
 
-            - name: Delete orphans resources
+            - name: Delete orphaned resources
+              id: delete-orphaned-resources
               timeout-minutes: 360
               if: always()
               uses: ./.github/actions/eks-cleanup-resources
@@ -73,9 +74,21 @@ jobs:
                   max-age-hours: ${{ env.MAX_AGE_HOURS }}
                   target: all
 
+            # There are cases where the deletion of resources fails due to dependencies.
+            - name: Retry delete orphaned resources
+              id: retry-delete-orphaned-resources
+              timeout-minutes: 360
+              if: failure() && steps.delete-orphaned-resources.outcome == 'failure'
+              uses: ./.github/actions/eks-cleanup-resources
+              with:
+                  tf-bucket: ${{ env.TF_STATE_BUCKET }}
+                  tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
+                  max-age-hours: ${{ env.MAX_AGE_HOURS }}
+                  target: all
+
             - name: Notify in Slack in case of failure
               id: slack-notification
-              if: failure() && github.event_name == 'schedule'
+              if: failure() && github.event_name == 'schedule' && steps.retry-delete-orphaned-resources.outcome == 'failure'
               uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@05525fc94eb00df358ab212524d28add4873aca9 # main
               with:
                   vault_addr: ${{ secrets.VAULT_ADDR }}
