@@ -187,7 +187,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptionsRDS)
 	}
 
-	terraform.InitAndApply(suite.T(), terraformOptionsRDS)
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptionsRDS)
 	auroraEndpoint := terraform.Output(suite.T(), terraformOptionsRDS, "aurora_endpoint")
 	suite.Assert().NotEmpty(auroraEndpoint)
 

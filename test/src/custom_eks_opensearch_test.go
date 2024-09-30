@@ -236,7 +236,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptionsOpenSearch)
 	}
 
-	terraform.InitAndApply(suite.T(), terraformOptionsOpenSearch)
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptionsOpenSearch)
 	opensearchEndpoint := terraform.Output(suite.T(), terraformOptionsOpenSearch, "opensearch_domain_endpoint")
 	suite.Assert().NotEmpty(opensearchEndpoint)
 
