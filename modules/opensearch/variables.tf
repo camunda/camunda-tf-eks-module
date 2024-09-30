@@ -60,7 +60,7 @@ variable "dedicated_master_enabled" {
 variable "dedicated_master_type" {
   type        = string
   description = "Instance type of the dedicated master nodes in the cluster."
-  default     = ""
+  default     = "m4.large.search"
 }
 
 variable "dedicated_master_count" {
