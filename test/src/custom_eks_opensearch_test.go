@@ -117,7 +117,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
-	terraform.InitAndApply(suite.T(), terraformOptions)
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
 
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
@@ -157,7 +157,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	// Create namespace and associated service account in EKS
 	openSearchNamespace := "opensearch"
 	openSearchServiceAccount := "opensearch-access-sa"
-	openSearchRole := "opensearch-role"
+	openSearchRole := "OpenSearchRole" // please use the same as the default one for cleanup reasons
 	openSearchKubectlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, openSearchNamespace)
 	utils.CreateIfNotExistsNamespace(suite.T(), openSearchKubectlOptions, openSearchNamespace)
 	utils.CreateIfNotExistsServiceAccount(suite.T(), openSearchKubectlOptions, openSearchServiceAccount, map[string]string{

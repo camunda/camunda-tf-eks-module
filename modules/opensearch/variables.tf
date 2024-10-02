@@ -107,7 +107,7 @@ variable "warm_type" {
 
 variable "tags" {
   type        = map(string)
-  default     = {}
+  default     = null
   description = "Tags assigned to the domain."
 }
 

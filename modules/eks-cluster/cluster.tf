@@ -103,7 +103,6 @@ module "eks" {
   # EKS Managed Node Group definitions
   eks_managed_node_groups = {
     services = {
-      labels          = {}
       name            = "services"
       use_name_prefix = false
     }

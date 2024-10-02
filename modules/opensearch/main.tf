@@ -31,8 +31,8 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
     multi_az_with_standby_enabled = var.multi_az_with_standby_enabled
 
     warm_enabled = var.warm_enabled
-    warm_count   = var.warm_count
-    warm_type    = var.warm_type
+    warm_count   = var.warm_enabled ? var.warm_count : null
+    warm_type    = var.warm_enabled ? var.warm_type : null
 
     zone_awareness_config {
       availability_zone_count = var.zone_awareness_availability_zone_count
@@ -94,7 +94,6 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
   timeouts {
     create = var.create_timeout
   }
-
 }
 
 resource "aws_kms_key" "kms" {
