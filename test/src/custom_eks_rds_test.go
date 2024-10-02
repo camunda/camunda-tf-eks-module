@@ -265,8 +265,9 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	// cleanup existing jobs
 	jobListOptions := metav1.ListOptions{LabelSelector: "app=postgres-client"}
 	existingJobs := k8s.ListJobs(suite.T(), pgKubeCtlOptions, jobListOptions)
+	backgroundDeletion := metav1.DeletePropagationBackground
 	for _, job := range existingJobs {
-		err := kubeClient.BatchV1().Jobs(namespace).Delete(context.Background(), job.Name, metav1.DeleteOptions{})
+		err := kubeClient.BatchV1().Jobs(namespace).Delete(context.Background(), job.Name, metav1.DeleteOptions{PropagationPolicy: &backgroundDeletion})
 		suite.Assert().NoError(err)
 	}
 

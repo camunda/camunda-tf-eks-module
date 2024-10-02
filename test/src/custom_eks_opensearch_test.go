@@ -15,10 +15,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 type CustomEKSOpenSearchTestSuite struct {
@@ -134,7 +138,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	suite.sugaredLogger.Infow("eks describe cluster result", "result", result, "err", err)
 	suite.Assert().NoError(err)
 
-	_, errKubeClient := utils.NewKubeClientSet(result.Cluster)
+	kubeClient, errKubeClient := utils.NewKubeClientSet(result.Cluster)
 	suite.Require().NoError(errKubeClient)
 	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
 
@@ -144,10 +148,13 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	opensearchDomainName := fmt.Sprintf("os-%s", suite.clusterName)
 	opensearchMasterUserName := "opensearch-admin"
-	opensearchMasterUserPassword := "password"
+	opensearchMasterUserPassword := "password" // TODO: replace this by a random value
 
 	// Extract OIDC issuer and create the IRSA role with OpenSearch access
-	oidcProvider := *result.Cluster.Identity.Oidc.Issuer
+	oidcProviderURL := *result.Cluster.Identity.Oidc.Issuer
+	partsOIDC := strings.Split(oidcProviderURL, "/")
+	oidcProviderID := partsOIDC[len(partsOIDC)-1]
+
 	stsIdentity, err := stsSvc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
 	suite.Require().NoError(err, "Failed to get AWS account ID")
 	accountId := *stsIdentity.Account
@@ -195,7 +202,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
       }
     }
   ]
-}`, accountId, suite.region, oidcProvider, suite.region, oidcProvider, openSearchNamespace, openSearchServiceAccount)
+}`, accountId, suite.region, oidcProviderID, suite.region, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
 	varsConfigOpenSearch := map[string]interface{}{
 		"domain_name":                            opensearchDomainName,
@@ -254,7 +261,42 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	// Perform assertions on the OpenSearch domain configuration
 
-	// TODO
+	// ))))))))
+
+	// Test the OpenSearch connection and perform additional tests as needed
+
+	configMapScript := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "opensearch-config",
+			Namespace: openSearchNamespace,
+		},
+		Data: map[string]string{
+			"opensearch_endpoint": opensearchEndpoint,
+			"aws_region":          suite.region,
+		},
+	}
+
+	err = kubeClient.CoreV1().ConfigMaps(openSearchNamespace).Delete(context.Background(), configMapScript.Name, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		suite.Require().NoError(err)
+	}
+	_, err = kubeClient.CoreV1().ConfigMaps(openSearchNamespace).Create(context.Background(), configMapScript, metav1.CreateOptions{})
+	k8s.WaitUntilConfigMapAvailable(suite.T(), openSearchKubectlOptions, configMapScript.Name, 6, 10*time.Second)
+
+	// cleanup existing jobs
+	jobListOptions := metav1.ListOptions{LabelSelector: "app=opensearch-client"}
+	existingJobs := k8s.ListJobs(suite.T(), openSearchKubectlOptions, jobListOptions)
+	backgroundDeletion := metav1.DeletePropagationBackground
+	for _, job := range existingJobs {
+		err := kubeClient.BatchV1().Jobs(openSearchNamespace).Delete(context.Background(), job.Name, metav1.DeleteOptions{PropagationPolicy: &backgroundDeletion})
+		suite.Assert().NoError(err)
+	}
+
+	// deploy the postgres-client Job to test the connection
+	k8s.KubectlApply(suite.T(), openSearchKubectlOptions, "../../modules/fixtures/opensearch-client.yml")
+	errJob := utils.WaitForJobCompletion(kubeClient, openSearchNamespace, "opensearch-client", 5*time.Minute, jobListOptions)
+	suite.Require().NoError(errJob)
+	// TODO: test that without auth, the same command fails in the job
 }
 
 func TestCustomEKSOpenSearchTestSuite(t *testing.T) {

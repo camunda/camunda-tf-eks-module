@@ -19,23 +19,53 @@ spec:
                       - -c
                       - |
                         /bin/bash <<'EOF'
-                        set -e
+                        set -euxo pipefail
 
                         echo "Installing dependencies..."
-                        yum install -y python3-pip curl unzip
+                        yum install -y unzip
 
                         echo "Installing AWS CLI..."
                         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
                         unzip awscliv2.zip
                         ./aws/install
 
-                        echo "Testing OpenSearch connection using IRSA..."
-                        export AWS_OPENSEARCH_PASSWORD=$(aws opensearch get-signature-v4-auth-token \
-                          --region $AWS_REGION \
-                          --host $OPENSEARCH_ENDPOINT \
-                          --username $OPENSEARCH_USERNAME)
+                        echo "Installing OpenSearch CLI..."
+                        curl -L "https://github.com/opensearch-project/opensearch-cli/releases/download/v1.2.0/opensearch-cli-1.2.0-linux-x64.zip" -o "opensearch.zip"
+                        unzip opensearch.zip
 
-                        curl -XGET -u "admin:$AWS_OPENSEARCH_PASSWORD" "https://$OPENSEARCH_ENDPOINT/_cluster/health?pretty"
+                        # Create or replace the ~/.aws/config file with the values from the environment variables
+                        mkdir -p ~/.aws
+                        cat <<EOCONFIG > ~/.aws/config
+                        [profile opensearch]
+                        role_arn = "$AWS_ROLE_ARN"
+                        web_identity_token_file = "$AWS_WEB_IDENTITY_TOKEN_FILE"
+                        EOCONFIG
+                        chmod 0600 ~/.aws/config
+
+                        echo "AWS IRSA profile configured:"
+                        cat ~/.aws/config
+
+                        echo "Testing OpenSearch connection using IRSA..."
+
+                        # Create or replace the /root/.opensearch-cli/config.yaml file with the values from the environment variables
+                        mkdir -p ~/.opensearch-cli
+                        cat <<EOCONFIG_OPENSEARCH > ~/.opensearch-cli/config.yaml
+                        profiles:
+                          - name: opensearch
+                            endpoint: https://$OPENSEARCH_ENDPOINT
+                            aws_iam:
+                              profile: opensearch
+                              service: es
+                            max_retry: 3
+                            timeout: 10
+                        EOCONFIG_OPENSEARCH
+                        chmod 0600 ~/.opensearch-cli/config.yaml
+
+                        echo "OpenSearch CLI profile configured:"
+                        cat ~/.opensearch-cli/config.yaml
+
+                        # Test OpenSearch connection using the opensearch profile
+                        ./opensearch-cli curl get --path _cluster/health --profile opensearch
 
                         EOF
                   env:
@@ -44,11 +74,6 @@ spec:
                             configMapKeyRef:
                                 name: opensearch-config
                                 key: opensearch_endpoint
-                      - name: OPENSEARCH_USERNAME
-                        valueFrom:
-                            configMapKeyRef:
-                                name: opensearch-config
-                                key: opensearch_username
                       - name: AWS_REGION
                         valueFrom:
                             configMapKeyRef:

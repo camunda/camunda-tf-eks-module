@@ -126,13 +126,11 @@ resource "aws_security_group_rule" "allow_egress" {
 }
 
 resource "aws_security_group_rule" "allow_ingress" {
-  for_each = toset(["9200", "9300"])
-
-  description = "Allow incoming traffic for the OpenSearch on port ${each.key}"
+  description = "Allow incoming traffic for the OpenSearch on port 443"
 
   type        = "ingress"
-  from_port   = tonumber(each.key)
-  to_port     = tonumber(each.key)
+  from_port   = 443
+  to_port     = 443
   protocol    = "tcp"
   cidr_blocks = var.cidr_blocks
 
