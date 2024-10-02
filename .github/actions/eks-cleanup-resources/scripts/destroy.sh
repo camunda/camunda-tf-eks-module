@@ -134,9 +134,7 @@ destroy_resource() {
 
   # Execute the terraform destroy command with appropriate variables (see https://github.com/hashicorp/terraform/issues/23552)
   if [ "$terraform_module" == "eks-cluster" ]; then
-    if terraform state list | grep -q "kubernetes_storage_class_v1.ebs_sc"; then
-      terraform state rm "kubernetes_storage_class_v1.ebs_sc"
-    fi
+    terraform state rm "kubernetes_storage_class_v1.ebs_sc" || true
 
     if ! terraform destroy -auto-approve \
       -var="region=$AWS_REGION" \
@@ -156,6 +154,8 @@ destroy_resource() {
   elif [ "$terraform_module" == "opensearch" ]; then
     if ! terraform destroy -auto-approve \
       -var="domain_name=$cluster_name" \
+      -var="vpc_id=vpc-dummy" \
+      -var="advanced_security_master_user_password=dummy" \
       -var="vpc_id=vpc-dummy" \
       -var="cidr_blocks=[]" \
       -var="subnet_ids=[]"; then return 1; fi
