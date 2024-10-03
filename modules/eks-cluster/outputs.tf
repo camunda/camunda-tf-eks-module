@@ -71,6 +71,11 @@ output "oidc_provider_arn" {
   description = "Amazon Resource Name of the OIDC provider for the EKS cluster. Allows to add additional IRSA mappings"
 }
 
+output "oidc_provider_id" {
+  value       = split("/", module.eks.oidc_provider_arn)[4]
+  description = "OIDC provider for the EKS cluster. Allows to add additional IRSA mappings"
+}
+
 ################################################################################
 # VPC
 ################################################################################

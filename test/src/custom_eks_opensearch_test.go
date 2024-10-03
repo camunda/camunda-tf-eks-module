@@ -163,7 +163,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	// Create namespace and associated service account in EKS
 	openSearchNamespace := "opensearch"
 	openSearchServiceAccount := "opensearch-access-sa"
-	openSearchRole := "OpenSearchRole" // please use the same as the default one for cleanup reasons
+	openSearchRole := fmt.Sprintf("OpenSearchRole-%s", suite.clusterName)
 	openSearchKubectlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, openSearchNamespace)
 	utils.CreateIfNotExistsNamespace(suite.T(), openSearchKubectlOptions, openSearchNamespace)
 	utils.CreateIfNotExistsServiceAccount(suite.T(), openSearchKubectlOptions, openSearchServiceAccount, map[string]string{

@@ -174,7 +174,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	// Create namespace and associated service account in EKS
 	auroraNamespace := "aurora"
 	auroraServiceAccount := "aurora-access-sa"
-	auroraRole := "AuroraRole" // please use the same as the default one for cleanup reasons
+	auroraRole := fmt.Sprintf("AuroraRole-%s", suite.clusterName)
 	auroraKubectlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, auroraNamespace)
 	utils.CreateIfNotExistsNamespace(suite.T(), auroraKubectlOptions, auroraNamespace)
 	utils.CreateIfNotExistsServiceAccount(suite.T(), auroraKubectlOptions, auroraServiceAccount, map[string]string{
