@@ -43,8 +43,8 @@ spec:
                         # Attempt unauthenticated access to the Aurora PostgreSQL database, expecting a failure
                         if psql -h "$AURORA_ENDPOINT" \
                                 -p "$AURORA_PORT" \
-                                "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME_IRSA" \
-                                -c 'SELECT version();' 2>&1 | grep -q 'password authentication failed'; then
+                                "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME_IRSA password=empty" \
+                                -c 'SELECT version();' 2>&1 | grep -q 'authentication failed'; then
                           echo "Unauthenticated access failed as expected."
                         else
                           echo "Unauthenticated access did not fail as expected, check the configuration."
@@ -56,8 +56,6 @@ spec:
                             --region $AWS_REGION --username $AURORA_USERNAME_IRSA)
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME_IRSA password=$AWS_PG_PASSWORD" \
                           -c 'SELECT version();'
-
-                        sleep 30000
 
                         EOF
                   env:

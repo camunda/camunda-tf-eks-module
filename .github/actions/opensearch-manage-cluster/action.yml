@@ -35,10 +35,9 @@ inputs:
         description: Instance type for the OpenSearch cluster
         default: t3.small.search
 
-    # TODO: add number of AZs
     instance-count:
         description: Number of instances in the cluster
-        default: '1'
+        default: '4'
 
     additional-terraform-vars:
         description: JSON object containing additional Terraform variables
