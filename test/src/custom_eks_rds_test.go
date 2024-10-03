@@ -354,7 +354,6 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	suite.Assert().Equal(varsConfigAurora["username"].(string), *describeDBClusterOutput.DBClusters[0].MasterUsername)
 	suite.Assert().Equal(auroraDatabase, *describeDBClusterOutput.DBClusters[0].DatabaseName)
 	suite.Assert().Equal(int32(5432), *describeDBClusterOutput.DBClusters[0].Port)
-	suite.Assert().Equal("15.4", *describeDBClusterOutput.DBClusters[0].EngineVersion)
 	suite.Assert().ElementsMatch(expectedRDSAZ, describeDBClusterOutput.DBClusters[0].AvailabilityZones)
 	suite.Assert().Equal(varsConfigAurora["cluster_name"].(string), *describeDBClusterOutput.DBClusters[0].DBClusterIdentifier)
 

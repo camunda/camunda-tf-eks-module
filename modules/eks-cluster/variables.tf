@@ -35,6 +35,12 @@ variable "np_desired_node_count" {
   default     = 4
 }
 
+variable "np_labels" {
+  type        = map(string)
+  description = "A map of labels to add to the default pool nodes"
+  default     = {}
+}
+
 variable "cluster_tags" {
   type        = map(string)
   description = "A map of additional tags to add to the cluster"

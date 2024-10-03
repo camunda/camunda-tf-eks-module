@@ -75,4 +75,7 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_aurora_endpoint"></a> [aurora\_endpoint](#output\_aurora\_endpoint) | The endpoint of the Aurora cluster |
+| <a name="output_aurora_policy_arn"></a> [aurora\_policy\_arn](#output\_aurora\_policy\_arn) | The ARN of the aurora access policy |
+| <a name="output_aurora_role_arn"></a> [aurora\_role\_arn](#output\_aurora\_role\_arn) | The ARN of the aurora IAM role |
+| <a name="output_aurora_role_name"></a> [aurora\_role\_name](#output\_aurora\_role\_name) | The name of the aurora IAM role |
 <!-- END_TF_DOCS -->

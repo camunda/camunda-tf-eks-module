@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/opensearch"
+	"github.com/aws/aws-sdk-go-v2/service/opensearch/types"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/camunda/camunda-tf-eks-module/utils"
 	"github.com/gruntwork-io/terratest/modules/k8s"
@@ -126,8 +128,9 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	suite.Require().NoErrorf(err, "Failed to get aws client")
 
 	eksSvc := eks.NewFromConfig(sess)
-	opensearchSvc := opensearch.NewFromConfig(sess)
+	openSearchSvc := opensearch.NewFromConfig(sess)
 	stsSvc := sts.NewFromConfig(sess)
+	iamSvc := iam.NewFromConfig(sess)
 
 	inputEKS := &eks.DescribeClusterInput{
 		Name: aws.String(suite.clusterName),
@@ -248,16 +251,37 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	describeDomainInput := &opensearch.DescribeDomainInput{
 		DomainName: aws.String(varsConfigOpenSearch["domain_name"].(string)),
 	}
-	describeDomainOutput, err := opensearchSvc.DescribeDomain(context.Background(), describeDomainInput)
+	describeOpenSearchDomainOutput, err := openSearchSvc.DescribeDomain(context.Background(), describeDomainInput)
 	suite.Require().NoError(err)
-	suite.sugaredLogger.Infow("Domain info", "domain", describeDomainOutput)
+	suite.sugaredLogger.Infow("Domain info", "domain", describeOpenSearchDomainOutput)
+
+	suite.sugaredLogger.Infow("DescribeDomain info", "domain", describeOpenSearchDomainOutput.DomainStatus.EngineVersion)
 
 	// Perform assertions on the OpenSearch domain configuration
+	suite.Assert().Equal(varsConfigOpenSearch["domain_name"].(string), *describeOpenSearchDomainOutput.DomainStatus.DomainName)
+	suite.Assert().Equal(int32(4), *describeOpenSearchDomainOutput.DomainStatus.ClusterConfig.InstanceCount)
+	suite.Assert().Equal(types.OpenSearchPartitionInstanceType("t3.small.search"), describeOpenSearchDomainOutput.DomainStatus.ClusterConfig.InstanceType)
+	suite.Assert().Equal(varsConfigOpenSearch["vpc_id"].(string), *describeOpenSearchDomainOutput.DomainStatus.VPCOptions.VPCId)
 
-	// TODO: implement those tests
+	// Verify security group information
+	suite.Assert().NotEmpty(describeOpenSearchDomainOutput.DomainStatus.VPCOptions.SecurityGroupIds)
+
+	// Retrieve the IAM Role associated with OpenSearch
+	describeOpenSearchRoleInput := &iam.GetRoleInput{
+		RoleName: aws.String(varsConfigOpenSearch["iam_opensearch_role_name"].(string)),
+	}
+	_, err = iamSvc.GetRole(context.Background(), describeOpenSearchRoleInput)
+	suite.Require().NoError(err)
+
+	// Verify IAM Policy Attachment
+	listAttachedPoliciesInput := &iam.ListAttachedRolePoliciesInput{
+		RoleName: aws.String(varsConfigOpenSearch["iam_opensearch_role_name"].(string)),
+	}
+	_, err = iamSvc.ListAttachedRolePolicies(context.Background(), listAttachedPoliciesInput)
+	suite.Require().NoError(err)
 
 	// Test the OpenSearch connection and perform additional tests as needed
-
+	suite.Assert().NotEmpty(opensearchEndpoint)
 	configMapScript := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "opensearch-config",

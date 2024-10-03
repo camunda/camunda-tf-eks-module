@@ -86,6 +86,8 @@ module "eks" {
     instance_types = var.np_instance_types
     capacity_type  = var.np_capacity_type
 
+    labels = var.np_labels
+
     update_config = {
       max_unavailable = 1
     }
