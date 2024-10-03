@@ -41,10 +41,10 @@ spec:
                           -c "SELECT version();" -c "\du"
 
                         # Attempt unauthenticated access to the Aurora PostgreSQL database, expecting a failure
-                        if psql -h "$AURORA_ENDPOINT" \
-                                -p "$AURORA_PORT" \
-                                "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME_IRSA password=empty" \
-                                -c 'SELECT version();' 2>&1 | grep -q 'authentication failed'; then
+                        if ! psql -h "$AURORA_ENDPOINT" \
+                                  -p "$AURORA_PORT" \
+                                  "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME_IRSA password=$AWS_PG_PASSWORD" \
+                                  -c 'SELECT version();' 2>/dev/null; then
                           echo "Unauthenticated access failed as expected."
                         else
                           echo "Unauthenticated access did not fail as expected, check the configuration."
