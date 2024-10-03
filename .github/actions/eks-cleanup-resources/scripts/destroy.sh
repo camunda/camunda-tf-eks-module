@@ -9,7 +9,7 @@ set -o pipefail
 # is successful, it removes the corresponding S3 objects.
 #
 # Usage:
-# ./destroy.sh <BUCKET> <MODULES_DIR> <TEMP_DIR_PREFIX> <MIN_AGE_IN_HOURS> <ID_OR_ALL>
+# ./destroy.sh <BUCKET> <MODULES_DIR> <TEMP_DIR_PREFIX> <MIN_AGE_IN_HOURS> <ID_OR_ALL> [MODULE_NAME]
 #
 # Arguments:
 #   BUCKET: The name of the S3 bucket containing the resource state files.
@@ -17,18 +17,20 @@ set -o pipefail
 #   TEMP_DIR_PREFIX: The prefix for the temporary directories created for each resource.
 #   MIN_AGE_IN_HOURS: The minimum age (in hours) of resources to be destroyed.
 #   ID_OR_ALL: The specific ID suffix to filter objects, or "all" to destroy all objects.
+#   MODULE_NAME (optional): The name of the module to destroy (e.g., "eks-cluster", "aurora", "opensearch"). Default is "all".
 #
 # Example:
 # ./destroy.sh tf-state-eks-ci-eu-west-3 ./modules/eks/ /tmp/eks/ 24 all
-# ./destroy.sh tf-state-eks-ci-eu-west-3 ./modules/eks/ /tmp/eks/ 24 4891048
+# ./destroy.sh tf-state-eks-ci-eu-west-3 ./modules/eks/ /tmp/eks/ 24 4891048 eks-cluster
 #
 # Requirements:
 # - AWS CLI installed and configured with the necessary permissions to access and modify the S3 bucket.
 # - Terraform installed and accessible in the PATH.
 
+
 # Check for required arguments
 if [ "$#" -ne 5 ]; then
-  echo "Usage: $0 <BUCKET> <MODULES_DIR> <TEMP_DIR_PREFIX> <MIN_AGE_IN_HOURS> <ID_OR_ALL>"
+  echo "Usage: $0 <BUCKET> <MODULES_DIR> <TEMP_DIR_PREFIX> <MIN_AGE_IN_HOURS> <ID_OR_ALL> [MODULE_NAME]"
   exit 1
 fi
 
@@ -50,6 +52,7 @@ MODULES_DIR=$2
 TEMP_DIR_PREFIX=$3
 MIN_AGE_IN_HOURS=$4
 ID_OR_ALL=$5
+MODULE_NAME=${6:-all}
 FAILED=0
 CURRENT_DIR=$(pwd)
 AWS_S3_REGION=${AWS_S3_REGION:-$AWS_REGION}
@@ -202,6 +205,12 @@ for resource_id in $resources; do
 
   terraform_module=$(basename "$(dirname "$resource_id")")
   echo "Checking resource $resource_id (terraform module=$terraform_module)"
+
+  # Apply module name filter if specified
+  if [ "$MODULE_NAME" != "all" ] && [ "$MODULE_NAME" != "$terraform_module" ]; then
+    echo "Skipping resource $resource_id because it does not match the specified module name: $MODULE_NAME"
+    continue
+  fi
 
   last_modified=$(aws s3api head-object --bucket "$BUCKET" --key "$resource_id" --output json | grep LastModified | awk -F '"' '{print $4}')
   if [ -z "$last_modified" ]; then

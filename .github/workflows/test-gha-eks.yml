@@ -190,7 +190,6 @@ jobs:
 
                   availability-zones: ${{ steps.after_cluster_creation_infos.outputs.availability_zones }}
 
-
             - name: Deploy OpenSearch Domain
               uses: ./.github/actions/opensearch-manage-cluster
               id: deploy_opensearch_domain
@@ -201,14 +200,35 @@ jobs:
                   vpc-id: ${{ steps.after_cluster_creation_infos.outputs.vpc_id }}
                   subnet-ids: ${{ steps.after_cluster_creation_infos.outputs.private_subnet_ids }}
                   cidr-blocks: ${{ steps.after_cluster_creation_infos.outputs.private_vpc_cidr_blocks }}
-                  availability-zones: ${{ steps.after_cluster_creation_infos.outputs.availability_zones }}
 
                   s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
                   s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
                   tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}
 
-            - name: Delete Clusters
-              timeout-minutes: 60
+            - name: Delete OpenSearch cluster
+              timeout-minutes: 30
+              if: always() && env.CREATE_OPENSEARCH == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.delete_cluster == 'false')
+              uses: ./.github/actions/eks-cleanup-resources
+              with:
+                  tf-bucket: ${{ env.TF_STATE_BUCKET }}
+                  tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
+                  max-age-hours: 0
+                  target: ${{ steps.commit_info.outputs.cluster_name }}
+                  module-name: opensearch
+
+            - name: Delete Aurora cluster
+              timeout-minutes: 30
+              if: always() && env.CREATE_DB == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.delete_cluster == 'false')
+              uses: ./.github/actions/eks-cleanup-resources
+              with:
+                  tf-bucket: ${{ env.TF_STATE_BUCKET }}
+                  tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
+                  max-age-hours: 0
+                  target: ${{ steps.commit_info.outputs.cluster_name }}
+                  module-name: aurora
+
+            - name: Delete EKS cluster
+              timeout-minutes: 30
               if: always() && !(github.event_name == 'workflow_dispatch' && inputs.delete_cluster == 'false')
               uses: ./.github/actions/eks-cleanup-resources
               with:
@@ -216,6 +236,7 @@ jobs:
                   tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
                   max-age-hours: 0
                   target: ${{ steps.commit_info.outputs.cluster_name }}
+                  module-name: eks-cluster
 
             - name: Notify in Slack in case of failure
               id: slack-notification
