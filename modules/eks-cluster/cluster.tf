@@ -12,6 +12,8 @@ module "eks" {
   cluster_endpoint_private_access = true # private API communication for nodes within the VPC
   cluster_endpoint_public_access  = true # API accessible to engineers
 
+  cluster_tags = var.cluster_tags
+
   cluster_addons = {
     coredns = {
       most_recent       = true

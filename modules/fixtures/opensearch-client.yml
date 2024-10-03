@@ -45,6 +45,14 @@ spec:
                         echo "AWS IRSA profile configured:"
                         cat ~/.aws/config
 
+                        # Attempt unauthenticated access to the OpenSearch cluster, expecting a failure
+                        if curl -s -o /dev/null -w "%{http_code}" https://$OPENSEARCH_ENDPOINT/_cluster/health | grep -q '401'; then
+                          echo "Unauthenticated access failed as expected."
+                        else
+                          echo "Unauthenticated access did not fail as expected, check the configuration."
+                          exit 1
+                        fi
+
                         echo "Testing OpenSearch connection using IRSA..."
 
                         # Create or replace the /root/.opensearch-cli/config.yaml file with the values from the environment variables
@@ -66,6 +74,8 @@ spec:
 
                         # Test OpenSearch connection using the opensearch profile
                         ./opensearch-cli curl get --path _cluster/health --profile opensearch
+                        ./opensearch-cli curl put --path /my_index --profile opensearch
+                        ./opensearch-cli curl get --path /my_index --profile opensearch
 
                         EOF
                   env:

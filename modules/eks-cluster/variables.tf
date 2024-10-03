@@ -35,6 +35,12 @@ variable "np_desired_node_count" {
   default     = 4
 }
 
+variable "cluster_tags" {
+  type        = map(string)
+  description = "A map of additional tags to add to the cluster"
+  default     = {}
+}
+
 variable "np_instance_types" {
   type        = list(string)
   description = "Allow passing a list of instance types for the auto scaler to select from when scaling the default node pool"
