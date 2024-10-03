@@ -29,7 +29,7 @@ set -o pipefail
 
 
 # Check for required arguments
-if [ "$#" -ne 5 ]; then
+if [ "$#" -lt 5 ] || [ "$#" -gt 6 ]; then
   echo "Usage: $0 <BUCKET> <MODULES_DIR> <TEMP_DIR_PREFIX> <MIN_AGE_IN_HOURS> <ID_OR_ALL> [MODULE_NAME]"
   exit 1
 fi

@@ -72,7 +72,7 @@ output "oidc_provider_arn" {
 }
 
 output "oidc_provider_id" {
-  value       = replace(module.eks.oidc_provider_arn, ".*?(oidc\\.eks.*)", "$1")
+  value       = replace(module.eks.oidc_provider_arn, ".*?(oidc\\.eks.*)", "$1") # TODO: fix this!
   description = "OIDC provider for the EKS cluster. Allows to add additional IRSA mappings"
 }
 
