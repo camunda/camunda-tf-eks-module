@@ -78,7 +78,6 @@ func (suite *CustomEKSOpenSearchTestSuite) TearDownTest() {
 
 // TestCustomEKSAndOpenSearch spawns a custom EKS cluster with custom parameters, and spawns a
 // a curl pod that will try to reach the OpenSearch cluster
-// TODO: implement IRSA connection in the pod https://github.com/opensearch-project/logstash-output-opensearch/issues/96
 func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	suite.varTf = map[string]interface{}{
 		"name":                  suite.clusterName,
@@ -147,8 +146,6 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	privateBlocks := strings.Fields(strings.Trim(terraform.Output(suite.T(), terraformOptions, "private_vpc_cidr_blocks"), "[]"))
 
 	opensearchDomainName := fmt.Sprintf("os-%s", suite.clusterName)
-	opensearchMasterUserName := "opensearch-admin"
-	opensearchMasterUserPassword := "password" // TODO: replace this by a random value
 
 	// Extract OIDC issuer and create the IRSA role with OpenSearch access
 	oidcProviderURL := *result.Cluster.Identity.Oidc.Issuer
@@ -205,15 +202,13 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 }`, accountId, suite.region, oidcProviderID, suite.region, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
 	varsConfigOpenSearch := map[string]interface{}{
-		"domain_name":                            opensearchDomainName,
-		"advanced_security_master_user_name":     opensearchMasterUserName,
-		"advanced_security_master_user_password": opensearchMasterUserPassword,
-		"subnet_ids":                             result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"cidr_blocks":                            append(publicBlocks, privateBlocks...),
-		"opensearch_access_policy":               openSearchAccessPolicy,
-		"iam_role_trust_policy":                  iamRoleTrustPolicy,
-		"opensearch_role_name":                   openSearchRole,
-		"vpc_id":                                 *result.Cluster.ResourcesVpcConfig.VpcId,
+		"domain_name":              opensearchDomainName,
+		"subnet_ids":               result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"cidr_blocks":              append(publicBlocks, privateBlocks...),
+		"opensearch_access_policy": openSearchAccessPolicy,
+		"iam_role_trust_policy":    iamRoleTrustPolicy,
+		"opensearch_role_name":     openSearchRole,
+		"vpc_id":                   *result.Cluster.ResourcesVpcConfig.VpcId,
 	}
 
 	tfModuleOpenSearch := "opensearch/"
@@ -249,8 +244,6 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	// Test the OpenSearch connection and perform additional tests as needed
 
-	// TODO
-
 	// Retrieve OpenSearch information
 	describeDomainInput := &opensearch.DescribeDomainInput{
 		DomainName: aws.String(varsConfigOpenSearch["domain_name"].(string)),
@@ -261,7 +254,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	// Perform assertions on the OpenSearch domain configuration
 
-	// ))))))))
+	// TODO: implement those tests
 
 	// Test the OpenSearch connection and perform additional tests as needed
 
@@ -296,7 +289,6 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	k8s.KubectlApply(suite.T(), openSearchKubectlOptions, "../../modules/fixtures/opensearch-client.yml")
 	errJob := utils.WaitForJobCompletion(kubeClient, openSearchNamespace, "opensearch-client", 5*time.Minute, jobListOptions)
 	suite.Require().NoError(errJob)
-	// TODO: test that without auth, the same command fails in the job
 }
 
 func TestCustomEKSOpenSearchTestSuite(t *testing.T) {
