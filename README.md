@@ -50,6 +50,8 @@ module "postgresql" {
 }
 ```
 
+# TODO: explain how to use IRSA and associated templating with real example
+
 #### GitHub Actions
 
 You can automate the deployment and deletion of the EKS cluster and Aurora database using GitHub Actions. Below are examples of GitHub Actions workflows for deploying and deleting these resources.

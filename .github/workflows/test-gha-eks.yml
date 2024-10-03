@@ -179,6 +179,7 @@ jobs:
                   cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
                   username: ${{ steps.commit_info.outputs.db_username }}
                   password: ${{ steps.commit_info.outputs.db_password }}
+                  aws-region: ${{ env.AWS_REGION }}
 
                   s3-backend-bucket: ${{ env.TF_STATE_BUCKET }}
                   s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
@@ -196,6 +197,7 @@ jobs:
               if: env.CREATE_OPENSEARCH == 'true'
               with:
                   domain-name: ${{ steps.commit_info.outputs.cluster_name }}-opensearch
+                  aws-region: ${{ env.AWS_REGION }}
 
                   vpc-id: ${{ steps.after_cluster_creation_infos.outputs.vpc_id }}
                   subnet-ids: ${{ steps.after_cluster_creation_infos.outputs.private_subnet_ids }}

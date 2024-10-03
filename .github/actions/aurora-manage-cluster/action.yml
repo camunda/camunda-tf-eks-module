@@ -6,6 +6,10 @@ description: |
     This action will also install Terraform and awscli. It will output the Aurora cluster endpoint.
 
 inputs:
+    aws-region:
+        description: AWS region where the cluster will be deployed
+        required: true
+
     cluster-name:
         description: Name of the RDS Aurora cluster to deploy
         required: true
@@ -109,6 +113,8 @@ runs:
           with:
               awscli-version: ${{ inputs.awscli-version }}
               terraform-version: ${{ inputs.terraform-version }}
+
+              aws-region: ${{ inputs.aws-region }}
 
               s3-backend-bucket: ${{ inputs.s3-backend-bucket }}
               s3-bucket-region: ${{ inputs.s3-bucket-region }}

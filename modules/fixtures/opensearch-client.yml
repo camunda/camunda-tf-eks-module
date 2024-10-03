@@ -46,7 +46,7 @@ spec:
                         cat ~/.aws/config
 
                         # Attempt unauthenticated access to the OpenSearch cluster, expecting a failure
-                        if curl -s -o /dev/null -w "%{http_code}" https://$OPENSEARCH_ENDPOINT/_cluster/health | grep -q '401'; then
+                        if curl -s -o /dev/null -w "%{http_code}" https://$OPENSEARCH_ENDPOINT/_cluster/health | grep -q '403'; then
                           echo "Unauthenticated access failed as expected."
                         else
                           echo "Unauthenticated access did not fail as expected, check the configuration."

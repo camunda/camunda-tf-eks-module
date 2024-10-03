@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	types2 "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -158,4 +159,17 @@ func DeleteObjectFromS3Bucket(sess aws.Config, s3Bucket string, objectToDelete s
 
 	fmt.Printf("Successfully deleted object %q from bucket %q\n", objectToDelete, s3Bucket)
 	return nil
+}
+
+// ExtractOIDCProviderID extracts the OIDC provider ID from the EKS cluster result.
+func ExtractOIDCProviderID(clusterResult *eks.DescribeClusterOutput) (string, error) {
+	if clusterResult == nil || clusterResult.Cluster == nil || clusterResult.Cluster.Identity == nil {
+		return "", fmt.Errorf("invalid cluster result")
+	}
+
+	oidcProviderURL := *clusterResult.Cluster.Identity.Oidc.Issuer
+	partsOIDC := strings.Split(oidcProviderURL, "/")
+	oidcProviderID := partsOIDC[len(partsOIDC)-1]
+
+	return oidcProviderID, nil
 }

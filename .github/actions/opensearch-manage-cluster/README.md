@@ -10,6 +10,7 @@ It will also install Terraform and awscli. It will output the OpenSearch domain 
 
 | name | description | required | default |
 | --- | --- | --- | --- |
+| `aws-region` | <p>AWS region where the cluster will be deployed</p> | `true` | `""` |
 | `domain-name` | <p>Name of the OpenSearch domain to deploy</p> | `true` | `""` |
 | `engine-version` | <p>Version of the OpenSearch engine to deploy</p> | `false` | `2.15` |
 | `vpc-id` | <p>VPC ID to create the domain in</p> | `true` | `""` |
@@ -47,6 +48,12 @@ This action is a `composite` action.
 ```yaml
 - uses: camunda/camunda-tf-eks-module/.github/actions/opensearch-manage-cluster@main
   with:
+    aws-region:
+    # AWS region where the cluster will be deployed
+    #
+    # Required: true
+    # Default: ""
+
     domain-name:
     # Name of the OpenSearch domain to deploy
     #

@@ -6,11 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/camunda/camunda-tf-eks-module/utils"
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
+	"github.com/sethvargo/go-password/password"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
@@ -127,6 +129,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	// list your services here
 	eksSvc := eks.NewFromConfig(sess)
 	rdsSvc := rds.NewFromConfig(sess)
+	stsSvc := sts.NewFromConfig(sess)
 
 	inputEKS := &eks.DescribeClusterInput{
 		Name: aws.String(suite.clusterName),
@@ -143,20 +146,81 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	publicBlocks := strings.Fields(strings.Trim(terraform.Output(suite.T(), terraformOptions, "public_vpc_cidr_blocks"), "[]"))
 	privateBlocks := strings.Fields(strings.Trim(terraform.Output(suite.T(), terraformOptions, "private_vpc_cidr_blocks"), "[]"))
 
-	auroraUsername := "myuser"
-	auroraPassword := "mypassword123secure"
+	// Extract OIDC issuer and create the IRSA role with RDS Aurora access
+	oidcProviderID, errorOIDC := utils.ExtractOIDCProviderID(result)
+	suite.Require().NoError(errorOIDC)
+
+	stsIdentity, err := stsSvc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
+	suite.Require().NoError(err, "Failed to get AWS account ID")
+
+	accountId := *stsIdentity.Account
+	auroraClusterName := fmt.Sprintf("postgres-%s", suite.clusterName)
+	auroraUsername := "myuser-irsa"
+	auroraPassword, errPassword := password.Generate(18, 4, 4, false, false)
+	suite.Require().NoError(errPassword)
 	auroraDatabase := "camunda"
 
+	// Define the ARN for RDS IAM DB Auth
+	auroraArn := fmt.Sprintf("arn:aws:rds-db:%s:%s:dbuser:%s/%s", suite.region, accountId, auroraClusterName, auroraUsername)
+	suite.sugaredLogger.Infow("Aurora RDS IAM infos", "accountId", accountId, "auroraArn", auroraArn)
+
+	// Create namespace and associated service account in EKS
+	auroraNamespace := "aurora"
+	auroraServiceAccount := "aurora-access-sa"
+	auroraRole := "AuroraRole" // please use the same as the default one for cleanup reasons
+	auroraKubectlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, auroraNamespace)
+	utils.CreateIfNotExistsNamespace(suite.T(), auroraKubectlOptions, auroraNamespace)
+	utils.CreateIfNotExistsServiceAccount(suite.T(), auroraKubectlOptions, auroraServiceAccount, map[string]string{
+		"eks.amazonaws.com/role-arn": fmt.Sprintf("arn:aws:iam::%s:role/%s", accountId, auroraRole),
+	})
+
+	// Define the Aurora access policy for IAM DB Auth
+	auroraAccessPolicy := fmt.Sprintf(`{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "rds-db:connect"
+      ],
+      "Resource": "arn:aws:rds-db:%s:%s:dbuser:%s/%s"
+    }
+  ]
+}`, suite.region, accountId, auroraClusterName, auroraUsername)
+
+	// Define the trust policy for Aurora IAM role
+	iamRoleTrustPolicy := fmt.Sprintf(`{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::%s:oidc-provider/oidc.eks.%s.amazonaws.com/id/%s"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.%s.amazonaws.com/id/%s:sub": "system:serviceaccount:%s:%s"
+        }
+      }
+    }
+  ]
+}`, accountId, suite.region, oidcProviderID, suite.region, oidcProviderID, auroraNamespace, auroraServiceAccount)
+
 	varsConfigAurora := map[string]interface{}{
-		"username":              auroraUsername,
-		"password":              auroraPassword,
-		"default_database_name": auroraDatabase,
-		"cluster_name":          fmt.Sprintf("postgres-%s", suite.clusterName),
-		"subnet_ids":            result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"vpc_id":                *result.Cluster.ResourcesVpcConfig.VpcId,
-		"availability_zones":    []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
-		"cidr_blocks":           append(publicBlocks, privateBlocks...),
-		"iam_auth_enabled":      true,
+		"username":                 auroraUsername,
+		"password":                 auroraPassword,
+		"default_database_name":    auroraDatabase,
+		"cluster_name":             auroraClusterName,
+		"subnet_ids":               result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"vpc_id":                   *result.Cluster.ResourcesVpcConfig.VpcId,
+		"availability_zones":       []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
+		"cidr_blocks":              append(publicBlocks, privateBlocks...),
+		"iam_auth_enabled":         true,
+		"iam_create_aurora_role":   true,
+		"iam_aurora_role_name":     auroraRole,
+		"iam_role_trust_policy":    iamRoleTrustPolicy,
+		"iam_aurora_access_policy": auroraAccessPolicy,
 	}
 
 	tfModuleAurora := "aurora/"

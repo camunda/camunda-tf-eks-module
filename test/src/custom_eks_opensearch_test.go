@@ -147,10 +147,9 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	opensearchDomainName := fmt.Sprintf("os-%s", suite.clusterName)
 
-	// Extract OIDC issuer and create the IRSA role with OpenSearch access
-	oidcProviderURL := *result.Cluster.Identity.Oidc.Issuer
-	partsOIDC := strings.Split(oidcProviderURL, "/")
-	oidcProviderID := partsOIDC[len(partsOIDC)-1]
+	// Extract OIDC issuer and create the IRSA role with RDS OpenSearch access
+	oidcProviderID, errorOIDC := utils.ExtractOIDCProviderID(result)
+	suite.Require().NoError(errorOIDC)
 
 	stsIdentity, err := stsSvc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
 	suite.Require().NoError(err, "Failed to get AWS account ID")
@@ -202,13 +201,14 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 }`, accountId, suite.region, oidcProviderID, suite.region, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
 	varsConfigOpenSearch := map[string]interface{}{
-		"domain_name":              opensearchDomainName,
-		"subnet_ids":               result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"cidr_blocks":              append(publicBlocks, privateBlocks...),
-		"opensearch_access_policy": openSearchAccessPolicy,
-		"iam_role_trust_policy":    iamRoleTrustPolicy,
-		"opensearch_role_name":     openSearchRole,
-		"vpc_id":                   *result.Cluster.ResourcesVpcConfig.VpcId,
+		"domain_name":                  opensearchDomainName,
+		"subnet_ids":                   result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"cidr_blocks":                  append(publicBlocks, privateBlocks...),
+		"vpc_id":                       *result.Cluster.ResourcesVpcConfig.VpcId,
+		"iam_create_opensearch_role":   true,
+		"iam_opensearch_role_name":     openSearchRole,
+		"iam_role_trust_policy":        iamRoleTrustPolicy,
+		"iam_opensearch_access_policy": openSearchAccessPolicy,
 	}
 
 	tfModuleOpenSearch := "opensearch/"

@@ -10,6 +10,7 @@ This action will also install Terraform and awscli. It will output the Aurora cl
 
 | name | description | required | default |
 | --- | --- | --- | --- |
+| `aws-region` | <p>AWS region where the cluster will be deployed</p> | `true` | `""` |
 | `cluster-name` | <p>Name of the RDS Aurora cluster to deploy</p> | `true` | `""` |
 | `username` | <p>Username for the PostgreSQL admin user</p> | `true` | `""` |
 | `password` | <p>Password for the PostgreSQL admin user</p> | `true` | `""` |
@@ -47,6 +48,12 @@ This action is a `composite` action.
 ```yaml
 - uses: camunda/camunda-tf-eks-module/.github/actions/aurora-manage-cluster@main
   with:
+    aws-region:
+    # AWS region where the cluster will be deployed
+    #
+    # Required: true
+    # Default: ""
+
     cluster-name:
     # Name of the RDS Aurora cluster to deploy
     #

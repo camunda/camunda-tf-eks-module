@@ -107,7 +107,7 @@ variable "warm_type" {
 
 variable "tags" {
   type        = map(string)
-  default     = null
+  default     = {}
   description = "Tags assigned to the domain."
 }
 
@@ -157,6 +157,7 @@ variable "advanced_security_master_user_name" {
 
 variable "advanced_security_master_user_password" {
   type        = string
+  default     = ""
   description = "Main user's password, which is stored in the Amazon Elasticsearch Service domain's internal database. Only specify if `advanced_security_internal_user_database_enabled` is set to true."
 }
 
@@ -256,13 +257,13 @@ variable "kms_key_tags" {
   default     = {}
 }
 
-variable "create_opensearch_role" {
+variable "iam_create_opensearch_role" {
   description = "Flag to determine if the OpenSearch role should be created"
   type        = bool
-  default     = true
+  default     = false
 }
 
-variable "opensearch_role_name" {
+variable "iam_opensearch_role_name" {
   description = "Name of the OpenSearch IAM role"
   type        = string
   default     = "OpenSearchRole"
@@ -293,7 +294,7 @@ variable "iam_role_trust_policy" {
 EOF
 }
 
-variable "opensearch_access_policy" {
+variable "iam_opensearch_access_policy" {
   description = "Access policy for OpenSearch allowing access"
   type        = string
   default     = <<EOF

@@ -6,6 +6,10 @@ description: |
     It will also install Terraform and awscli. It will output the OpenSearch domain endpoint.
 
 inputs:
+    aws-region:
+        description: AWS region where the cluster will be deployed
+        required: true
+
     domain-name:
         description: Name of the OpenSearch domain to deploy
         required: true
@@ -87,7 +91,7 @@ inputs:
 outputs:
     opensearch-endpoint:
         description: The endpoint of the deployed OpenSearch domain
-        value: ${{ steps.apply.outputs.opensearch_endpoint }}
+        value: ${{ steps.fetch_outputs.outputs.opensearch_endpoint }}
 
     terraform-state-url:
         description: URL of the Terraform state file in the S3 bucket
@@ -106,6 +110,8 @@ runs:
           with:
               awscli-version: ${{ inputs.awscli-version }}
               terraform-version: ${{ inputs.tf-terraform-version }}
+
+              aws-region: ${{ inputs.aws-region }}
 
               s3-backend-bucket: ${{ inputs.s3-backend-bucket }}
               s3-bucket-region: ${{ inputs.s3-bucket-region }}
@@ -157,13 +163,14 @@ runs:
           working-directory: ${{ inputs.tf-modules-path }}/modules/opensearch/
           run: |
               terraform apply -no-color opensearch.plan
-              export opensearch_endpoint="$(terraform output -raw opensearch_endpoint)"
-              echo "opensearch_endpoint=$opensearch_endpoint" >> "$GITHUB_OUTPUT"
 
         - name: Fetch Terraform Outputs
           shell: bash
           id: fetch_outputs
           working-directory: ${{ inputs.tf-modules-path }}/modules/opensearch/
           run: |
+              export opensearch_endpoint="$(terraform output -raw opensearch_endpoint)"
+              echo "opensearch_endpoint=$opensearch_endpoint" >> "$GITHUB_OUTPUT"
+
               all_outputs=$(terraform output -json | jq -c .)
               echo "all_terraform_outputs=$all_outputs" | tee -a "$GITHUB_OUTPUT"
