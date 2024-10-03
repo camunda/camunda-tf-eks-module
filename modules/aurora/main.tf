@@ -1,6 +1,5 @@
 # Provision an RDS Aurora cluster suitable for operating within our VPC and VPN connectivity.
 
-# TODO: add backup
 resource "aws_rds_cluster" "aurora_cluster" {
   cluster_identifier = var.cluster_name
   availability_zones = var.availability_zones

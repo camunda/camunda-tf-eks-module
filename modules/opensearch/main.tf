@@ -103,4 +103,3 @@ resource "aws_kms_key" "kms" {
 
   tags = var.kms_key_tags
 }
-# TODO: test backup
