@@ -17,7 +17,7 @@ Consider installing Camunda 8 via [this guide](https://docs.camunda.io/docs/next
 
 Below is a simple example configuration for deploying both an EKS cluster and an Aurora PostgreSQL database.
 
-See [AWS EKS Cluster inputs](./modules/eks-cluster/README.md#inputs) and [AWS Aurora RDS inputs](./modules/aurora/README.md#inputs) for further configuration options and how they affect the cluster and database creation.
+See [AWS EKS Cluster inputs](./modules/eks-cluster/README.md#inputs), [AWS Aurora RDS inputs](./modules/aurora/README.md#inputs) and [AWS OpenSearch inputs](./modules/opensearch/README.md#inputs) for further configuration options and how they affect the cluster and database creation.
 
 ```hcl
 module "eks_cluster" {
@@ -78,9 +78,9 @@ module "opensearch_domain" {
 
 You can automate the deployment and deletion of the EKS cluster and Aurora database using GitHub Actions. Below are examples of GitHub Actions workflows for deploying and deleting these resources.
 
-For more details, refer to the corresponding [EKS Actions README](https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/actions/eks-manage-cluster/README.md), [Aurora Actions README](https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/actions/aurora-manage-cluster/README.md) and [OpenSearch Actions README](https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/actions/opensearch-manage-cluster/README.md), [Cleanup Actions README](https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/actions/eks-cleanup-resources/README.md).
+For more details, refer to the corresponding [EKS Actions README](./.github/actions/eks-manage-cluster/README.md), [Aurora Actions README](./.github/actions/aurora-manage-cluster/README.md) and [OpenSearch Actions README](./.github/actions/opensearch-manage-cluster/README.md), [Cleanup Actions README](./.github/actions/eks-cleanup-resources/README.md).
 
-An example workflow can be found in https://github.com/camunda/camunda-tf-eks-module/blob/main/.github/workflows/test-gha-eks.yml.
+An example workflow can be found in [here](./.github/workflows/test-gha-eks.yml).
 
 #### Advanced usage with IRSA
 
@@ -205,6 +205,32 @@ EOF
 ```
 
 By defining the IRSA roles and policies using the outputs of the EKS cluster module, you can simplify the configuration and ensure that the roles and policies are created with the correct permissions and trust policies.
+
+Apply the Service Accounts definitions to your Kubernetes cluster:
+
+**Aurora Service Account**
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aurora-service-account
+  namespace: <your-namespace>
+  annotations:
+    eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/AuroraRole>
+```
+
+**OpenSearch Service Account**
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: opensearch-service-account
+  namespace: <your-namespace>
+  annotations:
+    eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/OpenSearchRole>
+```
 
 ## Support
 
