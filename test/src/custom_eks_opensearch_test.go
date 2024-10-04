@@ -153,10 +153,15 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	// Extract OIDC issuer and create the IRSA role with RDS OpenSearch access
 	oidcProviderID, errorOIDC := utils.ExtractOIDCProviderID(result)
 	suite.Require().NoError(errorOIDC)
+	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "oidc_provider_id"))
+	suite.Require().Equal(oidcProviderID, terraform.Output(suite.T(), terraformOptions, "oidc_provider_id"))
 
 	stsIdentity, err := stsSvc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
 	suite.Require().NoError(err, "Failed to get AWS account ID")
 	accountId := *stsIdentity.Account
+	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "aws_caller_identity_account_id"))
+	suite.Require().Equal(accountId, terraform.Output(suite.T(), terraformOptions, "aws_caller_identity_account_id"))
+
 	openSearchArn := fmt.Sprintf("arn:aws:es:%s:%s:domain/%s/*", suite.region, accountId, opensearchDomainName)
 	suite.sugaredLogger.Infow("OpenSearch infos", "accountId", accountId, "openSearchArn", openSearchArn)
 
