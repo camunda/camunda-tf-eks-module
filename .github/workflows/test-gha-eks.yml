@@ -207,30 +207,8 @@ jobs:
                   s3-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
                   tf-modules-revision: ${{ steps.commit_info.outputs.tf_modules_revision }}
 
-            - name: Delete OpenSearch cluster
-              timeout-minutes: 30
-              if: always() && env.CREATE_OPENSEARCH == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.delete_cluster == 'false')
-              uses: ./.github/actions/eks-cleanup-resources
-              with:
-                  tf-bucket: ${{ env.TF_STATE_BUCKET }}
-                  tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
-                  max-age-hours: 0
-                  target: ${{ steps.commit_info.outputs.cluster_name }}
-                  module-name: opensearch
-
-            - name: Delete Aurora cluster
-              timeout-minutes: 30
-              if: always() && env.CREATE_DB == 'true' && !(github.event_name == 'workflow_dispatch' && inputs.delete_cluster == 'false')
-              uses: ./.github/actions/eks-cleanup-resources
-              with:
-                  tf-bucket: ${{ env.TF_STATE_BUCKET }}
-                  tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
-                  max-age-hours: 0
-                  target: ${{ steps.commit_info.outputs.cluster_name }}
-                  module-name: aurora
-
-            - name: Delete EKS cluster
-              timeout-minutes: 30
+            - name: Delete Resources
+              timeout-minutes: 120
               if: always() && !(github.event_name == 'workflow_dispatch' && inputs.delete_cluster == 'false')
               uses: ./.github/actions/eks-cleanup-resources
               with:
@@ -238,7 +216,6 @@ jobs:
                   tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
                   max-age-hours: 0
                   target: ${{ steps.commit_info.outputs.cluster_name }}
-                  module-name: eks-cluster
 
             - name: Notify in Slack in case of failure
               id: slack-notification

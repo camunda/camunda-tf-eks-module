@@ -203,17 +203,17 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
     {
       "Effect": "Allow",
       "Principal": {
-        "Federated": "arn:aws:iam::%s:oidc-provider/oidc.eks.%s.amazonaws.com/id/%s"
+        "Federated": "arn:aws:iam::%s:oidc-provider/%s"
       },
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "oidc.eks.%s.amazonaws.com/id/%s:sub": "system:serviceaccount:%s:%s"
+          "%s:sub": "system:serviceaccount:%s:%s"
         }
       }
     }
   ]
-}`, accountId, suite.region, oidcProviderID, suite.region, oidcProviderID, auroraNamespace, auroraServiceAccount)
+}`, accountId, oidcProviderID, oidcProviderID, auroraNamespace, auroraServiceAccount)
 
 	varsConfigAurora := map[string]interface{}{
 		"username":                 auroraUsername,

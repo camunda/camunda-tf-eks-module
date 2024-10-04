@@ -197,17 +197,17 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
     {
       "Effect": "Allow",
       "Principal": {
-        "Federated": "arn:aws:iam::%s:oidc-provider/oidc.eks.%s.amazonaws.com/id/%s"
+        "Federated": "arn:aws:iam::%s:oidc-provider/%s"
       },
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "oidc.eks.%s.amazonaws.com/id/%s:sub": "system:serviceaccount:%s:%s"
+          "%s:sub": "system:serviceaccount:%s:%s"
         }
       }
     }
   ]
-}`, accountId, suite.region, oidcProviderID, suite.region, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
+}`, accountId, oidcProviderID, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
 	varsConfigOpenSearch := map[string]interface{}{
 		"domain_name":                  opensearchDomainName,

@@ -161,15 +161,11 @@ func DeleteObjectFromS3Bucket(sess aws.Config, s3Bucket string, objectToDelete s
 	return nil
 }
 
-// ExtractOIDCProviderID extracts the OIDC provider ID from the EKS cluster result.
+// ExtractOIDCProviderID extracts the OIDC provider from the EKS cluster result (without scheme, eg. no https://).
 func ExtractOIDCProviderID(clusterResult *eks.DescribeClusterOutput) (string, error) {
 	if clusterResult == nil || clusterResult.Cluster == nil || clusterResult.Cluster.Identity == nil {
 		return "", fmt.Errorf("invalid cluster result")
 	}
 
-	oidcProviderURL := *clusterResult.Cluster.Identity.Oidc.Issuer
-	partsOIDC := strings.Split(oidcProviderURL, "/")
-	oidcProviderID := partsOIDC[len(partsOIDC)-1]
-
-	return oidcProviderID, nil
+	return strings.ReplaceAll(*clusterResult.Cluster.Identity.Oidc.Issuer, "https://", ""), nil
 }

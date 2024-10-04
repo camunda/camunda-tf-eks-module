@@ -27,7 +27,6 @@ set -o pipefail
 # - AWS CLI installed and configured with the necessary permissions to access and modify the S3 bucket.
 # - Terraform installed and accessible in the PATH.
 
-
 # Check for required arguments
 if [ "$#" -lt 5 ] || [ "$#" -gt 6 ]; then
   echo "Usage: $0 <BUCKET> <MODULES_DIR> <TEMP_DIR_PREFIX> <MIN_AGE_IN_HOURS> <ID_OR_ALL> [MODULE_NAME]"
@@ -186,66 +185,106 @@ if [ $aws_exit_code -ne 0 ]; then
   exit 1
 fi
 
-
+# Categorize resources by module type
 if [ "$ID_OR_ALL" == "all" ]; then
   resources=$(echo "$all_objects" | grep "/terraform.tfstate" | awk '{print $4}')
 else
   resources=$(echo "$all_objects" | grep "/terraform.tfstate" | grep "$ID_OR_ALL" | awk '{print $4}')
 fi
+
 # Check if resources is empty (i.e., no objects found)
 if [ -z "$resources" ]; then
   echo "No terraform.tfstate objects found in the S3 bucket. Exiting script." >&2
   exit 0
 fi
 
+# Initialise arrays for the resources by module type
+aurora_resources=()
+opensearch_resources=()
+eks_resources=()
+
+# Classify resources into different module types
+for resource_id in $resources; do
+  terraform_module=$(basename "$(dirname "$resource_id")")
+
+  case "$terraform_module" in
+    aurora)
+      aurora_resources+=("$resource_id")
+      ;;
+    opensearch)
+      opensearch_resources+=("$resource_id")
+      ;;
+    eks-cluster)
+      eks_resources+=("$resource_id")
+      ;;
+    *)
+      echo "Skipping unsupported module: $terraform_module"
+      ;;
+  esac
+done
+
 current_timestamp=$($date_command +%s)
 
-for resource_id in $resources; do
-  cd "$CURRENT_DIR" || return 1
+# Function to process the destruction for a specific resource type
+process_resources_in_order() {
+  local resources=("$@")  # Accept an array of resources to process
 
-  terraform_module=$(basename "$(dirname "$resource_id")")
-  echo "Checking resource $resource_id (terraform module=$terraform_module)"
+  for resource_id in "${resources[@]}"; do
+    cd "$CURRENT_DIR" || return 1
 
-  # Apply module name filter if specified
-  if [ "$MODULE_NAME" != "all" ] && [ "$MODULE_NAME" != "$terraform_module" ]; then
-    echo "Skipping resource $resource_id because it does not match the specified module name: $MODULE_NAME"
-    continue
-  fi
+    terraform_module=$(basename "$(dirname "$resource_id")")
+    echo "Checking resource $resource_id (terraform module=$terraform_module)"
 
-  last_modified=$(aws s3api head-object --bucket "$BUCKET" --key "$resource_id" --output json | grep LastModified | awk -F '"' '{print $4}')
-  if [ -z "$last_modified" ]; then
-    echo "Error: Failed to retrieve last modified timestamp for resource $resource_id"
-    exit 1
-  fi
-
-  last_modified_timestamp=$($date_command -d "$last_modified" +%s)
-  if [ -z "$last_modified_timestamp" ]; then
-    echo "Error: Failed to convert last modified timestamp to seconds since epoch for resource $resource_id"
-    exit 1
-  fi
-  echo "resource $resource_id last modification: $last_modified ($last_modified_timestamp)"
-
-  file_age_hours=$(( ($current_timestamp - $last_modified_timestamp) / 3600 ))
-  if [ -z "$file_age_hours" ]; then
-    echo "Error: Failed to calculate file age in hours for resource $resource_id"
-    exit 1
-  fi
-  echo "resource $resource_id is $file_age_hours hours old"
-
-  if [ $file_age_hours -ge "$MIN_AGE_IN_HOURS" ]; then
-    # name of the cluster is always after terraform/
-    cluster_name=$(echo "$resource_id" | cut -d'/' -f2)
-    echo "Destroying resource $resource_id in $terraform_module (cluster_name=$cluster_name)"
-
-    if ! destroy_resource "$resource_id" "$terraform_module" "$cluster_name"; then
-      echo "Error destroying resource $resource_id"
-      FAILED=1
+    # Apply module name filter if specified
+    if [ "$MODULE_NAME" != "all" ] && [ "$MODULE_NAME" != "$terraform_module" ]; then
+      echo "Skipping resource $resource_id because it does not match the specified module name: $MODULE_NAME"
+      continue
     fi
 
-  else
-    echo "Skipping resource $resource_id as it does not meet the minimum age requirement of $MIN_AGE_IN_HOURS hours"
-  fi
-done
+    last_modified=$(aws s3api head-object --bucket "$BUCKET" --key "$resource_id" --output json | grep LastModified | awk -F '"' '{print $4}')
+    if [ -z "$last_modified" ]; then
+      echo "Error: Failed to retrieve last modified timestamp for resource $resource_id"
+      exit 1
+    fi
+
+    last_modified_timestamp=$($date_command -d "$last_modified" +%s)
+    if [ -z "$last_modified_timestamp" ]; then
+      echo "Error: Failed to convert last modified timestamp to seconds since epoch for resource $resource_id"
+      exit 1
+    fi
+    echo "Resource $resource_id last modification: $last_modified ($last_modified_timestamp)"
+
+    file_age_hours=$(( ($current_timestamp - $last_modified_timestamp) / 3600 ))
+    if [ -z "$file_age_hours" ]; then
+      echo "Error: Failed to calculate file age in hours for resource $resource_id"
+      exit 1
+    fi
+    echo "Resource $resource_id is $file_age_hours hours old"
+
+    if [ $file_age_hours -ge "$MIN_AGE_IN_HOURS" ]; then
+      # Name of the cluster is always after terraform/
+      cluster_name=$(echo "$resource_id" | cut -d'/' -f2)
+      echo "Destroying resource $resource_id in $terraform_module (cluster_name=$cluster_name)"
+
+      if ! destroy_resource "$resource_id" "$terraform_module" "$cluster_name"; then
+        echo "Error destroying resource $resource_id"
+        FAILED=1
+      fi
+    else
+      echo "Skipping resource $resource_id as it does not meet the minimum age requirement of $MIN_AGE_IN_HOURS hours"
+    fi
+  done
+}
+
+# Destroy resources in the specific order: Aurora, OpenSearch, then EKS
+echo "Destroying Aurora resources..."
+process_resources_in_order "${aurora_resources[@]}"
+
+echo "Destroying OpenSearch resources..."
+process_resources_in_order "${opensearch_resources[@]}"
+
+echo "Destroying EKS resources..."
+process_resources_in_order "${eks_resources[@]}"
 
 echo "Cleaning up empty folders in s3://$BUCKET"
 # Loop until no empty folders are found
