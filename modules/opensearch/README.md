@@ -11,11 +11,11 @@ module "opensearch_domain" {
   source = "github.com/camunda/camunda-tf-eks-module/modules/opensearch"
 
   domain_name     = "my-opensearch-domain"
-  engine_version  = "OpenSearch_1.0"
-  subnet_ids      = module.eks_cluster.subnet_ids
+  engine_version  = "2.15"
+  subnet_ids      = module.eks_cluster.private_subnet_ids
   security_group_ids = module.eks_cluster.security_group_ids
   vpc_id          = module.eks_cluster.vpc_id
-  availability_zones = module.eks_cluster.availability_zones
+  cidr_blocks      = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
   instance_type   = "t3.small.search"
   instance_count  = 2

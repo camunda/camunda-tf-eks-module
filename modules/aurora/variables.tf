@@ -97,7 +97,7 @@ variable "default_database_name" {
 variable "iam_create_aurora_role" {
   description = "Flag to determine if the Aurora IAM role should be created, if true, this module will create a role. Please ensure that iam_auth_enabled is set to `true`"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "iam_aurora_role_name" {
