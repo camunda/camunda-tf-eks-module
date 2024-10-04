@@ -38,7 +38,9 @@ variable "np_desired_node_count" {
 variable "np_labels" {
   type        = map(string)
   description = "A map of labels to add to the default pool nodes"
-  default     = {}
+  default = {
+    managed_by = "terraform"
+  }
 }
 
 variable "cluster_tags" {

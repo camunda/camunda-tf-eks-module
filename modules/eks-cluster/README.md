@@ -62,7 +62,7 @@ module "eks_cluster" {
 | <a name="input_np_desired_node_count"></a> [np\_desired\_node\_count](#input\_np\_desired\_node\_count) | Actual number of nodes for the default node pool. Min-Max will be used for autoscaling | `number` | `4` | no |
 | <a name="input_np_disk_size"></a> [np\_disk\_size](#input\_np\_disk\_size) | Disk size of the nodes on the default node pool | `number` | `20` | no |
 | <a name="input_np_instance_types"></a> [np\_instance\_types](#input\_np\_instance\_types) | Allow passing a list of instance types for the auto scaler to select from when scaling the default node pool | `list(string)` | <pre>[<br/>  "m6i.xlarge"<br/>]</pre> | no |
-| <a name="input_np_labels"></a> [np\_labels](#input\_np\_labels) | A map of labels to add to the default pool nodes | `map(string)` | `{}` | no |
+| <a name="input_np_labels"></a> [np\_labels](#input\_np\_labels) | A map of labels to add to the default pool nodes | `map(string)` | <pre>{<br/>  "managed_by": "terraform"<br/>}</pre> | no |
 | <a name="input_np_max_node_count"></a> [np\_max\_node\_count](#input\_np\_max\_node\_count) | Maximum number of nodes for the default node pool | `number` | `10` | no |
 | <a name="input_np_min_node_count"></a> [np\_min\_node\_count](#input\_np\_min\_node\_count) | Minimum number of nodes for the default node pool | `number` | `1` | no |
 | <a name="input_region"></a> [region](#input\_region) | The region where the cluster and relevant resources should be deployed in | `string` | n/a | yes |
