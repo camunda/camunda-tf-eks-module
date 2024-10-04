@@ -47,7 +47,7 @@ func (suite *CustomEKSOpenSearchTestSuite) SetupTest() {
 	suite.sugaredLogger = suite.logger.Sugar()
 
 	clusterSuffix := utils.GetEnv("TESTS_CLUSTER_ID", strings.ToLower(random.UniqueId()))
-	suite.clusterName = fmt.Sprintf("cluster-opensearch-%s", clusterSuffix)
+	suite.clusterName = fmt.Sprintf("cl-os-%s", clusterSuffix)
 	suite.region = utils.GetEnv("TESTS_CLUSTER_REGION", "eu-central-1")
 	suite.bucketRegion = utils.GetEnv("TF_STATE_BUCKET_REGION", suite.region)
 	suite.tfBinaryName = utils.GetEnv("TESTS_TF_BINARY_NAME", "terraform")
