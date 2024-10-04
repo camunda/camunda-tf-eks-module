@@ -109,6 +109,7 @@ module "eks" {
     services = {
       name            = "services"
       use_name_prefix = false
+      labels          = var.np_labels
     }
   }
 
