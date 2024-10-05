@@ -105,7 +105,7 @@ runs:
           id: utility
           # see https://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
           # steps.uses  cannot access the github context.
-          uses: camunda/camunda-tf-eks-module/.github/actions/utility-action@cdd97c4c54a77f3835a1f565f672f51f69a95922 # main
+          uses: camunda/camunda-tf-eks-module/.github/actions/utility-action@779cedf8ad722992dde019a5135a29ffe2515da3 # main
           with:
               awscli-version: ${{ inputs.awscli-version }}
               terraform-version: ${{ inputs.terraform-version }}
