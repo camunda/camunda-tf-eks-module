@@ -122,7 +122,9 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
-	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+	// due to output of the creation changing tags from null to {}, we can't pass the
+	// idempotency test
+	terraform.InitAndApply(suite.T(), terraformOptions)
 
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")

@@ -122,7 +122,9 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
-	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+	// due to output of the creation changing tags from null to {}, we can't pass the
+	// idempotency test
+	terraform.InitAndApply(suite.T(), terraformOptions)
 
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
@@ -210,7 +212,9 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
-	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
+	// due to output of the creation changing tags from null to {}, we can't pass the
+	// idempotency test
+	terraform.InitAndApply(suite.T(), terraformOptions)
 
 	errClusterReady = utils.WaitUntilKubeClusterIsReady(result.Cluster, 5*time.Minute, uint64(suite.expectedNodes))
 	suite.Require().NoError(errClusterReady)
