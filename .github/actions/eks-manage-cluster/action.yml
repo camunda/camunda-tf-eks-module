@@ -88,7 +88,7 @@ runs:
           # see https://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
           # steps.uses  cannot access the github context.
           # uses: ${{ github.action_repository }}/utility-action@${{ github.action_ref }}
-          uses: camunda/camunda-tf-eks-module/.github/actions/utility-action@2cff27f15c4c2d42d693576f95286ede185ab22d # main
+          uses: camunda/camunda-tf-eks-module/.github/actions/utility-action@49b29405669b7283b775675b5124e25cf13cdf12 # main
           with:
               awscli-version: ${{ inputs.awscli-version }}
               terraform-version: ${{ inputs.terraform-version }}
