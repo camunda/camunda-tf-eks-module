@@ -121,8 +121,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
-	// due to labels, we can't test Idempotent-ency on EKS
-	terraform.InitAndApply(suite.T(), terraformOptions)
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
 
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")

@@ -121,8 +121,7 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
-	// due to labels, we can't test Idempotent-ency on EKS
-	terraform.InitAndApply(suite.T(), terraformOptions)
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptions)
 	suite.baseChecksEKS(terraformOptions)
 }
 
