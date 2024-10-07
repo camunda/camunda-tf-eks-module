@@ -167,10 +167,6 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	auroraArn := fmt.Sprintf("arn:aws:rds-db:%s:%s:dbuser:%s/%s", suite.region, accountId, auroraClusterName, auroraIRSAUsername)
 	suite.sugaredLogger.Infow("Aurora RDS IAM infos", "accountId", accountId, "auroraArn", auroraArn)
 
-	// create a kubeclient
-	kubeClient, err := utils.NewKubeClientSet(result.Cluster)
-	suite.Require().NoError(err)
-
 	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
 
 	// Create namespace and associated service account in EKS
@@ -282,6 +278,10 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 			"aurora_db_name":       auroraDatabase,
 		},
 	}
+
+	// create a kubeclient
+	kubeClient, err := utils.NewKubeClientSet(result.Cluster)
+	suite.Require().NoError(err)
 
 	err = kubeClient.CoreV1().ConfigMaps(auroraNamespace).Delete(context.Background(), configMapPostgres.Name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {

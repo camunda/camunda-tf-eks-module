@@ -142,8 +142,6 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	suite.sugaredLogger.Infow("eks describe cluster result", "result", result, "err", err)
 	suite.Assert().NoError(err)
 
-	kubeClient, errKubeClient := utils.NewKubeClientSet(result.Cluster)
-	suite.Require().NoError(errKubeClient)
 	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
 
 	// Spawn OpenSearch within the EKS VPC/subnet
@@ -299,6 +297,10 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 			"aws_region":          suite.region,
 		},
 	}
+
+	// spawn a kubeclient
+	kubeClient, errKubeClient := utils.NewKubeClientSet(result.Cluster)
+	suite.Require().NoError(errKubeClient)
 
 	err = kubeClient.CoreV1().ConfigMaps(openSearchNamespace).Delete(context.Background(), configMapScript.Name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
