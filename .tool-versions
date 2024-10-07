@@ -24,7 +24,7 @@ just 1.36.0
 
 opentofu 1.8.3
 
-pre-commit 3.8.0
+pre-commit 4.0.0
 
 terraform 1.9.7
 
