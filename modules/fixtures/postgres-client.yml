@@ -14,7 +14,7 @@ spec:
             restartPolicy: Never
             containers:
                 - name: postgres-client
-                  image: ubuntu:latest
+                  image: amazonlinux:latest
                   command:
                       - sh
                       - -c
@@ -23,13 +23,7 @@ spec:
                         set -o pipefail
 
                         echo "Installing dependencies..."
-                        apt-get update
-                        apt-get install -y curl postgresql-client unzip
-
-                        echo "Installing AWS CLI..."
-                        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-                        unzip awscliv2.zip
-                        ./aws/install
+                        yum install -y curl postgresql unzip awscli-2
 
                         echo "Creating IRSA db user using admin user"
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
