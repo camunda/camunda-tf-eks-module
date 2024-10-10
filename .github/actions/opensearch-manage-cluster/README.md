@@ -17,7 +17,7 @@ It will also install Terraform and awscli. It will output the OpenSearch domain 
 | `subnet-ids` | <p>List of subnet IDs to create the domain in</p> | `true` | `""` |
 | `cidr-blocks` | <p>CIDR blocks to allow access from and to</p> | `true` | `""` |
 | `instance-type` | <p>Instance type for the OpenSearch cluster</p> | `false` | `t3.small.search` |
-| `instance-count` | <p>Number of instances in the cluster</p> | `false` | `4` |
+| `instance-count` | <p>Number of instances in the cluster</p> | `false` | `3` |
 | `additional-terraform-vars` | <p>JSON object containing additional Terraform variables</p> | `false` | `{}` |
 | `s3-backend-bucket` | <p>Name of the S3 bucket to store Terraform state</p> | `true` | `""` |
 | `s3-bucket-region` | <p>Region of the bucket containing the resources states</p> | `false` | `""` |
@@ -94,7 +94,7 @@ This action is a `composite` action.
     # Number of instances in the cluster
     #
     # Required: false
-    # Default: 4
+    # Default: 3
 
     additional-terraform-vars:
     # JSON object containing additional Terraform variables

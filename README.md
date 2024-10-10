@@ -62,7 +62,7 @@ module "opensearch_domain" {
   cidr_blocks      = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
   instance_type   = "t3.small.search"
-  instance_count  = 2
+  instance_count  = 3
   ebs_volume_size = 100
 
   advanced_security_enabled = true

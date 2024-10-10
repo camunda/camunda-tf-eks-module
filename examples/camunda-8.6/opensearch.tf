@@ -8,7 +8,7 @@ module "opensearch" {
   engine_version = "2.15"
 
   instance_type   = "t3.medium.search"
-  instance_count  = 2
+  instance_count  = 3
   ebs_volume_size = 50
 
   subnet_ids         = module.eks_cluster.private_subnet_ids
