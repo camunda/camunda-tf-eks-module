@@ -2,14 +2,11 @@ locals {
   opensearch_domain_name = "domain-name-opensearch" # Replace "domain-name" with your domain name
 
   # IRSA configuration
-  camunda_namespace                     = "camunda"         # Replace with your Kubernetes namespace that will host C8 Platform
-  camunda_zeebe_service_account         = "zeebe-sa"        # Replace with your Kubernetes ServiceAcccount that will be created for Zeebe
-  camunda_zeebe_gateway_service_account = "zeebegateway-sa" # Replace with your Kubernetes ServiceAcccount that will be created for ZeebeGateway
-  camunda_operate_service_account       = "operate-sa"      # Replace with your Kubernetes ServiceAcccount that will be created for Operate
-  camunda_identity_service_account      = "identity-sa"     # Replace with your Kubernetes ServiceAcccount that will be created for Identity
-  camunda_tasklist_service_account      = "tasklist-sa"     # Replace with your Kubernetes ServiceAcccount that will be created for TaskList
-  camunda_webmodeler_service_account    = "webmodeler-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for WebModeler
-  camunda_connectors_service_account    = "connectors-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for Connectors
+  camunda_namespace                = "camunda"     # Replace with your Kubernetes namespace that will host C8 Platform
+  camunda_zeebe_service_account    = "zeebe-sa"    # Replace with your Kubernetes ServiceAcccount that will be created for Zeebe
+  camunda_operate_service_account  = "operate-sa"  # Replace with your Kubernetes ServiceAcccount that will be created for Operate
+  camunda_tasklist_service_account = "tasklist-sa" # Replace with your Kubernetes ServiceAcccount that will be created for TaskList
+  camunda_optimize_service_account = "optimize-sa" # Replace with your Kubernetes ServiceAcccount that will be created for Optimize
 }
 
 module "opensearch_domain" {
@@ -69,12 +66,9 @@ EOF
                 "Condition": {
                   "StringEquals": {
                     "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_zeebe_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_zeebe_gateway_service_account}",
                     "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_operate_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_identity_service_account}",
                     "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_tasklist_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_webmodeler_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_connectors_service_account}"
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_optimize_service_account}",
                   }
                 }
               }
