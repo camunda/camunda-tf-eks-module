@@ -116,6 +116,8 @@ runs:
           id: init
           working-directory: ${{ inputs.tf-modules-path }}/modules/eks-cluster/
           run: |
+              set -euxo pipefail
+
               cp ../fixtures/backend.tf ./
               terraform version
               terraform init -backend-config="bucket=${{ steps.utility.outputs.TFSTATE_BUCKET }}" \
@@ -127,6 +129,8 @@ runs:
           id: plan
           working-directory: ${{ inputs.tf-modules-path }}/modules/eks-cluster/
           run: |
+              set -euxo pipefail
+
               echo '${{ inputs.additional-terraform-vars }}' > /tmp/var.tfvars.json
               terraform plan -no-color -out eks.plan \
                 -var-file=/tmp/var.tfvars.json \
@@ -139,6 +143,8 @@ runs:
           id: apply
           working-directory: ${{ inputs.tf-modules-path }}/modules/eks-cluster/
           run: |
+              set -euxo pipefail
+
               terraform apply -no-color eks.plan
               export cluster_endpoint="$(terraform output -raw cluster_endpoint)"
               echo "cluster_endpoint=$cluster_endpoint" >> "$GITHUB_OUTPUT"
@@ -148,6 +154,8 @@ runs:
           id: fetch_outputs
           working-directory: ${{ inputs.tf-modules-path }}/modules/eks-cluster/
           run: |
+              set -euxo pipefail
+
               all_outputs=$(terraform output -json | jq -c .)
               echo "all_terraform_outputs=$all_outputs" | tee -a "$GITHUB_OUTPUT"
 
@@ -156,11 +164,15 @@ runs:
           id: kube_config
           if: inputs.login == 'true'
           run: |
+              set -euxo pipefail
+
               aws eks --region ${{ inputs.aws-region }} update-kubeconfig --name ${{ inputs.cluster-name }}
 
         - name: Output Kube Config
           shell: bash
           if: inputs.login == 'true'
           run: |
+              set -euxo pipefail
+
               kubectl config view
               kubectl get ns

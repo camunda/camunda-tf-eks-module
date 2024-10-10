@@ -12,6 +12,8 @@ module "eks" {
   cluster_endpoint_private_access = true # private API communication for nodes within the VPC
   cluster_endpoint_public_access  = true # API accessible to engineers
 
+  cluster_tags = var.cluster_tags
+
   cluster_addons = {
     coredns = {
       most_recent       = true
@@ -84,6 +86,8 @@ module "eks" {
     instance_types = var.np_instance_types
     capacity_type  = var.np_capacity_type
 
+    labels = var.np_labels
+
     update_config = {
       max_unavailable = 1
     }
@@ -103,9 +107,9 @@ module "eks" {
   # EKS Managed Node Group definitions
   eks_managed_node_groups = {
     services = {
-      labels          = {}
       name            = "services"
       use_name_prefix = false
+      labels          = var.np_labels
     }
   }
 

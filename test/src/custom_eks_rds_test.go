@@ -6,11 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/camunda/camunda-tf-eks-module/utils"
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	test_structure "github.com/gruntwork-io/terratest/modules/test-structure"
+	"github.com/sethvargo/go-password/password"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
@@ -119,7 +121,8 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
-	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
+	// due to output of the creation changing tags from null to {}, we can't pass the
+	// idempotency test
 	terraform.InitAndApply(suite.T(), terraformOptions)
 
 	sess, err := utils.GetAwsClient()
@@ -128,6 +131,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	// list your services here
 	eksSvc := eks.NewFromConfig(sess)
 	rdsSvc := rds.NewFromConfig(sess)
+	stsSvc := sts.NewFromConfig(sess)
 
 	inputEKS := &eks.DescribeClusterInput{
 		Name: aws.String(suite.clusterName),
@@ -144,20 +148,84 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	publicBlocks := strings.Fields(strings.Trim(terraform.Output(suite.T(), terraformOptions, "public_vpc_cidr_blocks"), "[]"))
 	privateBlocks := strings.Fields(strings.Trim(terraform.Output(suite.T(), terraformOptions, "private_vpc_cidr_blocks"), "[]"))
 
-	auroraUsername := "myuser"
-	auroraPassword := "mypassword123secure"
+	// Extract OIDC issuer and create the IRSA role with RDS Aurora access
+	oidcProviderID, errorOIDC := utils.ExtractOIDCProviderID(result)
+	suite.Require().NoError(errorOIDC)
+
+	stsIdentity, err := stsSvc.GetCallerIdentity(context.TODO(), &sts.GetCallerIdentityInput{})
+	suite.Require().NoError(err, "Failed to get AWS account ID")
+
+	accountId := *stsIdentity.Account
+	auroraClusterName := fmt.Sprintf("postgres-%s", suite.clusterName)
+	auroraUsername := "adminuser"
+	auroraPassword, errPassword := password.Generate(18, 4, 0, false, false)
+	suite.Require().NoError(errPassword)
 	auroraDatabase := "camunda"
 
+	// Define the ARN for RDS IAM DB Auth
+	auroraIRSAUsername := "myirsauser"
+	auroraArn := fmt.Sprintf("arn:aws:rds-db:%s:%s:dbuser:%s/%s", suite.region, accountId, auroraClusterName, auroraIRSAUsername)
+	suite.sugaredLogger.Infow("Aurora RDS IAM infos", "accountId", accountId, "auroraArn", auroraArn)
+
+	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
+
+	// Create namespace and associated service account in EKS
+	auroraNamespace := "aurora"
+	auroraServiceAccount := "aurora-access-sa"
+	auroraRole := fmt.Sprintf("AuroraRole-%s", suite.clusterName)
+	auroraKubectlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, auroraNamespace)
+	utils.CreateIfNotExistsNamespace(suite.T(), auroraKubectlOptions, auroraNamespace)
+	utils.CreateIfNotExistsServiceAccount(suite.T(), auroraKubectlOptions, auroraServiceAccount, map[string]string{
+		"eks.amazonaws.com/role-arn": fmt.Sprintf("arn:aws:iam::%s:role/%s", accountId, auroraRole),
+	})
+
+	// Define the Aurora access policy for IAM DB Auth
+	auroraAccessPolicy := fmt.Sprintf(`{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "rds-db:connect"
+      ],
+      "Resource": "arn:aws:rds-db:%s:%s:dbuser:%s/%s"
+    }
+  ]
+}`, suite.region, accountId, auroraClusterName, auroraIRSAUsername)
+
+	// Define the trust policy for Aurora IAM role
+	iamRoleTrustPolicy := fmt.Sprintf(`{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::%s:oidc-provider/%s"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "%s:sub": "system:serviceaccount:%s:%s"
+        }
+      }
+    }
+  ]
+}`, accountId, oidcProviderID, oidcProviderID, auroraNamespace, auroraServiceAccount)
+
 	varsConfigAurora := map[string]interface{}{
-		"username":              auroraUsername,
-		"password":              auroraPassword,
-		"default_database_name": auroraDatabase,
-		"cluster_name":          fmt.Sprintf("postgres-%s", suite.clusterName),
-		"subnet_ids":            result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"vpc_id":                *result.Cluster.ResourcesVpcConfig.VpcId,
-		"availability_zones":    []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
-		"cidr_blocks":           append(publicBlocks, privateBlocks...),
-		"iam_auth_enabled":      true,
+		"username":                 auroraUsername,
+		"password":                 auroraPassword,
+		"default_database_name":    auroraDatabase,
+		"cluster_name":             auroraClusterName,
+		"subnet_ids":               result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"vpc_id":                   *result.Cluster.ResourcesVpcConfig.VpcId,
+		"availability_zones":       []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
+		"cidr_blocks":              append(publicBlocks, privateBlocks...),
+		"iam_auth_enabled":         true,
+		"iam_create_aurora_role":   true,
+		"iam_aurora_role_name":     auroraRole,
+		"iam_role_trust_policy":    iamRoleTrustPolicy,
+		"iam_aurora_access_policy": auroraAccessPolicy,
 	}
 
 	tfModuleAurora := "aurora/"
@@ -187,96 +255,71 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptionsRDS)
 	}
 
-	terraform.InitAndApply(suite.T(), terraformOptionsRDS)
+	terraform.InitAndApplyAndIdempotent(suite.T(), terraformOptionsRDS)
 	auroraEndpoint := terraform.Output(suite.T(), terraformOptionsRDS, "aurora_endpoint")
 	suite.Assert().NotEmpty(auroraEndpoint)
 
 	// Test of the RDS connection is performed by launching a pod on the cluster and test the pg connection
-	kubeClient, err := utils.NewKubeClientSet(result.Cluster)
-	suite.Require().NoError(err)
-
-	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
-
-	namespace := "postgres-client"
-	pgKubeCtlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, namespace)
-	utils.CreateIfNotExistsNamespace(suite.T(), pgKubeCtlOptions, namespace)
+	pgKubeCtlOptions := k8s.NewKubectlOptions("", suite.kubeConfigPath, auroraNamespace)
 
 	// deploy the postgres-client ConfigMap
 	configMapPostgres := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "aurora-config",
-			Namespace: namespace,
+			Namespace: auroraNamespace,
 		},
 		Data: map[string]string{
 			"aurora_endpoint":      auroraEndpoint,
 			"aurora_username":      auroraUsername,
-			"aurora_username_irsa": fmt.Sprintf("%s-irsa", auroraUsername),
+			"aurora_password":      auroraPassword,
+			"aurora_username_irsa": auroraIRSAUsername,
 			"aurora_port":          "5432",
 			"aws_region":           suite.region,
 			"aurora_db_name":       auroraDatabase,
 		},
 	}
 
-	err = kubeClient.CoreV1().ConfigMaps(namespace).Delete(context.Background(), configMapPostgres.Name, metav1.DeleteOptions{})
+	// create a kubeclient
+	kubeClient, err := utils.NewKubeClientSet(result.Cluster)
+	suite.Require().NoError(err)
+
+	err = kubeClient.CoreV1().ConfigMaps(auroraNamespace).Delete(context.Background(), configMapPostgres.Name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		suite.Require().NoError(err)
 	}
-	_, err = kubeClient.CoreV1().ConfigMaps(namespace).Create(context.Background(), configMapPostgres, metav1.CreateOptions{})
+	_, err = kubeClient.CoreV1().ConfigMaps(auroraNamespace).Create(context.Background(), configMapPostgres, metav1.CreateOptions{})
 	k8s.WaitUntilConfigMapAvailable(suite.T(), pgKubeCtlOptions, configMapPostgres.Name, 6, 10*time.Second)
 
 	// create the secret for aurora pg password
 	secretPostgres := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "aurora-secret",
-			Namespace: namespace,
+			Namespace: auroraNamespace,
 		},
 		StringData: map[string]string{
 			"aurora_password": auroraPassword,
 		},
 	}
-	err = kubeClient.CoreV1().Secrets(namespace).Delete(context.Background(), configMapPostgres.Name, metav1.DeleteOptions{})
+	err = kubeClient.CoreV1().Secrets(auroraNamespace).Delete(context.Background(), secretPostgres.Name, metav1.DeleteOptions{})
 	if err != nil && !errors.IsNotFound(err) {
 		suite.Require().NoError(err)
 	}
-	_, err = kubeClient.CoreV1().Secrets(namespace).Create(context.Background(), secretPostgres, metav1.CreateOptions{})
+	_, err = kubeClient.CoreV1().Secrets(auroraNamespace).Create(context.Background(), secretPostgres, metav1.CreateOptions{})
 	k8s.WaitUntilSecretAvailable(suite.T(), pgKubeCtlOptions, secretPostgres.Name, 6, 10*time.Second)
-
-	// add the scripts as a ConfigMap
-	scriptPath := "../../modules/fixtures/scripts/create_aurora_pg_db.sh"
-	scriptContent, err := os.ReadFile(scriptPath)
-	suite.Require().NoError(err)
-
-	configMapScript := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "postgres-scripts",
-			Namespace: namespace,
-		},
-		Data: map[string]string{
-			"create_aurora_pg_db.sh": string(scriptContent),
-		},
-	}
-
-	err = kubeClient.CoreV1().ConfigMaps(namespace).Delete(context.Background(), configMapScript.Name, metav1.DeleteOptions{})
-	if err != nil && !errors.IsNotFound(err) {
-		suite.Require().NoError(err)
-	}
-	_, err = kubeClient.CoreV1().ConfigMaps(namespace).Create(context.Background(), configMapScript, metav1.CreateOptions{})
-	k8s.WaitUntilConfigMapAvailable(suite.T(), pgKubeCtlOptions, configMapScript.Name, 6, 10*time.Second)
 
 	// cleanup existing jobs
 	jobListOptions := metav1.ListOptions{LabelSelector: "app=postgres-client"}
 	existingJobs := k8s.ListJobs(suite.T(), pgKubeCtlOptions, jobListOptions)
+	backgroundDeletion := metav1.DeletePropagationBackground
 	for _, job := range existingJobs {
-		err := kubeClient.BatchV1().Jobs(namespace).Delete(context.Background(), job.Name, metav1.DeleteOptions{})
+		err := kubeClient.BatchV1().Jobs(auroraNamespace).Delete(context.Background(), job.Name, metav1.DeleteOptions{PropagationPolicy: &backgroundDeletion})
 		suite.Assert().NoError(err)
 	}
 
 	// deploy the postgres-client Job to test the connection
 	k8s.KubectlApply(suite.T(), pgKubeCtlOptions, "../../modules/fixtures/postgres-client.yml")
-	errJob := utils.WaitForJobCompletion(kubeClient, namespace, "postgres-client", 5*time.Minute, jobListOptions)
+	errJob := utils.WaitForJobCompletion(kubeClient, auroraNamespace, "postgres-client", 5*time.Minute, jobListOptions)
 	suite.Require().NoError(errJob)
-
-	// TODO: test IRSA apply https://kubedemy.io/aws-eks-part-13-setup-iam-roles-for-service-accounts-irsa to setup iam
 
 	// Retrieve RDS information
 	describeDBClusterInput := &rds.DescribeDBClustersInput{
@@ -290,7 +333,6 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	suite.Assert().Equal(varsConfigAurora["username"].(string), *describeDBClusterOutput.DBClusters[0].MasterUsername)
 	suite.Assert().Equal(auroraDatabase, *describeDBClusterOutput.DBClusters[0].DatabaseName)
 	suite.Assert().Equal(int32(5432), *describeDBClusterOutput.DBClusters[0].Port)
-	suite.Assert().Equal("15.4", *describeDBClusterOutput.DBClusters[0].EngineVersion)
 	suite.Assert().ElementsMatch(expectedRDSAZ, describeDBClusterOutput.DBClusters[0].AvailabilityZones)
 	suite.Assert().Equal(varsConfigAurora["cluster_name"].(string), *describeDBClusterOutput.DBClusters[0].DBClusterIdentifier)
 

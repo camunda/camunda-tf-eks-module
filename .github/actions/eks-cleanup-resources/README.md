@@ -14,6 +14,7 @@ This GitHub Action automates the deletion of EKS resources using a shell script.
 | `max-age-hours` | <p>Maximum age of resources in hours</p> | `false` | `20` |
 | `target` | <p>Specify an ID to destroy specific resources or "all" to destroy all resources</p> | `false` | `all` |
 | `temp-dir` | <p>Temporary directory prefix used for storing resource data during processing</p> | `false` | `./tmp/eks-cleanup/` |
+| `module-name` | <p>Name of the module to destroy (e.g., "eks-cluster", "aurora", "opensearch"), or "all" to destroy all modules</p> | `false` | `all` |
 
 
 ## Runs
@@ -54,4 +55,10 @@ This action is a `composite` action.
     #
     # Required: false
     # Default: ./tmp/eks-cleanup/
+
+    module-name:
+    # Name of the module to destroy (e.g., "eks-cluster", "aurora", "opensearch"), or "all" to destroy all modules
+    #
+    # Required: false
+    # Default: all
 ```

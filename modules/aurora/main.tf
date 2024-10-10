@@ -1,6 +1,5 @@
 # Provision an RDS Aurora cluster suitable for operating within our VPC and VPN connectivity.
 
-# TODO: add backup
 resource "aws_rds_cluster" "aurora_cluster" {
   cluster_identifier = var.cluster_name
   availability_zones = var.availability_zones
@@ -11,9 +10,10 @@ resource "aws_rds_cluster" "aurora_cluster" {
   master_username = var.username
   database_name   = var.default_database_name
 
-  # New: Enable IAM auth + assign iam roles
   iam_database_authentication_enabled = var.iam_auth_enabled
-  iam_roles                           = var.iam_roles # only needed if wanted to grant access from Aurora to e.g. S3
+
+  # don't assign twice the roles, otherwise you may encounter conflicts
+  iam_roles = var.iam_roles # only needed if wanted to grant access from Aurora to e.g. S3
 
   vpc_security_group_ids = [aws_security_group.this.id]
   db_subnet_group_name   = aws_db_subnet_group.this.name
@@ -65,40 +65,6 @@ resource "aws_rds_cluster_instance" "aurora_instance" {
   # add hard dependency on cluster as the instance can only be created after the cluster
   # this is required for the initial terraform apply to not fail due to the cluster not existing yet
   depends_on = [aws_rds_cluster.aurora_cluster]
-}
-
-resource "aws_security_group" "this" {
-  name        = "${var.cluster_name}-allow-all-internal-access"
-  description = "Security group managing access to ${var.cluster_name}"
-
-  vpc_id = var.vpc_id
-
-  tags = var.tags
-}
-
-resource "aws_security_group_rule" "allow_egress" {
-  description = "Allow outgoing traffic for the aurora db"
-
-  type        = "egress"
-  from_port   = 0
-  to_port     = 0
-  protocol    = "-1"
-  cidr_blocks = var.cidr_blocks
-
-  security_group_id = aws_security_group.this.id
-
-}
-
-resource "aws_security_group_rule" "allow_ingress" {
-  description = "Allow incoming traffic for the aurora db for port 5432"
-
-  type        = "ingress"
-  from_port   = 5432
-  to_port     = 5432
-  protocol    = "tcp"
-  cidr_blocks = var.cidr_blocks
-
-  security_group_id = aws_security_group.this.id
 }
 
 resource "aws_db_subnet_group" "this" {

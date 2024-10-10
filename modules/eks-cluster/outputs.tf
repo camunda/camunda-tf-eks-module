@@ -71,6 +71,16 @@ output "oidc_provider_arn" {
   description = "Amazon Resource Name of the OIDC provider for the EKS cluster. Allows to add additional IRSA mappings"
 }
 
+output "aws_caller_identity_account_id" {
+  value       = data.aws_caller_identity.current.account_id
+  description = "Account ID of the current AWS account"
+}
+
+output "oidc_provider_id" {
+  value       = replace(module.eks.oidc_provider_arn, "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/", "")
+  description = "OIDC provider for the EKS cluster. Allows to add additional IRSA mappings"
+}
+
 ################################################################################
 # VPC
 ################################################################################

@@ -93,3 +93,61 @@ variable "default_database_name" {
   default     = "camunda"
   description = "The name for the automatically created database on cluster creation."
 }
+
+variable "iam_create_aurora_role" {
+  description = "Flag to determine if the Aurora IAM role should be created, if true, this module will create a role. Please ensure that iam_auth_enabled is set to `true`"
+  type        = bool
+  default     = false
+}
+
+variable "iam_aurora_role_name" {
+  description = "Name of the AuroraRole IAM role"
+  type        = string
+  default     = "AuroraRole"
+}
+
+variable "iam_role_trust_policy" {
+  description = "Assume role trust policy for Aurora role"
+  type        = string
+  default     = <<EOF
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
+                  }
+                }
+              }
+            ]
+          }
+
+EOF
+}
+
+variable "iam_aurora_access_policy" {
+  # see https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+  description = "Access policy for Aurora allowing access"
+  type        = string
+  default     = <<EOF
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "rds-db:connect"
+                  ],
+                  "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:<YOUR-CLUSTER-NAME>/<YOUR-DB-USER-NAME>"
+                }
+              ]
+            }
+
+EOF
+}

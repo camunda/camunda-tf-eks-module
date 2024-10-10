@@ -4,3 +4,9 @@ np_instance_types         = ["t2.medium"]
 
 # spot instances are cheaper with same performances for non production environments
 np_capacity_type = "SPOT"
+cluster_tags = {
+  Environment = "tests"
+}
+np_labels = {
+  Environment = "tests"
+}
