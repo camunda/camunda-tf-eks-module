@@ -1,0 +1,36 @@
+---
+# this manifest creates the database
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: postgres-client
+    labels:
+        app: postgres-client
+spec:
+    backoffLimit: 0
+    template:
+        spec:
+            restartPolicy: Never
+            containers:
+                - name: postgres-client
+                  image: amazonlinux:latest
+                  command:
+                      - sh
+                      - -c
+                      - |
+                        /bin/bash <<'EOF'
+                        set -o pipefail
+
+                        echo "Installing dependencies..."
+                        yum install -y curl postgresql unzip awscli-2
+
+                        echo "Creating IRSA db user using admin user"
+                        psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
+                          -c "CREATE USER \"${AURORA_USERNAME_IRSA}\" WITH LOGIN;" \
+                          -c "GRANT rds_iam TO \"${AURORA_USERNAME_IRSA}\";" \
+                          -c "GRANT rds_superuser TO \"${AURORA_USERNAME_IRSA}\";" \
+                          -c "GRANT ALL PRIVILEGES ON DATABASE \"${AURORA_DB_NAME}\" TO \"${AURORA_USERNAME_IRSA}\";" \
+                          -c "SELECT aurora_version();" \
+                          -c "SELECT version();" -c "\du"
+
+                        EOF
