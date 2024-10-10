@@ -18,7 +18,7 @@ module "opensearch_domain" {
   cidr_blocks      = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
   instance_type   = "t3.small.search"
-  instance_count  = 2
+  instance_count  = 3
   ebs_volume_size = 100
 
   advanced_security_enabled = true
@@ -93,7 +93,7 @@ No modules.
 | <a name="input_cidr_blocks"></a> [cidr\_blocks](#input\_cidr\_blocks) | The CIDR blocks to allow access from and to. | `list(string)` | n/a | yes |
 | <a name="input_cold_storage_enabled"></a> [cold\_storage\_enabled](#input\_cold\_storage\_enabled) | Indicates cold storage is enabled. | `bool` | `false` | no |
 | <a name="input_create_timeout"></a> [create\_timeout](#input\_create\_timeout) | How much time to wait for the creation before timing out. | `string` | `"2h"` | no |
-| <a name="input_dedicated_master_count"></a> [dedicated\_master\_count](#input\_dedicated\_master\_count) | Number of dedicated master nodes in the cluster. | `number` | `4` | no |
+| <a name="input_dedicated_master_count"></a> [dedicated\_master\_count](#input\_dedicated\_master\_count) | Number of dedicated master nodes in the cluster. | `number` | `3` | no |
 | <a name="input_dedicated_master_enabled"></a> [dedicated\_master\_enabled](#input\_dedicated\_master\_enabled) | Indicates whether dedicated master nodes are enabled for the cluster. | `bool` | `true` | no |
 | <a name="input_dedicated_master_type"></a> [dedicated\_master\_type](#input\_dedicated\_master\_type) | Instance type of the dedicated master nodes in the cluster. | `string` | `"m4.large.search"` | no |
 | <a name="input_domain_endpoint_options"></a> [domain\_endpoint\_options](#input\_domain\_endpoint\_options) | Configuration block for domain endpoint HTTP(S) related options | `any` | <pre>{<br/>  "enforce_https": true,<br/>  "tls_security_policy": "Policy-Min-TLS-1-2-2019-07"<br/>}</pre> | no |
@@ -109,7 +109,7 @@ No modules.
 | <a name="input_iam_opensearch_access_policy"></a> [iam\_opensearch\_access\_policy](#input\_iam\_opensearch\_access\_policy) | Access policy for OpenSearch allowing access | `string` | `"            {\n              \"Version\": \"2012-10-17\",\n              \"Statement\": [\n                {\n                  \"Effect\": \"Allow\",\n                  \"Action\": [\n                    \"es:ESHttpGet\",\n                    \"es:ESHttpPut\",\n                    \"es:ESHttpPost\"\n                  ],\n                  \"Resource\": \"arn:aws:es:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:domain/<YOUR-DOMAIN-NAME>/*\"\n                }\n              ]\n            }\n\n"` | no |
 | <a name="input_iam_opensearch_role_name"></a> [iam\_opensearch\_role\_name](#input\_iam\_opensearch\_role\_name) | Name of the OpenSearch IAM role | `string` | `"OpenSearchRole"` | no |
 | <a name="input_iam_role_trust_policy"></a> [iam\_role\_trust\_policy](#input\_iam\_role\_trust\_policy) | Assume role trust policy for OpenSearch role | `string` | `"          {\n            \"Version\": \"2012-10-17\",\n            \"Statement\": [\n              {\n                \"Effect\": \"Allow\",\n                \"Principal\": {\n                  \"Federated\": \"arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>\"\n                },\n                \"Action\": \"sts:AssumeRoleWithWebIdentity\",\n                \"Condition\": {\n                  \"StringEquals\": {\n                    \"oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub\": \"system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>\"\n                  }\n                }\n              }\n            ]\n          }\n\n"` | no |
-| <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of instances in the cluster. | `number` | `4` | no |
+| <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of instances in the cluster. | `number` | `3` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | Instance type of data nodes in the cluster. | `string` | `"t3.small.search"` | no |
 | <a name="input_ip_address_type"></a> [ip\_address\_type](#input\_ip\_address\_type) | The IP address type for the endpoint. Valid values are ipv4 and dualstack | `string` | `"ipv4"` | no |
 | <a name="input_kms_key_delete_window_in_days"></a> [kms\_key\_delete\_window\_in\_days](#input\_kms\_key\_delete\_window\_in\_days) | The number of days before the KMS key is deleted after being disabled. | `number` | `7` | no |

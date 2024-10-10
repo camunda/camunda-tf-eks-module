@@ -41,7 +41,7 @@ variable "instance_type" {
 
 variable "instance_count" {
   type        = number
-  default     = 4
+  default     = 3
   description = "Number of instances in the cluster."
 }
 
@@ -66,7 +66,7 @@ variable "dedicated_master_type" {
 variable "dedicated_master_count" {
   type        = number
   description = "Number of dedicated master nodes in the cluster."
-  default     = 4
+  default     = 3
 }
 
 variable "multi_az_with_standby_enabled" {

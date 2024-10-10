@@ -37,7 +37,7 @@ inputs:
 
     instance-count:
         description: Number of instances in the cluster
-        default: '4'
+        default: '3'
 
     additional-terraform-vars:
         description: JSON object containing additional Terraform variables
