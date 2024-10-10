@@ -318,7 +318,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 		suite.Assert().NoError(err)
 	}
 
-	// deploy the postgres-client Job to test the connection
+	// deploy the opensearch-client Job to test the connection
 	k8s.KubectlApply(suite.T(), openSearchKubectlOptions, "../../modules/fixtures/opensearch-client.yml")
 	errJob := utils.WaitForJobCompletion(kubeClient, openSearchNamespace, "opensearch-client", 5*time.Minute, jobListOptions)
 	suite.Require().NoError(errJob)

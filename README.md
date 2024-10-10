@@ -4,7 +4,7 @@
 [![tests](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml)
 [![License](https://img.shields.io/github/license/camunda/camunda-tf-eks-module)](LICENSE)
 
-Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8 and an AWS Aurora RDS cluster.
+Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8, an AWS Aurora RDS cluster and an OpenSearch domain.
 
 **⚠️ Warning:** This project is not intended for production use but rather for demonstration purposes only. There are no guarantees or warranties provided.
 
@@ -15,7 +15,7 @@ Consider installing Camunda 8 via [this guide](https://docs.camunda.io/docs/next
 
 ## Usage
 
-Below is a simple example configuration for deploying both an EKS cluster and an Aurora PostgreSQL database.
+Below is a simple example configuration for deploying both an EKS cluster, an Aurora PostgreSQL database and an OpenSearch domain.
 
 See [AWS EKS Cluster inputs](./modules/eks-cluster/README.md#inputs), [AWS Aurora RDS inputs](./modules/aurora/README.md#inputs) and [AWS OpenSearch inputs](./modules/opensearch/README.md#inputs) for further configuration options and how they affect the cluster and database creation.
 
@@ -62,7 +62,7 @@ module "opensearch_domain" {
   cidr_blocks      = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
   instance_type   = "t3.small.search"
-  instance_count  = 4
+  instance_count  = 2
   ebs_volume_size = 100
 
   advanced_security_enabled = true
@@ -76,7 +76,11 @@ module "opensearch_domain" {
 
 #### GitHub Actions
 
-You can automate the deployment and deletion of the EKS cluster and Aurora database using GitHub Actions. Below are examples of GitHub Actions workflows for deploying and deleting these resources.
+You can automate the deployment and deletion of the EKS cluster and Aurora database using GitHub Actions.
+
+**Note:** This is recommended only for development and testing purposes, not for production use.
+
+Below are examples of GitHub Actions workflows for deploying and deleting these resources.
 
 For more details, refer to the corresponding [EKS Actions README](./.github/actions/eks-manage-cluster/README.md), [Aurora Actions README](./.github/actions/aurora-manage-cluster/README.md) and [OpenSearch Actions README](./.github/actions/opensearch-manage-cluster/README.md), [Cleanup Actions README](./.github/actions/eks-cleanup-resources/README.md).
 
@@ -84,8 +88,12 @@ An example workflow can be found in [here](./.github/workflows/test-gha-eks.yml)
 
 #### Advanced usage with IRSA
 
-This documentation provides a step-by-step guide to creating an EKS cluster, an Aurora RDS instance, and an OpenSearch domain with IRSA (IAM Roles for Service Accounts) roles using Terraform modules.
-The modules create the necessary IAM roles and policies for Aurora and OpenSearch. To simplify the configuration, the modules use the outputs of the EKS cluster module to define the IRSA roles and policies.
+This documentation provides a step-by-step guide to creating an EKS cluster, an Aurora RDS instance, and an OpenSearch domain with IRSA (IAM Roles for Service Accounts) roles using Terraform modules. The modules create the necessary IAM roles and policies for Aurora and OpenSearch. To simplify the configuration, the modules use the outputs of the EKS cluster module to define the IRSA roles and policies.
+
+For further details and a more in-depth configuration, it is recommended to refer to the official documentation at:
+- [Amazon EKS Terraform setup](https://docs.camunda.io/docs/self-managed/setup/deploy/amazon/amazon-eks/eks-terraform/)
+- [IRSA roles setup](https://docs.camunda.io/docs/self-managed/setup/deploy/amazon/amazon-eks/irsa/)
+
 
 ### Aurora IRSA Role and Policy
 
@@ -93,11 +101,12 @@ The Aurora module uses the following outputs from the EKS cluster module to defi
 
 - `module.eks_cluster.oidc_provider_arn`: The ARN of the OIDC provider for the EKS cluster.
 - `module.eks_cluster.oidc_provider_id`: The ID of the OIDC provider for the EKS cluster.
-- `var.account_id`: Your account id
+- `var.account_id`: Your AWS account id
 - `var.aurora_cluster_name`: The name of the Aurora cluster to access
-- `var.aurora_irsa_username`: The username of the user used to access to the AuroraDB
-- `var.aurora_namespace`: The namespace to allow access
-- `var.aurora_service_account`: The ServiceAccount to allow access
+Here is the corrected version:
+- `var.aurora_irsa_username`: The username used to access AuroraDB. This username is different from the superuser. The user must also be created manually in the database to enable the IRSA connection, as described in [the steps below](#create-irsa-user-on-the-database).
+- `var.aurora_namespace`: The kubernetes namespace to allow access
+- `var.aurora_service_account`: The kubernetes ServiceAccount to allow access
 
 You need to define the IAM role trust policy and access policy for Aurora. Here's an example of how to define these policies using the outputs of the EKS cluster module:
 
@@ -146,18 +155,35 @@ EOF
 }
 ```
 
+#### Create IRSA User on the Database
+
+Once the database is up, you will need to connect to it using the superuser credentials defined in the module (`username`, `password`).
+
+```bash
+echo "Creating IRSA DB user using admin user"
+psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
+  -c "CREATE USER \"${AURORA_USERNAME_IRSA}\" WITH LOGIN;" \
+  -c "GRANT rds_iam TO \"${AURORA_USERNAME_IRSA}\";" \
+  -c "GRANT rds_superuser TO \"${AURORA_USERNAME_IRSA}\";" \
+  -c "GRANT ALL PRIVILEGES ON DATABASE \"${AURORA_DB_NAME}\" TO \"${AURORA_USERNAME_IRSA}\";" \
+  -c "SELECT aurora_version();" \
+  -c "SELECT version();" -c "\du"
+```
+
+The permissions can be adapted as needed. However, the most important permission is `rds_iam`, which is required for using IRSA with the database.
+
+A complete example of a pod to [create the database is available](modules/fixtures/postgres-client.yml).
+
 ### OpenSearch IRSA Role and Policy
 
 The OpenSearch module uses the following outputs from the EKS cluster module to define the IRSA role and policy:
 
 - `module.eks_cluster.oidc_provider_arn`: The ARN of the OIDC provider for the EKS cluster.
 - `module.eks_cluster.oidc_provider_id`: The ID of the OIDC provider for the EKS cluster.
-- `var.account_id`: Your account id
+- `var.account_id`: Your AWS account id
 - `var.opensearch_domain_name`: The name of the OpenSearch domain to access
-- `var.opensearch_namespace`: The namespace to allow access
-- `var.opensearch_service_account`: The ServiceAccount to allow access
-
-You need to define the IAM role trust policy and access policy for OpenSearch. Here's an example of how to define these policies using the outputs of the EKS cluster module:
+- `var.opensearch_namespace`: The kubernetes namespace to allow access
+- `var.opensearch_service_account`: The kubernetes ServiceAccount to allow access
 
 ```hcl
 module "opensearch_domain" {
@@ -219,6 +245,7 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/AuroraRole>
 ```
+You can retrieve the role ARN from the module output: `aurora_role_arn`.
 
 **OpenSearch Service Account**
 
@@ -231,6 +258,7 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/OpenSearchRole>
 ```
+You can retrieve the role ARN from the module output: `opensearch_role_arn`.
 
 ## Support
 
