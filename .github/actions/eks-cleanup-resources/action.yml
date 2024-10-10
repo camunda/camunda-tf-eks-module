@@ -36,6 +36,8 @@ runs:
           id: delete_resources
           shell: bash
           run: |
+              set -euxo pipefail
+
               if [ -n "${{ inputs.tf-bucket-region }}" ]; then
                 export AWS_S3_REGION="${{ inputs.tf-bucket-region }}"
               fi
