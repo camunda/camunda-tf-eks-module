@@ -245,6 +245,7 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/AuroraRole>
 ```
+You can retrieve the role ARN from the module output: `aurora_role_arn`.
 
 **OpenSearch Service Account**
 
@@ -257,6 +258,7 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/OpenSearchRole>
 ```
+You can retrieve the role ARN from the module output: `opensearch_role_arn`.
 
 ## Support
 
