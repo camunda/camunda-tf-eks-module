@@ -3,12 +3,12 @@ locals {
 }
 
 module "opensearch" {
-  source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=feature/opensearch"
+  source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=2.6.0"
   domain_name    = locals.opensearch_domain_name
   engine_version = "2.15"
 
   instance_type   = "t3.medium.search"
-  instance_count  = 3
+  instance_count  = 2
   ebs_volume_size = 50
 
   subnet_ids         = module.eks_cluster.private_subnet_ids

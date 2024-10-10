@@ -17,8 +17,7 @@ module "postgresql" {
   subnet_ids  = module.eks_cluster.private_subnet_ids
   cidr_blocks = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
-  instance_class   = "db.t3.medium"
-  iam_auth_enabled = true
+  instance_class = "db.t3.medium"
 
   depends_on = [module.eks_cluster]
 }
