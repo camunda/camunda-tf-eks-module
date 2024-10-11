@@ -22,15 +22,44 @@ spec:
                         set -o pipefail
 
                         echo "Installing dependencies..."
-                        yum install -y curl postgresql unzip awscli-2
+                        yum install -y curl postgresql15 unzip awscli-2
 
                         echo "Creating IRSA db user using admin user"
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
                           -c "CREATE USER \"${AURORA_USERNAME_IRSA}\" WITH LOGIN;" \
                           -c "GRANT rds_iam TO \"${AURORA_USERNAME_IRSA}\";" \
-                          -c "GRANT rds_superuser TO \"${AURORA_USERNAME_IRSA}\";" \
                           -c "GRANT ALL PRIVILEGES ON DATABASE \"${AURORA_DB_NAME}\" TO \"${AURORA_USERNAME_IRSA}\";" \
                           -c "SELECT aurora_version();" \
                           -c "SELECT version();" -c "\du"
-
                         EOF
+                  env:
+                      - name: AURORA_ENDPOINT
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: AURORA_ENDPOINT
+                      - name: AURORA_PORT
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: AURORA_PORT
+                      - name: AURORA_DB_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: AURORA_DB_NAME
+                      - name: AURORA_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: AURORA_USERNAME
+                      - name: AURORA_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: AURORA_PASSWORD
+                      - name: AURORA_USERNAME_IRSA
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: AURORA_USERNAME_IRSA

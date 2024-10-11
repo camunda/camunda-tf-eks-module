@@ -43,9 +43,26 @@ module "opensearch_domain" {
                 {
                   "Effect": "Allow",
                   "Action": [
+                    "es:DescribeElasticsearchDomains",
+                    "es:DescribeElasticsearchInstanceTypeLimits",
+                    "es:DescribeReservedElasticsearchInstanceOfferings",
+                    "es:DescribeReservedElasticsearchInstances",
+                    "es:GetCompatibleElasticsearchVersions",
+                    "es:ListDomainNames",
+                    "es:ListElasticsearchInstanceTypes",
+                    "es:ListElasticsearchVersions",
+                    "es:DescribeElasticsearchDomain",
+                    "es:DescribeElasticsearchDomainConfig",
                     "es:ESHttpGet",
-                    "es:ESHttpPut",
-                    "es:ESHttpPost"
+                    "es:ESHttpHead",
+                    "es:GetUpgradeHistory",
+                    "es:GetUpgradeStatus",
+                    "es:ListTags",
+                    "es:AddTags",
+                    "es:RemoveTags",
+                    "es:ESHttpDelete",
+                    "es:ESHttpPost",
+                    "es:ESHttpPut"
                   ],
                   "Resource": "arn:aws:es:${module.eks_cluster.region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${var.opensearch_domain_name}/*"
                 }
