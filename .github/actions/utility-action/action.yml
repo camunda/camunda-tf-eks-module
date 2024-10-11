@@ -79,6 +79,8 @@ runs:
         - name: Install AWS CLI
           shell: bash
           run: |
+              set -euxo pipefail
+
               if ! command -v aws &> /dev/null; then
                 echo "AWS CLI not found, installing..."
                 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${{ inputs.awscli-version }}.zip" -o "awscliv2.zip"
@@ -93,6 +95,8 @@ runs:
           shell: bash
           id: set-terraform-variables
           run: |
+              set -euxo pipefail
+
               export TFSTATE_BUCKET="${{ inputs.s3-backend-bucket }}"
               export TFSTATE_KEY="${{ inputs.tf-state-key }}"
 
@@ -113,6 +117,8 @@ runs:
           id: create-s3-bucket
           shell: bash
           run: |
+              set -euxo pipefail
+
               if aws s3api head-bucket --bucket ${{ inputs.s3-backend-bucket }} --region ${{ steps.set-terraform-variables.outputs.TFSTATE_REGION }} 2>/dev/null; then
                 echo "Bucket already exists"
               else

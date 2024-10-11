@@ -121,7 +121,8 @@ func (suite *DefaultEKSTestSuite) TestDefaultEKS() {
 		defer utils.DeferCleanup(suite.T(), suite.bucketRegion, terraformOptions)
 	}
 
-	// since v20, we can't use InitAndApplyAndIdempotent due to labels being added
+	// due to output of the creation changing tags from null to {}, we can't pass the
+	// idempotency test
 	terraform.InitAndApply(suite.T(), terraformOptions)
 	suite.baseChecksEKS(terraformOptions)
 }

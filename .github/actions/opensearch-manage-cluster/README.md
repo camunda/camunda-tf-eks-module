@@ -1,9 +1,9 @@
-# Deploy RDS Aurora Cluster
+# Deploy OpenSearch Domain
 
 ## Description
 
-This GitHub Action automates the deployment of an RDS Aurora cluster using Terraform.
-This action will also install Terraform and awscli. It will output the Aurora cluster endpoint.
+This GitHub Action automates the deployment of an OpenSearch domain using Terraform.
+It will also install Terraform and awscli. It will output the OpenSearch domain endpoint.
 
 
 ## Inputs
@@ -11,18 +11,18 @@ This action will also install Terraform and awscli. It will output the Aurora cl
 | name | description | required | default |
 | --- | --- | --- | --- |
 | `aws-region` | <p>AWS region where the cluster will be deployed</p> | `true` | `""` |
-| `cluster-name` | <p>Name of the RDS Aurora cluster to deploy</p> | `true` | `""` |
-| `username` | <p>Username for the PostgreSQL admin user</p> | `true` | `""` |
-| `password` | <p>Password for the PostgreSQL admin user</p> | `true` | `""` |
-| `vpc-id` | <p>VPC ID to create the cluster in</p> | `true` | `""` |
-| `subnet-ids` | <p>List of subnet IDs to create the cluster in</p> | `true` | `""` |
+| `domain-name` | <p>Name of the OpenSearch domain to deploy</p> | `true` | `""` |
+| `engine-version` | <p>Version of the OpenSearch engine to deploy</p> | `false` | `2.15` |
+| `vpc-id` | <p>VPC ID to create the domain in</p> | `true` | `""` |
+| `subnet-ids` | <p>List of subnet IDs to create the domain in</p> | `true` | `""` |
 | `cidr-blocks` | <p>CIDR blocks to allow access from and to</p> | `true` | `""` |
-| `availability-zones` | <p>Array of availability zones to use for the Aurora cluster</p> | `true` | `""` |
+| `instance-type` | <p>Instance type for the OpenSearch cluster</p> | `false` | `t3.small.search` |
+| `instance-count` | <p>Number of instances in the cluster</p> | `false` | `3` |
 | `additional-terraform-vars` | <p>JSON object containing additional Terraform variables</p> | `false` | `{}` |
 | `s3-backend-bucket` | <p>Name of the S3 bucket to store Terraform state</p> | `true` | `""` |
 | `s3-bucket-region` | <p>Region of the bucket containing the resources states</p> | `false` | `""` |
 | `tf-modules-revision` | <p>Git revision of the tf modules to use</p> | `false` | `main` |
-| `tf-modules-path` | <p>Path where the tf Aurora modules will be cloned</p> | `false` | `./.action-tf-modules/aurora/` |
+| `tf-modules-path` | <p>Path where the tf OpenSearch modules will be cloned</p> | `false` | `./.action-tf-modules/opensearch/` |
 | `tf-cli-config-credentials-hostname` | <p>The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file. Defaults to <code>app.terraform.io</code>.</p> | `false` | `app.terraform.io` |
 | `tf-cli-config-credentials-token` | <p>The API token for a HCP Terraform/Terraform Enterprise instance to place within the credentials block of the Terraform CLI configuration file.</p> | `false` | `""` |
 | `tf-terraform-version` | <p>The version of Terraform CLI to install. Defaults to <code>latest</code>.</p> | `false` | `latest` |
@@ -34,7 +34,7 @@ This action will also install Terraform and awscli. It will output the Aurora cl
 
 | name | description |
 | --- | --- |
-| `aurora-endpoint` | <p>The endpoint of the deployed Aurora cluster</p> |
+| `opensearch-endpoint` | <p>The endpoint of the deployed OpenSearch domain</p> |
 | `terraform-state-url` | <p>URL of the Terraform state file in the S3 bucket</p> |
 | `all-terraform-outputs` | <p>All outputs from Terraform</p> |
 
@@ -46,7 +46,7 @@ This action is a `composite` action.
 ## Usage
 
 ```yaml
-- uses: camunda/camunda-tf-eks-module/.github/actions/aurora-manage-cluster@main
+- uses: camunda/camunda-tf-eks-module/.github/actions/opensearch-manage-cluster@main
   with:
     aws-region:
     # AWS region where the cluster will be deployed
@@ -54,32 +54,26 @@ This action is a `composite` action.
     # Required: true
     # Default: ""
 
-    cluster-name:
-    # Name of the RDS Aurora cluster to deploy
+    domain-name:
+    # Name of the OpenSearch domain to deploy
     #
     # Required: true
     # Default: ""
 
-    username:
-    # Username for the PostgreSQL admin user
+    engine-version:
+    # Version of the OpenSearch engine to deploy
     #
-    # Required: true
-    # Default: ""
-
-    password:
-    # Password for the PostgreSQL admin user
-    #
-    # Required: true
-    # Default: ""
+    # Required: false
+    # Default: 2.15
 
     vpc-id:
-    # VPC ID to create the cluster in
+    # VPC ID to create the domain in
     #
     # Required: true
     # Default: ""
 
     subnet-ids:
-    # List of subnet IDs to create the cluster in
+    # List of subnet IDs to create the domain in
     #
     # Required: true
     # Default: ""
@@ -90,11 +84,17 @@ This action is a `composite` action.
     # Required: true
     # Default: ""
 
-    availability-zones:
-    # Array of availability zones to use for the Aurora cluster
+    instance-type:
+    # Instance type for the OpenSearch cluster
     #
-    # Required: true
-    # Default: ""
+    # Required: false
+    # Default: t3.small.search
+
+    instance-count:
+    # Number of instances in the cluster
+    #
+    # Required: false
+    # Default: 3
 
     additional-terraform-vars:
     # JSON object containing additional Terraform variables
@@ -121,10 +121,10 @@ This action is a `composite` action.
     # Default: main
 
     tf-modules-path:
-    # Path where the tf Aurora modules will be cloned
+    # Path where the tf OpenSearch modules will be cloned
     #
     # Required: false
-    # Default: ./.action-tf-modules/aurora/
+    # Default: ./.action-tf-modules/opensearch/
 
     tf-cli-config-credentials-hostname:
     # The hostname of a HCP Terraform/Terraform Enterprise instance to place within the credentials block

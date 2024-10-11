@@ -4,7 +4,6 @@ name: Delete EKS resources
 description: |
     This GitHub Action automates the deletion of EKS resources using a shell script.
 
-
 inputs:
     tf-bucket:
         description: Bucket containing the resources states
@@ -26,6 +25,10 @@ inputs:
         description: Temporary directory prefix used for storing resource data during processing
         default: ./tmp/eks-cleanup/
 
+    module-name:
+        description: Name of the module to destroy (e.g., "eks-cluster", "aurora", "opensearch"), or "all" to destroy all modules
+        default: all
+
 runs:
     using: composite
     steps:
@@ -33,9 +36,11 @@ runs:
           id: delete_resources
           shell: bash
           run: |
+              set -euxo pipefail
+
               if [ -n "${{ inputs.tf-bucket-region }}" ]; then
                 export AWS_S3_REGION="${{ inputs.tf-bucket-region }}"
               fi
 
               ${{ github.action_path }}/scripts/destroy.sh "${{ inputs.tf-bucket }}" ${{ github.action_path }}/../../../modules/ \
-                "${{ inputs.temp-dir }}" ${{ inputs.max-age-hours }} ${{ inputs.target }}
+                "${{ inputs.temp-dir }}" ${{ inputs.max-age-hours }} ${{ inputs.target }} ${{ inputs.module-name }}

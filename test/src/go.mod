@@ -9,10 +9,13 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/eks v1.50.0
 	github.com/aws/aws-sdk-go-v2/service/iam v1.37.0
 	github.com/aws/aws-sdk-go-v2/service/kms v1.37.0
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.40.2
 	github.com/aws/aws-sdk-go-v2/service/rds v1.87.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.65.0
+	github.com/aws/aws-sdk-go-v2/service/sts v1.32.0
 	github.com/aws/smithy-go v1.22.0
 	github.com/gruntwork-io/terratest v0.47.2
+	github.com/sethvargo/go-password v0.3.1
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.31.1
@@ -42,7 +45,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.24.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.32.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
