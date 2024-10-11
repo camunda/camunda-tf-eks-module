@@ -1,5 +1,5 @@
 module "eks_cluster" {
-  source = "git::https://github.com/camunda/camunda-tf-eks-module//modules/eks-cluster?ref=feature/opensearch"
+  source = "git::https://github.com/camunda/camunda-tf-eks-module//modules/eks-cluster?ref=2.6.0"
 
   region = "eu-west-2"    # Change this to your desired AWS region
   name   = "cluster-name" # Change this to a name of your choice

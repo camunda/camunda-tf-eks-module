@@ -3,7 +3,7 @@ locals {
 }
 
 module "postgresql" {
-  source                     = "git::https://github.com/camunda/camunda-tf-eks-module//modules/aurora?ref=feature/opensearch"
+  source                     = "git::https://github.com/camunda/camunda-tf-eks-module//modules/aurora?ref=2.6.0"
   engine_version             = "15.8"
   auto_minor_version_upgrade = false
   cluster_name               = locals.aurora_cluster_name
