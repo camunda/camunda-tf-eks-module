@@ -15,3 +15,18 @@ global:
         enabled: true
         aws:
             enabled: true
+        auth:
+            username: ${OPENSEARCH_MASTER_USER}
+            password: ${OPENSEARCH_MASTER_PASSWORD}
+        url:
+            protocol: https
+            host: ${OPENSEARCH_HOST}
+            # Amazon OpenSearch Service listens on port 443 opposed to the usual port 9200.
+            port: 443
+
+optimize:
+    migration:
+        enabled: false
+
+elasticsearch:
+    enabled: false
