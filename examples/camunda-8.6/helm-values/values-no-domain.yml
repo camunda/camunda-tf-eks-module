@@ -7,3 +7,11 @@ identityKeycloak:
         user: ${PG_USERNAME}
         password: ${PG_PASSWORD}
         database: ${DEFAULT_DB_NAME}
+
+global:
+    elasticsearch:
+        enabled: false
+    opensearch:
+        enabled: true
+        aws:
+            enabled: true

@@ -9,6 +9,13 @@ identityKeycloak:
         database: ${DEFAULT_DB_NAME}
 
 global:
+    elasticsearch:
+        enabled: false
+    opensearch:
+        enabled: true
+        aws:
+            enabled: true
+
     ingress:
         enabled: true
         host: ${DOMAIN_NAME}
