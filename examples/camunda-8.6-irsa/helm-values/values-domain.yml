@@ -16,9 +16,11 @@ identityKeycloak:
         - name: KEYCLOAK_EXTRA_ARGS
           value: --db-driver=software.amazon.jdbc.Driver --transaction-xa-enabled=false --log-level=INFO,software.amazon.jdbc:INFO
         - name: KEYCLOAK_JDBC_PARAMS
-          value: wrapperPlugins=iam
+          value: wrapperPlugins=iam&ssl=true&sslmode=require
         - name: KEYCLOAK_JDBC_DRIVER
           value: aws-wrapper:postgresql
+        - name: KC_DB_DRIVER
+          value: software.amazon.jdbc.Driver
 
 global:
     elasticsearch:
@@ -52,6 +54,7 @@ global:
                 redirectUrl: https://${DOMAIN_NAME}/optimize
 
 webModeler:
+    # TODO: understand why it's disabled by default
     serviceAccount:
         name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
         annotations:
