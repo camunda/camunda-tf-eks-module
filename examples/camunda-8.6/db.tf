@@ -1,5 +1,5 @@
 locals {
-  aurora_cluster_name = "cluster-name-postgresql" # Replace "cluster-name" with your cluster's name
+  aurora_cluster_name = "cluster-name-pg-std" # Replace "cluster-name" with your cluster's name
 }
 
 module "postgresql" {
@@ -8,6 +8,8 @@ module "postgresql" {
   auto_minor_version_upgrade = false
   cluster_name               = local.aurora_cluster_name
   default_database_name      = "camunda"
+
+  availability_zones = ["${local.eks_cluster_region}a", "${local.eks_cluster_region}b", "${local.eks_cluster_region}c"]
 
   # Supply your own secret values for username and password
   username = "secret_user"

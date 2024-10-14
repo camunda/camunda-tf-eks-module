@@ -1,6 +1,6 @@
 locals {
-  eks_cluster_name   = "cluster-name" # Change this to a name of your choice
-  eks_cluster_region = "eu-west-2"    # Change this to your desired AWS region
+  eks_cluster_name   = "cluster-name-irsa" # Change this to a name of your choice
+  eks_cluster_region = "eu-west-2"         # Change this to your desired AWS region
 }
 
 module "eks_cluster" {

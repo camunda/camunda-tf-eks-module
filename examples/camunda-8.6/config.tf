@@ -3,7 +3,7 @@ terraform {
 
   backend "s3" {
     bucket  = "my-eks-tf-state"
-    key     = "camunda-terraform/terraform.tfstate"
+    key     = "camunda-terraform/terraform-std.tfstate"
     encrypt = true
   }
 

@@ -1,5 +1,5 @@
 locals {
-  opensearch_domain_name = "domain-name-opensearch" # Replace "domain-name" with your domain name
+  opensearch_domain_name = "domain-name-os-std" # Replace "domain-name" with your domain name
 }
 
 module "opensearch" {

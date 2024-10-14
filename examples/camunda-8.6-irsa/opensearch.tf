@@ -1,5 +1,5 @@
 locals {
-  opensearch_domain_name = "domain-name-opensearch" # Replace "domain-name" with your domain name
+  opensearch_domain_name = "domain-name-os-irsa" # Replace "domain-name" with your domain name
 
   # IRSA configuration
   camunda_namespace                = "camunda"     # Replace with your Kubernetes namespace that will host C8 Platform
@@ -84,7 +84,7 @@ EOF
                     "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_zeebe_service_account}",
                     "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_operate_service_account}",
                     "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_tasklist_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_optimize_service_account}",
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_optimize_service_account}"
                   }
                 }
               }
