@@ -9,8 +9,9 @@ identityKeycloak:
         enabled: false
     externalDatabase:
         host: ${DB_HOST}
-        port: 5432
         user: ${PG_USERNAME}
+        port: 5432
+        password: '' # let it empty as we use IRSA
         database: ${DEFAULT_DB_NAME}
 
     extraEnvVars:
@@ -22,6 +23,10 @@ identityKeycloak:
           value: aws-wrapper:postgresql
         - name: KC_DB_DRIVER
           value: software.amazon.jdbc.Driver
+        - name: KC_DB
+          value: postgres
+        - name: KC_DB_URL
+          value: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DEFAULT_DB_NAME}?wrapperPlugins=iam&ssl=true&sslmode=require
 
 global:
     elasticsearch:
