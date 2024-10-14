@@ -1,6 +1,9 @@
 locals {
   opensearch_domain_name = "domain-name-os-irsa" # Replace "domain-name" with your domain name
 
+  opensearch_master_username = "secret_user"    # Replace with your opensearch username
+  opensearch_master_password = "Secretvalue$23" # Replace with your opensearch password
+
   # IRSA configuration
   camunda_namespace                = "camunda"     # Replace with your Kubernetes namespace that will host C8 Platform
   camunda_zeebe_service_account    = "zeebe-sa"    # Replace with your Kubernetes ServiceAcccount that will be created for Zeebe
@@ -25,9 +28,8 @@ module "opensearch_domain" {
   advanced_security_enabled                        = true
   advanced_security_internal_user_database_enabled = true
 
-  # Supply your own secret values
-  advanced_security_master_user_name     = "secret_user"
-  advanced_security_master_user_password = "secretvalue%23"
+  advanced_security_master_user_name     = local.opensearch_master_username
+  advanced_security_master_user_password = local.opensearch_master_password
 
   depends_on = [module.eks_cluster]
 
@@ -81,10 +83,12 @@ EOF
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                   "StringEquals": {
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_zeebe_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_operate_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_tasklist_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_optimize_service_account}"
+                    "${module.eks_cluster.oidc_provider_id}:sub": [
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_zeebe_service_account}",
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_operate_service_account}",
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_tasklist_service_account}",
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_optimize_service_account}"
+                    ]
                   }
                 }
               }

@@ -1,5 +1,8 @@
 locals {
   aurora_cluster_name = "cluster-name-pg-std" # Replace "cluster-name" with your cluster's name
+
+  aurora_master_username = "secret_user"    # Replace with your Aurora username
+  aurora_master_password = "secretvalue%23" # Replace with your Aurora password
 }
 
 module "postgresql" {
@@ -12,8 +15,8 @@ module "postgresql" {
   availability_zones = ["${local.eks_cluster_region}a", "${local.eks_cluster_region}b", "${local.eks_cluster_region}c"]
 
   # Supply your own secret values for username and password
-  username = "secret_user"
-  password = "secretvalue%23"
+  username = local.aurora_master_username
+  password = local.aurora_master_password
 
   vpc_id      = module.eks_cluster.vpc_id
   subnet_ids  = module.eks_cluster.private_subnet_ids

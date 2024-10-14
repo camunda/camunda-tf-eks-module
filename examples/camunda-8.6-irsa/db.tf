@@ -59,9 +59,11 @@ EOF
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                   "StringEquals": {
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_webmodeler_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_identity_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_keycloak_service_account}"
+                    "${module.eks_cluster.oidc_provider_id}:sub": [
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_webmodeler_service_account}",
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_identity_service_account}",
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_keycloak_service_account}"
+                    ]
                   }
                 }
               }

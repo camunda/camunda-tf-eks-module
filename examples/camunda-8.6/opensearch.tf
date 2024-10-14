@@ -1,5 +1,8 @@
 locals {
   opensearch_domain_name = "domain-name-os-std" # Replace "domain-name" with your domain name
+
+  opensearch_master_username = "secret_user"    # Replace with your opensearch username
+  opensearch_master_password = "Secretvalue$23" # Replace with your opensearch password
 }
 
 module "opensearch" {
@@ -18,9 +21,8 @@ module "opensearch" {
   advanced_security_enabled                        = true
   advanced_security_internal_user_database_enabled = true
 
-  # Supply your own secret values
-  advanced_security_master_user_name     = "secret_user"
-  advanced_security_master_user_password = "secretvalue%23"
+  advanced_security_master_user_name     = local.opensearch_master_username
+  advanced_security_master_user_password = local.opensearch_master_password
 
   depends_on = [module.eks_cluster]
 }
