@@ -45,7 +45,8 @@ jobs:
             )
         outputs:
             test_functions: ${{ steps.extract_test_functions.outputs.test_functions }}
-            cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}
+            # ensure a suffix is added to prevent concurrency deletion with gha integration tests (test-gha-eks.yml)
+            cluster_id: ${{ steps.short_git_sha.outputs.short_git_sha }}-g
         steps:
             - name: Checkout repository
               uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
