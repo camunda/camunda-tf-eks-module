@@ -3,16 +3,16 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-    name: postgres-client
+    name: create-irsa-user-db
     labels:
-        app: postgres-client
+        app: create-irsa-user-db
 spec:
     backoffLimit: 0
     template:
         spec:
             restartPolicy: Never
             containers:
-                - name: postgres-client
+                - name: create-irsa-user-db
                   image: amazonlinux:latest
                   command:
                       - sh
@@ -22,7 +22,7 @@ spec:
                         set -o pipefail
 
                         echo "Installing dependencies..."
-                        yum install -y curl postgresql15 unzip awscli-2
+                        yum install -y postgresql15 unzip awscli-2
 
                         echo "Creating IRSA db user using admin user"
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
