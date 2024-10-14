@@ -14,7 +14,7 @@ output "postgres_endpoint" {
 }
 
 output "opensearch_endpoint" {
-  value       = module.opensearch.opensearch_domain_endpoint
+  value       = module.opensearch_domain.opensearch_domain_endpoint
   description = "The OpenSearch endpoint URL"
 }
 
@@ -24,6 +24,6 @@ output "aurora_role_arn" {
 }
 
 output "opensearch_role_arn" {
-  value       = module.opensearch.opensearch_role_arn
+  value       = module.opensearch_domain.opensearch_role_arn
   description = "The OpenSearch Role ARN used for IRSA"
 }

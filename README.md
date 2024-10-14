@@ -28,6 +28,10 @@ module "eks_cluster" {
 
   cluster_service_ipv4_cidr = "10.190.0.0/16"
   cluster_node_ipv4_cidr    = "10.192.0.0/16"
+
+  output "cluster_region" {
+    value = "eu-central-1"
+  }
 }
 ```
 
@@ -57,7 +61,6 @@ module "opensearch_domain" {
 
   domain_name     = "my-opensearch-domain"
   subnet_ids      = module.eks_cluster.private_subnet_ids
-  security_group_ids = module.eks_cluster.security_group_ids
   vpc_id          = module.eks_cluster.vpc_id
   cidr_blocks      = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
@@ -122,7 +125,7 @@ module "postgresql" {
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${module.eks_cluster.region}:${var.account_id}:dbuser:${var.aurora_cluster_name}/${var.aurora_irsa_username}"
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${var.account_id}:dbuser:${var.aurora_cluster_name}/${var.aurora_irsa_username}"
                 }
               ]
             }
@@ -201,7 +204,7 @@ module "opensearch_domain" {
                     "es:ESHttpPut",
                     "es:ESHttpPost"
                   ],
-                  "Resource": "arn:aws:es:${module.eks_cluster.region}:${var.account_id}:domain/${var.opensearch_domain_name}/*"
+                  "Resource": "arn:aws:es:${local.eks_cluster_region}:${var.account_id}:domain/${var.opensearch_domain_name}/*"
                 }
               ]
             }

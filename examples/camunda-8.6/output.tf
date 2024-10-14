@@ -14,6 +14,6 @@ output "postgres_endpoint" {
 }
 
 output "opensearch_endpoint" {
-  value       = module.opensearch.opensearch_domain_endpoint
+  value       = module.opensearch_domain.opensearch_domain_endpoint
   description = "The OpenSearch endpoint URL"
 }

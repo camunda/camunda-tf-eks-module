@@ -18,10 +18,9 @@ module "opensearch_domain" {
   instance_count  = 3
   ebs_volume_size = 50
 
-  subnet_ids         = module.eks_cluster.private_subnet_ids
-  security_group_ids = module.eks_cluster.security_group_ids
-  vpc_id             = module.eks_cluster.vpc_id
-  cidr_blocks        = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
+  subnet_ids  = module.eks_cluster.private_subnet_ids
+  vpc_id      = module.eks_cluster.vpc_id
+  cidr_blocks = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
   advanced_security_enabled                        = true
   advanced_security_internal_user_database_enabled = true
@@ -64,7 +63,7 @@ module "opensearch_domain" {
                     "es:ESHttpPost",
                     "es:ESHttpPut"
                   ],
-                  "Resource": "arn:aws:es:${module.eks_cluster.region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${var.opensearch_domain_name}/*"
+                  "Resource": "arn:aws:es:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${local.opensearch_domain_name}/*"
                 }
               ]
             }
