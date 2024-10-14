@@ -11,7 +11,7 @@ locals {
 
 module "opensearch_domain" {
   source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=2.6.0"
-  domain_name    = locals.opensearch_domain_name
+  domain_name    = local.opensearch_domain_name
   engine_version = "2.15"
 
   instance_type   = "t3.medium.search"
@@ -34,7 +34,7 @@ module "opensearch_domain" {
 
   # IRSA configuration
   iam_create_opensearch_role = true
-  iam_opensearch_role_name   = "OpenSearchRole-${locals.opensearch_domain_name}" # Ensure uniqueness
+  iam_opensearch_role_name   = "OpenSearchRole-${local.opensearch_domain_name}" # Ensure uniqueness
 
   iam_opensearch_access_policy = <<EOF
             {
@@ -82,10 +82,10 @@ EOF
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                   "StringEquals": {
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_zeebe_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_operate_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_tasklist_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.camunda_namespace}:${locals.camunda_optimize_service_account}",
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_zeebe_service_account}",
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_operate_service_account}",
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_tasklist_service_account}",
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_optimize_service_account}",
                   }
                 }
               }

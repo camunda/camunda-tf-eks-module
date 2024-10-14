@@ -12,7 +12,7 @@ module "postgresql" {
   source                     = "git::https://github.com/camunda/camunda-tf-eks-module//modules/aurora?ref=2.6.0"
   engine_version             = "15.8"
   auto_minor_version_upgrade = false
-  cluster_name               = locals.aurora_cluster_name
+  cluster_name               = local.aurora_cluster_name
   default_database_name      = "camunda"
 
   # Supply your own secret values for username and password
@@ -26,7 +26,7 @@ module "postgresql" {
   instance_class = "db.t3.medium"
 
   # IAM IRSA addition
-  iam_aurora_role_name   = "AuroraRole-${locals.aurora_cluster_name}" # Ensure this name is unique
+  iam_aurora_role_name   = "AuroraRole-${local.aurora_cluster_name}" # Ensure this name is unique
   iam_create_aurora_role = true
   iam_auth_enabled       = true
 
@@ -39,7 +39,7 @@ module "postgresql" {
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${module.eks_cluster.region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${locals.aurora_cluster_name}/${locals.aurora_irsa_username}"
+                  "Resource": "arn:aws:rds-db:${module.eks_cluster.region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.aurora_irsa_username}"
                 }
               ]
             }
@@ -57,9 +57,9 @@ EOF
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                   "StringEquals": {
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.aurora_namespace}:${locals.camunda_webmodeler_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.aurora_namespace}:${locals.camunda_identity_service_account}",
-                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${locals.aurora_namespace}:${locals.camunda_keycloak_service_account}"
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.aurora_namespace}:${local.camunda_webmodeler_service_account}",
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.aurora_namespace}:${local.camunda_identity_service_account}",
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.aurora_namespace}:${local.camunda_keycloak_service_account}"
                   }
                 }
               }
