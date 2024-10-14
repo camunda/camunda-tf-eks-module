@@ -1,0 +1,9 @@
+---
+identityKeycloak:
+    postgresql:
+        enabled: false
+    externalDatabase:
+        host: ${DB_HOST}
+        user: ${PG_USERNAME}
+        password: ${PG_PASSWORD}
+        database: ${DEFAULT_DB_NAME}

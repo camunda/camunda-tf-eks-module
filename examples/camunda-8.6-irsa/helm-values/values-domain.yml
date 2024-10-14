@@ -1,0 +1,53 @@
+---
+identityKeycloak:
+    postgresql:
+        enabled: false
+    externalDatabase:
+        host: ${DB_HOST}
+        user: ${PG_USERNAME}
+        password: ${PG_PASSWORD}
+        database: ${DEFAULT_DB_NAME}
+
+global:
+    ingress:
+        enabled: true
+        host: ${DOMAIN_NAME}
+        tls:
+            enabled: true
+            secretName: camunda-c8-tls
+        annotations:
+            kubernetes.io/tls-acme: 'true'
+    identity:
+        auth:
+            publicIssuerUrl: https://${DOMAIN_NAME}/auth/realms/camunda-platform
+            operate:
+                redirectUrl: https://${DOMAIN_NAME}/operate
+            tasklist:
+                redirectUrl: https://${DOMAIN_NAME}/tasklist
+            optimize:
+                redirectUrl: https://${DOMAIN_NAME}/optimize
+
+identity:
+    contextPath: /identity
+    fullURL: https://${DOMAIN_NAME}/identity
+
+operate:
+    contextPath: /operate
+
+tasklist:
+    contextPath: /tasklist
+
+optimize:
+    contextPath: /optimize
+
+zeebeGateway:
+    ingress:
+        grpc:
+            enabled: true
+            host: zeebe.${DOMAIN_NAME}
+            tls:
+                enabled: true
+                secretName: zeebe-c8-tls-grpc
+            annotations:
+                kubernetes.io/tls-acme: 'true'
+    contextPath: /zeebe
