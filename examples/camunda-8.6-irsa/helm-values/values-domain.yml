@@ -1,8 +1,9 @@
 ---
 identityKeycloak:
     serviceAccount:
-        name: ''
+        name: ${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}
         annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
 
     postgresql:
         enabled: false
@@ -10,6 +11,7 @@ identityKeycloak:
         host: ${DB_HOST}
         user: ${PG_USERNAME}
         database: ${DEFAULT_DB_NAME}
+
     extraEnvVars:
         - name: KEYCLOAK_EXTRA_ARGS
           value: --db-driver=software.amazon.jdbc.Driver --transaction-xa-enabled=false --log-level=INFO,software.amazon.jdbc:INFO
@@ -25,6 +27,10 @@ global:
         enabled: true
         aws:
             enabled: true
+        url:
+            protocol: https
+            host: ${OPENSEARCH_HOST}
+            port: 443
 
     ingress:
         enabled: true
@@ -44,18 +50,50 @@ global:
             optimize:
                 redirectUrl: https://${DOMAIN_NAME}/optimize
 
+webModeler:
+    serviceAccount:
+        name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+
 identity:
     contextPath: /identity
     fullURL: https://${DOMAIN_NAME}/identity
 
+    serviceAccount:
+        name: ${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+
 operate:
     contextPath: /operate
+
+    serviceAccount:
+        name: ${CAMUNDA_OPERATE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
 
 tasklist:
     contextPath: /tasklist
 
+    serviceAccount:
+        name: ${CAMUNDA_TASKLIST_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
 optimize:
     contextPath: /optimize
+
+    serviceAccount:
+        name: ${CAMUNDA_OPTIMIZE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+zeebe:
+    serviceAccount:
+        name: ${CAMUNDA_ZEEBE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
 
 zeebeGateway:
     ingress:
@@ -68,3 +106,6 @@ zeebeGateway:
             annotations:
                 kubernetes.io/tls-acme: 'true'
     contextPath: /zeebe
+
+elasticsearch:
+    enabled: false

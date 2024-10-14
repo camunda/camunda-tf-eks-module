@@ -1,11 +1,17 @@
 ---
 identityKeycloak:
+    serviceAccount:
+        name: ${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+
     postgresql:
         enabled: false
     externalDatabase:
         host: ${DB_HOST}
         user: ${PG_USERNAME}
         database: ${DEFAULT_DB_NAME}
+
     extraEnvVars:
         - name: KEYCLOAK_EXTRA_ARGS
           value: --db-driver=software.amazon.jdbc.Driver --transaction-xa-enabled=false --log-level=INFO,software.amazon.jdbc:INFO
@@ -21,3 +27,47 @@ global:
         enabled: true
         aws:
             enabled: true
+        url:
+            protocol: https
+            host: ${OPENSEARCH_HOST}
+            port: 443
+
+webModeler:
+    serviceAccount:
+        name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+
+identity:
+    serviceAccount:
+        name: ${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+
+
+zeebe:
+    serviceAccount:
+        name: ${CAMUNDA_ZEEBE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+operate:
+    serviceAccount:
+        name: ${CAMUNDA_OPERATE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+tasklist:
+    serviceAccount:
+        name: ${CAMUNDA_TASKLIST_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+optimize:
+    serviceAccount:
+        name: ${CAMUNDA_OPTIMIZE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+elasticsearch:
+    enabled: false
