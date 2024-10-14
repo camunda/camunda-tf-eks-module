@@ -109,7 +109,7 @@ runs:
           id: utility
           # see https://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet
           # steps.uses  cannot access the github context.
-          uses: camunda/camunda-tf-eks-module/.github/actions/utility-action@2d49d09f14fb89eea8aa769c1e757089cc7e12bd # 2.5.1
+          uses: camunda/camunda-tf-eks-module/.github/actions/utility-action@55a6f6a6cb0e8950c6cbd67d1462601e81630cd2 # 2.6.0
           with:
               awscli-version: ${{ inputs.awscli-version }}
               terraform-version: ${{ inputs.terraform-version }}
@@ -126,7 +126,7 @@ runs:
               tf-terraform-wrapper: ${{ inputs.tf-terraform-wrapper }}
 
         - name: Checkout Repository Aurora modules
-          uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+          uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
           with:
               repository: camunda/camunda-tf-eks-module
               ref: ${{ inputs.tf-modules-revision }}
