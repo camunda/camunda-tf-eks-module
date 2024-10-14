@@ -9,6 +9,7 @@ identityKeycloak:
         enabled: false
     externalDatabase:
         host: ${DB_HOST}
+        port: 5432
         user: ${PG_USERNAME}
         database: ${DEFAULT_DB_NAME}
 
@@ -30,6 +31,7 @@ global:
         url:
             protocol: https
             host: ${OPENSEARCH_HOST}
+            # Amazon OpenSearch Service listens on port 443 opposed to the usual port 9200.
             port: 443
 
 webModeler:
@@ -38,12 +40,29 @@ webModeler:
         annotations:
             eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
 
+    env:
+        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+          value: software.amazon.jdbc.Driver
+    externalDatabase:
+        url: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DEFAULT_DB_NAME}?wrapperPlugins=iam
+        user: ${PG_USERNAME}
+
+
 identity:
     serviceAccount:
         name: ${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}
         annotations:
             eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
 
+    env:
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DEFAULT_DB_NAME}?wrapperPlugins=iam
+
+        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+          value: software.amazon.jdbc.Driver
+
+        - name: SPRING_DATASOURCE_USERNAME
+          value: ${PG_USERNAME}
 
 zeebe:
     serviceAccount:
@@ -68,6 +87,8 @@ optimize:
         name: ${CAMUNDA_OPTIMIZE_SERVICE_ACCOUNT_NAME}
         annotations:
             eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+    migration:
+        enabled: false
 
 elasticsearch:
     enabled: false
