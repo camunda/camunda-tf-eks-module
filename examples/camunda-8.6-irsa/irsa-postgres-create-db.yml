@@ -24,13 +24,27 @@ spec:
                         echo "Installing dependencies..."
                         yum install -y postgresql15 unzip awscli-2
 
-                        echo "Creating IRSA db user using admin user"
+                        echo "Create keycloak user and associated database"
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
-                          -c "CREATE USER \"${AURORA_USERNAME_IRSA}\" WITH LOGIN;" \
-                          -c "GRANT rds_iam TO \"${AURORA_USERNAME_IRSA}\";" \
-                          -c "GRANT ALL PRIVILEGES ON DATABASE \"${AURORA_DB_NAME}\" TO \"${AURORA_USERNAME_IRSA}\";" \
-                          -c "SELECT aurora_version();" \
-                          -c "SELECT version();" -c "\du"
+                          -c "CREATE DATABASE \"${DB_KEYCLOAK_NAME}\";" \
+                          -c "CREATE USER \"${DB_KEYCLOAK_USERNAME}\" WITH LOGIN;" \
+                          -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_KEYCLOAK_NAME}\" TO \"${DB_KEYCLOAK_USERNAME}\";" \
+                          -c "GRANT rds_iam TO \"${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}\";"
+
+                        echo "Create identity user and associated database"
+                        psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
+                          -c "CREATE DATABASE \"${DB_IDENTITY_NAME}\";" \
+                          -c "CREATE USER \"${DB_IDENTITY_USERNAME}\" WITH LOGIN;" \
+                          -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_IDENTITY_NAME}\" TO \"${DB_IDENTITY_USERNAME}\";" \
+                          -c "GRANT rds_iam TO \"${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}\";"
+
+                        echo "Create webmodeler user and associated database"
+                        psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
+                          -c "CREATE DATABASE \"${DB_WEBMODELER_NAME}\";" \
+                          -c "CREATE USER \"${DB_WEBMODELER_USERNAME}\" WITH LOGIN;" \
+                          -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_WEBMODELER_NAME}\" TO \"${DB_WEBMODELER_USERNAME}\";" \
+                          -c "GRANT rds_iam TO \"${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}\";"
+
                         EOF
                   env:
                       - name: AURORA_ENDPOINT
@@ -58,8 +72,48 @@ spec:
                             secretKeyRef:
                                 name: irsa-db-secret
                                 key: AURORA_PASSWORD
-                      - name: AURORA_USERNAME_IRSA
+                      - name: DB_KEYCLOAK_NAME
                         valueFrom:
                             secretKeyRef:
                                 name: irsa-db-secret
-                                key: AURORA_USERNAME_IRSA
+                                key: DB_KEYCLOAK_NAME
+                      - name: DB_KEYCLOAK_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: DB_KEYCLOAK_USERNAME
+                      - name: CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME
+                      - name: DB_IDENTITY_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: DB_IDENTITY_NAME
+                      - name: DB_IDENTITY_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: DB_IDENTITY_USERNAME
+                      - name: CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME
+                      - name: DB_WEBMODELER_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: DB_WEBMODELER_NAME
+                      - name: DB_WEBMODELER_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: DB_WEBMODELER_USERNAME
+                      - name: CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: irsa-db-secret
+                                key: CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME
