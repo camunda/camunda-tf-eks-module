@@ -23,10 +23,6 @@ identityKeycloak:
           value: aws-wrapper:postgresql
         - name: KC_DB_DRIVER
           value: software.amazon.jdbc.Driver
-        - name: KC_DB
-          value: postgres
-        - name: KC_DB_URL
-          value: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DEFAULT_DB_NAME}?wrapperPlugins=iam&ssl=true&sslmode=require
 
 global:
     elasticsearch:

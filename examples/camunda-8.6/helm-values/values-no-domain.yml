@@ -3,10 +3,13 @@ identityKeycloak:
     postgresql:
         enabled: false
     externalDatabase:
-        host: ${DB_HOST}
-        user: ${PG_USERNAME}
-        password: ${PG_PASSWORD}
-        database: ${DEFAULT_DB_NAME}
+        # see https://artifacthub.io/packages/helm/bitnami/keycloak
+        existingSecret: identity-keycloak-secret   # Name of an existing secret resource containing the database credentials
+        existingSecretHostKey: host
+        existingSecretPortKey: port
+        existingSecretUserKey: user
+        existingSecretDatabaseKey: database
+        existingSecretPasswordKey: password
 
 global:
     elasticsearch:
@@ -17,7 +20,8 @@ global:
             enabled: true
         auth:
             username: ${OPENSEARCH_MASTER_USER}
-            password: ${OPENSEARCH_MASTER_PASSWORD}
+            existingSecret: opensearch-secret
+            existingSecretKey: password
         url:
             protocol: https
             host: ${OPENSEARCH_HOST}
