@@ -1,8 +1,5 @@
 locals {
   opensearch_domain_name = "domain-name-os-std" # Replace "domain-name" with your domain name
-
-  opensearch_master_username = "secret_user"    # Replace with your opensearch username
-  opensearch_master_password = "Secretvalue$23" # Replace with your opensearch password
 }
 
 module "opensearch_domain" {
@@ -18,11 +15,7 @@ module "opensearch_domain" {
   vpc_id      = module.eks_cluster.vpc_id
   cidr_blocks = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
-  advanced_security_enabled                        = true
-  advanced_security_internal_user_database_enabled = true
-
-  advanced_security_master_user_name     = local.opensearch_master_username
-  advanced_security_master_user_password = local.opensearch_master_password
+  advanced_security_enabled = false
 
   depends_on = [module.eks_cluster]
 }

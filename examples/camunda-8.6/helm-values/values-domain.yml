@@ -18,10 +18,7 @@ global:
         enabled: true
         aws:
             enabled: true
-        auth:
-            username: ${OPENSEARCH_MASTER_USER}
-            existingSecret: opensearch-secret
-            existingSecretKey: password
+        # we rely on the network security to access the OpenSearch domain, no basic auth is needed
         url:
             protocol: https
             host: ${OPENSEARCH_HOST}
