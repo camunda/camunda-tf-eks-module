@@ -9,13 +9,13 @@ locals {
   camunda_database_webmodeler = "camunda_webmodeler" # Name of your camunda database for WebModeler
 
   # Connection configuration
-  keycloak_db_username   = "keycloak_db"   # This is the username that will be used for connection to the DB on Keycloak db
-  identity_db_username   = "identity_db"   # This is the username that will be used for connection to the DB on Identity db
-  webmodeler_db_username = "webmodeler_db" # This is the username that will be used for connection to the DB on WebModeler db
+  camunda_keycloak_db_username   = "keycloak_db"   # This is the username that will be used for connection to the DB on Keycloak db
+  camunda_identity_db_username   = "identity_db"   # This is the username that will be used for connection to the DB on Identity db
+  camunda_webmodeler_db_username = "webmodeler_db" # This is the username that will be used for connection to the DB on WebModeler db
 
-  keycloak_db_password   = "secretvalue%24" # Replace with a password that will be used for connection to the DB on Keycloak db
-  identity_db_password   = "secretvalue%25" # Replace with a password that will be used for connection to the DB on Identity db
-  webmodeler_db_password = "secretvalue%26" # Replace with a password that will be used for connection to the DB on WebModeler db
+  camunda_keycloak_db_password   = "secretvalue%24" # Replace with a password that will be used for connection to the DB on Keycloak db
+  camunda_identity_db_password   = "secretvalue%25" # Replace with a password that will be used for connection to the DB on Identity db
+  camunda_webmodeler_db_password = "secretvalue%26" # Replace with a password that will be used for connection to the DB on WebModeler db
 }
 
 module "postgresql" {

@@ -9,9 +9,9 @@ locals {
   camunda_database_webmodeler = "camunda_webmodeler" # Name of your camunda database for WebModeler
 
   # IRSA configuration
-  aurora_irsa_keycloak_username   = "keycloak_irsa"   # This is the username that will be used for IRSA connection to the DB on Keycloak db
-  aurora_irsa_identity_username   = "identity_irsa"   # This is the username that will be used for IRSA connection to the DB on Identity db
-  aurora_irsa_webmodeler_username = "webmodeler_irsa" # This is the username that will be used for IRSA connection to the DB on WebModeler db
+  camunda_keycloak_db_username   = "keycloak_irsa"   # This is the username that will be used for IRSA connection to the DB on Keycloak db
+  camunda_identity_db_username   = "identity_irsa"   # This is the username that will be used for IRSA connection to the DB on Identity db
+  camunda_webmodeler_db_username = "webmodeler_irsa" # This is the username that will be used for IRSA connection to the DB on WebModeler db
 
   camunda_keycloak_service_account   = "keycloak-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for Keycloak
   camunda_identity_service_account   = "identity-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for Identity
