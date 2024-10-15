@@ -13,7 +13,6 @@ module "opensearch_domain" {
   domain_name     = "my-opensearch-domain"
   engine_version  = "2.15"
   subnet_ids      = module.eks_cluster.private_subnet_ids
-  security_group_ids = module.eks_cluster.security_group_ids
   vpc_id          = module.eks_cluster.vpc_id
   cidr_blocks      = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
