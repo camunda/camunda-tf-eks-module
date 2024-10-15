@@ -29,10 +29,10 @@ spec:
                           -c "CREATE DATABASE \"${DB_KEYCLOAK_NAME}\";" \
                           -c "CREATE USER \"${DB_KEYCLOAK_USERNAME}\" WITH LOGIN NOSUPERUSER CREATEDB CREATEROLE INHERIT;" \
                           -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_KEYCLOAK_NAME}\" TO \"${DB_KEYCLOAK_USERNAME}\";" \
-                          -c "GRANT rds_iam TO \"${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}\";"
-                          -c "GRANT USAGE ON SCHEMA public TO \"${DB_KEYCLOAK_USERNAME}\";"
-                          -c "GRANT CREATE ON SCHEMA public TO \"${DB_KEYCLOAK_USERNAME}\";"
-                          -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${DB_KEYCLOAK_USERNAME}\";"
+                          -c "GRANT rds_iam TO \"${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}\";" \
+                          -c "GRANT USAGE ON SCHEMA public TO \"${DB_KEYCLOAK_USERNAME}\";" \
+                          -c "GRANT CREATE ON SCHEMA public TO \"${DB_KEYCLOAK_USERNAME}\";" \
+                          -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${DB_KEYCLOAK_USERNAME}\";" \
                           -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${DB_KEYCLOAK_USERNAME}\";"
 
                         echo "Create identity user and associated database"
@@ -40,10 +40,10 @@ spec:
                           -c "CREATE DATABASE \"${DB_IDENTITY_NAME}\";" \
                           -c "CREATE USER \"${DB_IDENTITY_USERNAME}\" WITH LOGIN NOSUPERUSER CREATEDB CREATEROLE INHERIT;" \
                           -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_IDENTITY_NAME}\" TO \"${DB_IDENTITY_USERNAME}\";" \
-                          -c "GRANT rds_iam TO \"${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}\";"
-                          -c "GRANT USAGE ON SCHEMA public TO \"${DB_IDENTITY_USERNAME}\";"
-                          -c "GRANT CREATE ON SCHEMA public TO \"${DB_IDENTITY_USERNAME}\";"
-                          -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${DB_IDENTITY_USERNAME}\";"
+                          -c "GRANT rds_iam TO \"${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}\";" \
+                          -c "GRANT USAGE ON SCHEMA public TO \"${DB_IDENTITY_USERNAME}\";" \
+                          -c "GRANT CREATE ON SCHEMA public TO \"${DB_IDENTITY_USERNAME}\";" \
+                          -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${DB_IDENTITY_USERNAME}\";" \
                           -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${DB_IDENTITY_USERNAME}\";"
 
                         echo "Create webmodeler user and associated database"
@@ -51,10 +51,10 @@ spec:
                           -c "CREATE DATABASE \"${DB_WEBMODELER_NAME}\";" \
                           -c "CREATE USER \"${DB_WEBMODELER_USERNAME}\" WITH LOGIN NOSUPERUSER CREATEDB CREATEROLE INHERIT;" \
                           -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_WEBMODELER_NAME}\" TO \"${DB_WEBMODELER_USERNAME}\";" \
-                          -c "GRANT rds_iam TO \"${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}\";"
-                          -c "GRANT USAGE ON SCHEMA public TO \"${DB_WEBMODELER_USERNAME}\";"
-                          -c "GRANT CREATE ON SCHEMA public TO \"${DB_WEBMODELER_USERNAME}\";"
-                          -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${DB_WEBMODELER_USERNAME}\";"
+                          -c "GRANT rds_iam TO \"${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}\";" \
+                          -c "GRANT USAGE ON SCHEMA public TO \"${DB_WEBMODELER_USERNAME}\";" \
+                          -c "GRANT CREATE ON SCHEMA public TO \"${DB_WEBMODELER_USERNAME}\";" \
+                          -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO \"${DB_WEBMODELER_USERNAME}\";" \
                           -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO \"${DB_WEBMODELER_USERNAME}\";"
 
                         EOF
