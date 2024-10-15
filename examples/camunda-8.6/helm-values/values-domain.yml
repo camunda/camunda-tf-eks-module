@@ -51,11 +51,30 @@ identity:
     contextPath: /identity
     fullURL: https://${DOMAIN_NAME}/identity
 
+    externalDatabase:
+        enabled: true
+        host: ${DB_HOST}
+        port: 5432
+        username: ${DB_IDENTITY_USERNAME}
+        database: ${DB_IDENTITY_NAME}
+        existingSecret: identity-postgres-secret
+        existingSecretPasswordKey: password
+
 operate:
     contextPath: /operate
 
 tasklist:
     contextPath: /tasklist
+
+webModeler:
+    enabled: false # by default, webModeler is not enabled
+
+    restapi:
+        externalDatabase:
+            url: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DB_WEBMODELER_NAME}
+            user: ${DB_WEBMODELER_USERNAME}
+            existingSecret: webmodeler-postgres-secret
+            existingSecretPasswordKey: password
 
 optimize:
     contextPath: /optimize

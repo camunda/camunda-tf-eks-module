@@ -9,10 +9,10 @@ identityKeycloak:
         enabled: false
     externalDatabase:
         host: ${DB_HOST}
-        user: ${PG_USERNAME}
+        user: ${DB_KEYCLOAK_USERNAME}
         port: 5432
         password: '' # let it empty as we use IRSA
-        database: ${DEFAULT_DB_NAME}
+        database: ${DB_KEYCLOAK_NAME}
 
     extraEnvVars:
         - name: KEYCLOAK_EXTRA_ARGS
@@ -63,12 +63,13 @@ webModeler:
         annotations:
             eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
 
-    env:
-        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
-          value: software.amazon.jdbc.Driver
-    externalDatabase:
-        url: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DEFAULT_DB_NAME}?wrapperPlugins=iam
-        user: ${PG_USERNAME}
+    restapi:
+        externalDatabase:
+            url: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DB_WEBMODELER_NAME}?wrapperPlugins=iam
+            user: ${DB_WEBMODELER_USERNAME}
+        env:
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              value: software.amazon.jdbc.Driver
 
 identity:
     contextPath: /identity
@@ -79,13 +80,20 @@ identity:
         annotations:
             eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
 
+    externalDatabase:
+        enabled: true
+        host: ${DB_HOST}
+        port: 5432
+        username: ${DB_IDENTITY_USERNAME}
+        database: ${DB_IDENTITY_NAME}
+
     env:
         - name: SPRING_DATASOURCE_URL
-          value: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DEFAULT_DB_NAME}?wrapperPlugins=iam
+          value: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DB_IDENTITY_NAME}?wrapperPlugins=iam
         - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
           value: software.amazon.jdbc.Driver
         - name: SPRING_DATASOURCE_USERNAME
-          value: ${PG_USERNAME}
+          value: ${DB_IDENTITY_USERNAME}
 
 
 operate:
