@@ -5,7 +5,7 @@ locals {
   opensearch_master_password = "Secretvalue$23" # Replace with your opensearch password
 }
 
-module "opensearch" {
+module "opensearch_domain" {
   source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=2.6.0"
   domain_name    = local.opensearch_domain_name
   engine_version = "2.15"
@@ -25,4 +25,9 @@ module "opensearch" {
   advanced_security_master_user_password = local.opensearch_master_password
 
   depends_on = [module.eks_cluster]
+}
+
+output "opensearch_endpoint" {
+  value       = module.opensearch_domain.opensearch_domain_endpoint
+  description = "The OpenSearch endpoint URL"
 }

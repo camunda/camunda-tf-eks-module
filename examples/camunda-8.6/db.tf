@@ -27,3 +27,8 @@ module "postgresql" {
 
   depends_on = [module.eks_cluster]
 }
+
+output "postgres_endpoint" {
+  value       = module.postgresql.aurora_endpoint
+  description = "The Postgres endpoint URL"
+}

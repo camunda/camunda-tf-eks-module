@@ -13,3 +13,13 @@ module "eks_cluster" {
   cluster_service_ipv4_cidr = "10.190.0.0/16"
   cluster_node_ipv4_cidr    = "10.192.0.0/16"
 }
+
+output "cert_manager_arn" {
+  value       = module.eks_cluster.cert_manager_arn
+  description = "The Amazon Resource Name (ARN) of the AWS IAM Roles for Service Account mapping for the cert-manager"
+}
+
+output "external_dns_arn" {
+  value       = module.eks_cluster.external_dns_arn
+  description = "The Amazon Resource Name (ARN) of the AWS IAM Roles for Service Account mapping for the external-dns"
+}

@@ -96,3 +96,13 @@ EOF
           }
 EOF
 }
+
+output "opensearch_endpoint" {
+  value       = module.opensearch_domain.opensearch_domain_endpoint
+  description = "The OpenSearch endpoint URL"
+}
+
+output "opensearch_role_arn" {
+  value       = module.opensearch_domain.opensearch_role_arn
+  description = "The OpenSearch Role ARN used for IRSA"
+}

@@ -77,3 +77,13 @@ EOF
 
   depends_on = [module.eks_cluster]
 }
+
+output "postgres_endpoint" {
+  value       = module.postgresql.aurora_endpoint
+  description = "The Postgres endpoint URL"
+}
+
+output "aurora_role_arn" {
+  value       = module.postgresql.aurora_role_arn
+  description = "The Aurora Role ARN used for IRSA"
+}
