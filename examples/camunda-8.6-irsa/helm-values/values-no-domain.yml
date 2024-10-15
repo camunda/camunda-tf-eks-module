@@ -94,6 +94,8 @@ optimize:
         name: ${CAMUNDA_OPTIMIZE_SERVICE_ACCOUNT_NAME}
         annotations:
             eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+    # OpenSearch prevents migration
     migration:
         enabled: false
 

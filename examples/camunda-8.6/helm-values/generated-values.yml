@@ -1,0 +1,36 @@
+---
+identityKeycloak:
+    postgresql:
+        enabled: false
+    externalDatabase:
+        # see https://artifacthub.io/packages/helm/bitnami/keycloak
+        existingSecret: identity-keycloak-secret   # Name of an existing secret resource containing the database credentials
+        existingSecretHostKey: host
+        existingSecretPortKey: port
+        existingSecretUserKey: user
+        existingSecretDatabaseKey: database
+        existingSecretPasswordKey: password
+
+global:
+    elasticsearch:
+        enabled: false
+    opensearch:
+        enabled: true
+        aws:
+            enabled: true
+        auth:
+            username: secret_user
+            existingSecret: opensearch-secret
+            existingSecretKey: password
+        url:
+            protocol: https
+            host: vpc-domain-name-os-std-s7ttei3uulfiyez54t66sj2zkq.eu-west-2.es.amazonaws.com
+            # Amazon OpenSearch Service listens on port 443 opposed to the usual port 9200.
+            port: 443
+
+optimize:
+    migration:
+        enabled: false
+
+elasticsearch:
+    enabled: false

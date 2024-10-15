@@ -56,7 +56,8 @@ global:
                 redirectUrl: https://${DOMAIN_NAME}/optimize
 
 webModeler:
-    # TODO: understand why it's disabled by default
+    enabled: false # by default, webModeler is not enabled
+
     serviceAccount:
         name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
         annotations:
@@ -111,6 +112,7 @@ optimize:
         annotations:
             eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
 
+    # OpenSearch prevents migration
     migration:
         enabled: false
 
