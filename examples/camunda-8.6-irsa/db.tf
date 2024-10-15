@@ -4,13 +4,18 @@ locals {
   aurora_master_username = "secret_user"    # Replace with your Aurora username
   aurora_master_password = "secretvalue%23" # Replace with your Aurora password
 
-  camunda_database = "camunda" # Name of your camunda database
+  camunda_database_keycloak   = "camunda_keycloak"   # Name of your camunda database for Keycloak
+  camunda_database_identity   = "camunda_identity"   # Name of your camunda database for Identity
+  camunda_database_webmodeler = "camunda_webmodeler" # Name of your camunda database for WebModeler
 
   # IRSA configuration
-  aurora_irsa_username               = "secret_user_irsa" # This is the username that will be used for IRSA connection to the DB
-  camunda_webmodeler_service_account = "webmodeler-sa"    # Replace with your Kubernetes ServiceAcccount that will be created for WebModeler
-  camunda_identity_service_account   = "identity-sa"      # Replace with your Kubernetes ServiceAcccount that will be created for Identity
-  camunda_keycloak_service_account   = "keycloak-sa"      # Replace with your Kubernetes ServiceAcccount that will be created for Keycloak
+  aurora_irsa_keycloak_username   = "keycloak_irsa"   # This is the username that will be used for IRSA connection to the DB on Keycloak db
+  aurora_irsa_identity_username   = "identity_irsa"   # This is the username that will be used for IRSA connection to the DB on Identity db
+  aurora_irsa_webmodeler_username = "webmodeler_irsa" # This is the username that will be used for IRSA connection to the DB on WebModeler db
+
+  camunda_keycloak_service_account   = "keycloak-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for Keycloak
+  camunda_identity_service_account   = "identity-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for Identity
+  camunda_webmodeler_service_account = "webmodeler-sa" # Replace with your Kubernetes ServiceAcccount that will be created for WebModeler
 }
 
 module "postgresql" {
@@ -18,7 +23,7 @@ module "postgresql" {
   engine_version             = "15.8"
   auto_minor_version_upgrade = false
   cluster_name               = local.aurora_cluster_name
-  default_database_name      = local.camunda_database
+  default_database_name      = local.camunda_database_keycloak
 
   availability_zones = ["${local.eks_cluster_region}a", "${local.eks_cluster_region}b", "${local.eks_cluster_region}c"]
 
@@ -45,7 +50,11 @@ module "postgresql" {
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.aurora_irsa_username}"
+                  "Resource": [
+                    "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.aurora_irsa_keycloak_username}",
+                    "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.aurora_irsa_identity_username}",
+                    "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.aurora_irsa_webmodeler_username}"
+                  ]
                 }
               ]
             }

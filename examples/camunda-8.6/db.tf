@@ -4,7 +4,18 @@ locals {
   aurora_master_username = "secret_user"    # Replace with your Aurora username
   aurora_master_password = "secretvalue%23" # Replace with your Aurora password
 
-  camunda_database = "camunda" # Name of your camunda database
+  camunda_database_keycloak   = "camunda_keycloak"   # Name of your camunda database for Keycloak
+  camunda_database_identity   = "camunda_identity"   # Name of your camunda database for Identity
+  camunda_database_webmodeler = "camunda_webmodeler" # Name of your camunda database for WebModeler
+
+  # Connection configuration
+  keycloak_db_username   = "keycloak_db"   # This is the username that will be used for connection to the DB on Keycloak db
+  identity_db_username   = "identity_db"   # This is the username that will be used for connection to the DB on Identity db
+  webmodeler_db_username = "webmodeler_db" # This is the username that will be used for connection to the DB on WebModeler db
+
+  keycloak_db_password   = "secretvalue%24" # Replace with a password that will be used for connection to the DB on Keycloak db
+  identity_db_password   = "secretvalue%25" # Replace with a password that will be used for connection to the DB on Identity db
+  webmodeler_db_password = "secretvalue%26" # Replace with a password that will be used for connection to the DB on WebModeler db
 }
 
 module "postgresql" {
@@ -12,7 +23,7 @@ module "postgresql" {
   engine_version             = "15.8"
   auto_minor_version_upgrade = false
   cluster_name               = local.aurora_cluster_name
-  default_database_name      = local.camunda_database
+  default_database_name      = local.camunda_database_keycloak
 
   availability_zones = ["${local.eks_cluster_region}a", "${local.eks_cluster_region}b", "${local.eks_cluster_region}c"]
 
