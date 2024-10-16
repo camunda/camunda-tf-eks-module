@@ -33,7 +33,7 @@ spec:
                           -c "CREATE USER \"${DB_KEYCLOAK_USERNAME}\" WITH LOGIN NOSUPERUSER CREATEDB CREATEROLE INHERIT;" \
                           -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_KEYCLOAK_NAME}\" TO \"${DB_KEYCLOAK_USERNAME}\";" \
                           -c "GRANT ALL ON SCHEMA public TO \"${DB_KEYCLOAK_USERNAME}\";" \
-                          -c "GRANT rds_iam TO \"${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}\";"
+                          -c "GRANT rds_iam TO \"${DB_KEYCLOAK_USERNAME}\";"
 
 
                         echo "Create identity user and associated database"
@@ -44,7 +44,7 @@ spec:
                           -c "CREATE USER \"${DB_IDENTITY_USERNAME}\" WITH LOGIN NOSUPERUSER CREATEDB CREATEROLE INHERIT;" \
                           -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_IDENTITY_NAME}\" TO \"${DB_IDENTITY_USERNAME}\";" \
                           -c "GRANT ALL ON SCHEMA public TO \"${DB_IDENTITY_USERNAME}\";" \
-                          -c "GRANT rds_iam TO \"${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}\";"
+                          -c "GRANT rds_iam TO \"${DB_IDENTITY_USERNAME}\";"
 
                         echo "Create webmodeler user and associated database"
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=postgres user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
@@ -54,7 +54,7 @@ spec:
                           -c "CREATE USER \"${DB_WEBMODELER_USERNAME}\" WITH LOGIN NOSUPERUSER CREATEDB CREATEROLE INHERIT;" \
                           -c "GRANT ALL PRIVILEGES ON DATABASE \"${DB_WEBMODELER_NAME}\" TO \"${DB_WEBMODELER_USERNAME}\";" \
                           -c "GRANT ALL ON SCHEMA public TO \"${DB_WEBMODELER_USERNAME}\";" \
-                          -c "GRANT rds_iam TO \"${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}\";"
+                          -c "GRANT rds_iam TO \"${DB_WEBMODELER_USERNAME}\";"
 
                         EOF
                   env:
@@ -88,11 +88,6 @@ spec:
                             secretKeyRef:
                                 name: setup-db-secret
                                 key: DB_KEYCLOAK_USERNAME
-                      - name: CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME
-                        valueFrom:
-                            secretKeyRef:
-                                name: setup-db-secret
-                                key: CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME
                       - name: DB_IDENTITY_NAME
                         valueFrom:
                             secretKeyRef:
@@ -103,11 +98,6 @@ spec:
                             secretKeyRef:
                                 name: setup-db-secret
                                 key: DB_IDENTITY_USERNAME
-                      - name: CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME
-                        valueFrom:
-                            secretKeyRef:
-                                name: setup-db-secret
-                                key: CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME
                       - name: DB_WEBMODELER_NAME
                         valueFrom:
                             secretKeyRef:
@@ -118,8 +108,3 @@ spec:
                             secretKeyRef:
                                 name: setup-db-secret
                                 key: DB_WEBMODELER_USERNAME
-                      - name: CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME
-                        valueFrom:
-                            secretKeyRef:
-                                name: setup-db-secret
-                                key: CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME
