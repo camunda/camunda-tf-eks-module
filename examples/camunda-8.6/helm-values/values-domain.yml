@@ -17,11 +17,10 @@ global:
     opensearch:
         enabled: true
         aws:
-            enabled: false # we rely on basic auth, not irsa
+            enabled: false # we rely on anonymous auth, not irsa, basic auth is not supported on managed OpenSearch
         auth:
-            username: ${OPENSEARCH_MASTER_USER}
-            existingSecret: opensearch-secret
-            existingSecretKey: password
+            username:
+            password:
         url:
             protocol: https
             host: ${OPENSEARCH_HOST}

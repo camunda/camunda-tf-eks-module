@@ -1,8 +1,5 @@
 locals {
   opensearch_domain_name = "domain-name-os-std" # Replace "domain-name" with your domain name
-
-  opensearch_master_username = "secret_user"    # Replace with your opensearch username
-  opensearch_master_password = "Secretvalue$23" # Replace with your opensearch password
 }
 
 # TODO: handle deletion
@@ -22,11 +19,25 @@ module "opensearch_domain" {
 
   advanced_security_enabled = false # disable fine-grained
 
-  advanced_security_internal_user_database_enabled = true  # required for master username
-  advanced_security_anonymous_auth_enabled         = false # require basic auth
+  advanced_security_internal_user_database_enabled = false
+  advanced_security_anonymous_auth_enabled         = true # rely on anonymous auth
 
-  advanced_security_master_user_name     = local.opensearch_master_username
-  advanced_security_master_user_password = local.opensearch_master_password
+  # allow unauthentificated access as managed OpenSearch only allows fine tuned and no Basic Auth
+  access_policies = <<CONFIG
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:*",
+      "Resource": "arn:aws:es:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${local.opensearch_domain_name}/*"
+    }
+  ]
+}
+CONFIG
 
   depends_on = [module.eks_cluster]
 }
