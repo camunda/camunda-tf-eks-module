@@ -11,7 +11,6 @@ identityKeycloak:
         host: ${DB_HOST}
         user: ${DB_KEYCLOAK_USERNAME}
         port: 5432
-        password: '' # let it empty as we use IRSA
         database: ${DB_KEYCLOAK_NAME}
 
     extraEnvVars:
@@ -21,13 +20,6 @@ identityKeycloak:
           value: wrapperPlugins=iam&ssl=true&sslmode=require
         - name: KEYCLOAK_JDBC_DRIVER
           value: aws-wrapper:postgresql
-        - name: KC_DB_DRIVER
-          value: software.amazon.jdbc.Driver
-        - name: KC_DB
-          value: postgres
-        - name: KC_DB_URL
-          value: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DB_KEYCLOAK_NAME}?wrapperPlugins=iam&ssl=true&sslmode=require
-
     auth:
         existingSecret: identity-secret-for-components
 
