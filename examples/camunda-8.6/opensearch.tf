@@ -1,6 +1,11 @@
 locals {
   opensearch_domain_name = "domain-name-os-std" # Replace "domain-name" with your domain name
+
+  opensearch_master_username = "secret_user"    # Replace with your opensearch username
+  opensearch_master_password = "Secretvalue$23" # Replace with your opensearch password
 }
+
+# TODO: handle deletion
 
 module "opensearch_domain" {
   source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=2.6.0"
@@ -15,7 +20,13 @@ module "opensearch_domain" {
   vpc_id      = module.eks_cluster.vpc_id
   cidr_blocks = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
-  advanced_security_enabled = false
+  advanced_security_enabled = false # disable fine-grained
+
+  advanced_security_internal_user_database_enabled = true  # required for master username
+  advanced_security_anonymous_auth_enabled         = false # require basic auth
+
+  advanced_security_master_user_name     = local.opensearch_master_username
+  advanced_security_master_user_password = local.opensearch_master_password
 
   depends_on = [module.eks_cluster]
 }

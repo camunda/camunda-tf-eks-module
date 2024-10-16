@@ -17,8 +17,11 @@ global:
     opensearch:
         enabled: true
         aws:
-            enabled: true
-        # we rely on the network security to access the OpenSearch domain, no basic auth is needed
+            enabled: false # we rely on basic auth, not irsa
+        auth:
+            username: ${OPENSEARCH_MASTER_USER}
+            existingSecret: opensearch-secret
+            existingSecretKey: password
         url:
             protocol: https
             host: ${OPENSEARCH_HOST}
