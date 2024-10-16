@@ -28,6 +28,9 @@ identityKeycloak:
         - name: KC_DB_URL
           value: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DB_KEYCLOAK_NAME}?wrapperPlugins=iam&ssl=true&sslmode=require
 
+    auth:
+        existingSecret: identity-secret-for-components
+
 global:
     elasticsearch:
         enabled: false
@@ -40,6 +43,24 @@ global:
             host: ${OPENSEARCH_HOST}
             # Amazon OpenSearch Service listens on port 443 opposed to the usual port 9200.
             port: 443
+
+    identity:
+        auth:
+            zeebe:
+                existingSecret:
+                    name: identity-secret-for-components
+            connectors:
+                existingSecret:
+                    name: identity-secret-for-components
+            operate:
+                existingSecret:
+                    name: identity-secret-for-components
+            tasklist:
+                existingSecret:
+                    name: identity-secret-for-components
+            optimize:
+                existingSecret:
+                    name: identity-secret-for-components
 
 webModeler:
     serviceAccount:
