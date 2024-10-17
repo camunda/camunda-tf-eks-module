@@ -37,6 +37,23 @@ module "opensearch_domain" {
   iam_create_opensearch_role = true
   iam_opensearch_role_name   = "OpenSearchRole-${local.opensearch_domain_name}" # Ensure uniqueness
 
+  # rely on fine grained access control for this part
+  access_policies = <<CONFIG
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:*",
+      "Resource": "arn:aws:es:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${local.opensearch_domain_name}/*"
+    }
+  ]
+}
+CONFIG
+
   iam_opensearch_access_policy = <<EOF
             {
               "Version": "2012-10-17",
