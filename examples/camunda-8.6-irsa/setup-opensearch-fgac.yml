@@ -21,13 +21,10 @@ spec:
                         /bin/bash <<'EOF'
                         set -o pipefail
 
-                        echo "Installing curl..."
-                        yum install -y curl
-
                         echo "Configuring Fine-Grained Access Control for OpenSearch..."
 
                         # Send the PATCH request to map the IAM role to OpenSearch role
-                        curl -sS -u "$OPENSEARCH_USER:$OPENSEARCH_PASSWORD" \
+                        curl -sS -u "$OPENSEARCH_MASTER_USERNAME:$OPENSEARCH_MASTER_PASSWORD" \
                           -X PATCH \
                           "https://$OPENSEARCH_HOST/_opendistro/_security/api/rolesmapping/all_access?pretty" \
                           -H 'Content-Type: application/json' \
@@ -40,12 +37,6 @@ spec:
                             }
                           ]'
 
-                        if [ $? -eq 0 ]; then
-                          echo "Fine-grained access control configuration successful."
-                        else
-                          echo "Failed to configure fine-grained access control." >&2
-                          exit 1
-                        fi
                         EOF
                   env:
                       - name: OPENSEARCH_HOST
