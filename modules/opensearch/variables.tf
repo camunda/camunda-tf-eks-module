@@ -304,9 +304,26 @@ variable "iam_opensearch_access_policy" {
                 {
                   "Effect": "Allow",
                   "Action": [
+                    "es:DescribeElasticsearchDomains",
+                    "es:DescribeElasticsearchInstanceTypeLimits",
+                    "es:DescribeReservedElasticsearchInstanceOfferings",
+                    "es:DescribeReservedElasticsearchInstances",
+                    "es:GetCompatibleElasticsearchVersions",
+                    "es:ListDomainNames",
+                    "es:ListElasticsearchInstanceTypes",
+                    "es:ListElasticsearchVersions",
+                    "es:DescribeElasticsearchDomain",
+                    "es:DescribeElasticsearchDomainConfig",
                     "es:ESHttpGet",
-                    "es:ESHttpPut",
-                    "es:ESHttpPost"
+                    "es:ESHttpHead",
+                    "es:GetUpgradeHistory",
+                    "es:GetUpgradeStatus",
+                    "es:ListTags",
+                    "es:AddTags",
+                    "es:RemoveTags",
+                    "es:ESHttpDelete",
+                    "es:ESHttpPost",
+                    "es:ESHttpPut"
                   ],
                   "Resource": "arn:aws:es:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:domain/<YOUR-DOMAIN-NAME>/*"
                 }
