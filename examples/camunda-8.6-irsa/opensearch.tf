@@ -4,6 +4,8 @@ locals {
   opensearch_master_username = "secret_user"    # Replace with your opensearch username
   opensearch_master_password = "Secretvalue$23" # Replace with your opensearch password
 
+  opensearch_iam_role_name = "OpenSearchRole-${local.opensearch_domain_name}" # Ensure uniqueness
+
   # IRSA configuration
   camunda_namespace                = "camunda"     # Replace with your Kubernetes namespace that will host C8 Platform
   camunda_zeebe_service_account    = "zeebe-sa"    # Replace with your Kubernetes ServiceAcccount that will be created for Zeebe
@@ -13,7 +15,8 @@ locals {
 }
 
 module "opensearch_domain" {
-  source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=2.6.0"
+  # TODO: pin to v3
+  source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=feature/opensearch-doc"
   domain_name    = local.opensearch_domain_name
   engine_version = "2.15"
 
@@ -31,31 +34,34 @@ module "opensearch_domain" {
   advanced_security_master_user_name     = local.opensearch_master_username
   advanced_security_master_user_password = local.opensearch_master_password
 
-  depends_on = [module.eks_cluster]
-
-  # IRSA configuration
-  iam_create_opensearch_role = true
-  iam_opensearch_role_name   = "OpenSearchRole-${local.opensearch_domain_name}" # Ensure uniqueness
-
-  # rely on fine grained access control for this part
-  access_policies = <<CONFIG
-{
-  "Version": "2012-10-17",
-  "Statement": [
+  # IAM IRSA
+  iam_roles_with_policies   = <<EOF
+  [
     {
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "*"
-      },
-      "Action": "es:*",
-      "Resource": "arn:aws:es:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${local.opensearch_domain_name}/*"
-    }
-  ]
-}
-CONFIG
-
-  iam_opensearch_access_policy = <<EOF
-            {
+      "role_name": "${local.opensearch_iam_role_name}",
+      "trust_policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Federated": "${module.eks_cluster.oidc_provider_arn}"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "${module.eks_cluster.oidc_provider_id}:sub": [
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_zeebe_service_account}",
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_operate_service_account}",
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_tasklist_service_account}",
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_optimize_service_account}"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+      "access_policy": {
               "Version": "2012-10-17",
               "Statement": [
                 {
@@ -85,33 +91,32 @@ CONFIG
                   "Resource": "arn:aws:es:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${local.opensearch_domain_name}/*"
                 }
               ]
-            }
-EOF
+            },
+    },
+  ]
 
-  iam_role_trust_policy = <<EOF
-          {
-            "Version": "2012-10-17",
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Principal": {
-                  "Federated": "${module.eks_cluster.oidc_provider_arn}"
-                },
-                "Action": "sts:AssumeRoleWithWebIdentity",
-                "Condition": {
-                  "StringEquals": {
-                    "${module.eks_cluster.oidc_provider_id}:sub": [
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_zeebe_service_account}",
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_operate_service_account}",
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_tasklist_service_account}",
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_optimize_service_account}"
-                    ]
-                  }
-                }
-              }
-            ]
-          }
-EOF
+EOF 
+
+
+  # rely on fine grained access control for this part
+  access_policies = <<CONFIG
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "*"
+      },
+      "Action": "es:*",
+      "Resource": "arn:aws:es:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${local.opensearch_domain_name}/*"
+    }
+  ]
+}
+CONFIG
+
+
+  depends_on = [module.eks_cluster]
 }
 
 output "opensearch_endpoint" {
@@ -119,7 +124,7 @@ output "opensearch_endpoint" {
   description = "The OpenSearch endpoint URL"
 }
 
-output "opensearch_role_arn" {
-  value       = module.opensearch_domain.opensearch_role_arn
-  description = "The OpenSearch Role ARN used for IRSA"
+output "opensearch_iam_role_arns" {
+  value       = module.opensearch_domain.opensearch_iam_role_arns
+  description = "Map of IAM role names to their ARNs"
 }

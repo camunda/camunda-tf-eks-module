@@ -96,7 +96,6 @@ variable "default_database_name" {
 
 variable "iam_roles_with_policies" {
   description = "List of roles with their trust and access policies"
-
   type = list(object({
     # Name of the Role to create
     role_name = string
@@ -106,47 +105,48 @@ variable "iam_roles_with_policies" {
 
     # Access policy for Aurora allowing access as a json string
     # see https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+    # Example:
+    #   [
+    #     {
+    #     role_name      = "AuroraRole"
+    #     trust_policy   = <<EOF
+    #           {
+    #             "Version": "2012-10-17",
+    #             "Statement": [
+    #               {
+    #                 "Effect": "Allow",
+    #                 "Principal": {
+    #                   "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
+    #                 },
+    #                 "Action": "sts:AssumeRoleWithWebIdentity",
+    #                 "Condition": {
+    #                   "StringEquals": {
+    #                     "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
+    #                   }
+    #                 }
+    #               }
+    #             ]
+    #           }
+    # EOF
+    #     access_policy  = <<EOF
+    #             {
+    #               "Version": "2012-10-17",
+    #               "Statement": [
+    #                 {
+    #                   "Effect": "Allow",
+    #                   "Action": [
+    #                     "rds-db:connect"
+    #                   ],
+    #                   "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:<YOUR-CLUSTER-NAME>/<YOUR-DB-USER-NAME>"
+    #                 }
+    #               ]
+    #             }
+    # EOF
+    #   }
+    #   ]
     access_policy = string
   }))
 
-  # By default, don't create any role and associated policies. Here's an example
-  #   [
-  #     {
-  #     role_name      = "AuroraRole"
-  #     trust_policy   = <<EOF
-  #           {
-  #             "Version": "2012-10-17",
-  #             "Statement": [
-  #               {
-  #                 "Effect": "Allow",
-  #                 "Principal": {
-  #                   "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
-  #                 },
-  #                 "Action": "sts:AssumeRoleWithWebIdentity",
-  #                 "Condition": {
-  #                   "StringEquals": {
-  #                     "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
-  #                   }
-  #                 }
-  #               }
-  #             ]
-  #           }
-  # EOF
-  #     access_policy  = <<EOF
-  #             {
-  #               "Version": "2012-10-17",
-  #               "Statement": [
-  #                 {
-  #                   "Effect": "Allow",
-  #                   "Action": [
-  #                     "rds-db:connect"
-  #                   ],
-  #                   "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:<YOUR-CLUSTER-NAME>/<YOUR-DB-USER-NAME>"
-  #                 }
-  #               ]
-  #             }
-  # EOF
-  #   }
-  #   ]
+  # By default, don't create any role and associated policies.
   default = []
 }

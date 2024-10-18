@@ -116,7 +116,10 @@ You need to define the IAM role trust policy and access policy for Aurora. Here'
 ```hcl
 module "postgresql" {
   # ...
-  iam_aurora_access_policy = <<EOF
+  iam_roles_with_policies = [
+    {
+      role_name = "AuroraRole-your-cluster" # ensure uniqueness of this one
+      access_policy = <<EOF
             {
               "Version": "2012-10-17",
               "Statement": [
@@ -131,7 +134,7 @@ module "postgresql" {
             }
 EOF
 
-  iam_role_trust_policy = <<EOF
+      trust_policy = <<EOF
           {
             "Version": "2012-10-17",
             "Statement": [
@@ -150,9 +153,9 @@ EOF
             ]
           }
 EOF
+    }
+  ]
 
-  iam_aurora_role_name = "AuroraRole-your-cluster" # ensure uniqueness of this one
-  iam_create_aurora_role = true
   iam_auth_enabled = true
   # ...
 }
@@ -190,9 +193,10 @@ The OpenSearch module uses the following outputs from the EKS cluster module to 
 ```hcl
 module "opensearch_domain" {
   # ...
-  iam_create_opensearch_role = true
-  iam_opensearch_role_name = "OpenSearchRole-your-cluster" # ensure uniqueness of this one
-  iam_opensearch_access_policy = <<EOF
+  iam_roles_with_policies = [
+    {
+      role_name = "OpenSearchRole-your-cluster" # ensure uniqueness of this one
+      access_policy =<<EOF
             {
               "Version": "2012-10-17",
               "Statement": [
@@ -209,7 +213,7 @@ module "opensearch_domain" {
             }
 EOF
 
-  iam_role_trust_policy = <<EOF
+      trust_policy =  <<EOF
           {
             "Version": "2012-10-17",
             "Statement": [
@@ -228,6 +232,9 @@ EOF
             ]
           }
 EOF
+    }
+  ]
+
   # ...
 }
 ```
@@ -247,7 +254,7 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/AuroraRole>
 ```
-You can retrieve the role ARN from the module output: `aurora_role_arn`.
+You can retrieve the role ARN from the module output: `aurora_iam_role_arns['Aurora-your-cluster']`.
 
 **OpenSearch Service Account**
 
@@ -260,7 +267,7 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/OpenSearchRole>
 ```
-You can retrieve the role ARN from the module output: `opensearch_role_arn`.
+You can retrieve the role ARN from the module output: `opensearch_iam_role_arns['OpenSearch-your-cluster']`.
 
 ## Support
 

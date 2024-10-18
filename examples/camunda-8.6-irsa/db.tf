@@ -16,10 +16,15 @@ locals {
   camunda_keycloak_service_account   = "keycloak-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for Keycloak
   camunda_identity_service_account   = "identity-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for Identity
   camunda_webmodeler_service_account = "webmodeler-sa" # Replace with your Kubernetes ServiceAcccount that will be created for WebModeler
+
+  camunda_keycloak_role_name   = "AuroraRole-Keycloak-${local.aurora_cluster_name}"   # IAM Role name use to allow access to the keycloak db
+  camunda_identity_role_name   = "AuroraRole-Identity-${local.aurora_cluster_name}"   # IAM Role name use to allow access to the identity db
+  camunda_webmodeler_role_name = "AuroraRole-Webmodeler-${local.aurora_cluster_name}"   # IAM Role name use to allow access to the webmodeler db
 }
 
 module "postgresql" {
-  source                     = "git::https://github.com/camunda/camunda-tf-eks-module//modules/aurora?ref=2.6.0"
+  # TODO: pin to v3
+  source                     = "git::https://github.com/camunda/camunda-tf-eks-module//modules/aurora?ref=feature/opensearch-doc"
   engine_version             = "15.8"
   auto_minor_version_upgrade = false
   cluster_name               = local.aurora_cluster_name
@@ -36,32 +41,12 @@ module "postgresql" {
 
   instance_class = "db.t3.medium"
 
-  # IAM IRSA addition
-  iam_aurora_role_name   = "AuroraRole-${local.aurora_cluster_name}" # Ensure this name is unique
-  iam_create_aurora_role = true
-  iam_auth_enabled       = true
-
-  iam_aurora_access_policy = <<EOF
-            {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "rds-db:connect"
-                  ],
-                  "Resource": [
-                    "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_keycloak_db_username}",
-                    "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_identity_db_username}",
-                    "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_webmodeler_db_username}"
-                  ]
-                }
-              ]
-            }
-EOF
-
-  iam_role_trust_policy = <<EOF
-          {
+  # IAM IRSA
+  iam_roles_with_policies   = <<EOF
+  [
+    {
+      "role_name": ${local.camunda_keycloak_role_name},
+      "trust_policy":  {
             "Version": "2012-10-17",
             "Statement": [
               {
@@ -73,16 +58,99 @@ EOF
                 "Condition": {
                   "StringEquals": {
                     "${module.eks_cluster.oidc_provider_id}:sub": [
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_webmodeler_service_account}",
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_identity_service_account}",
                       "system:serviceaccount:${local.camunda_namespace}:${local.camunda_keycloak_service_account}"
                     ]
                   }
                 }
               }
             ]
-          }
-EOF
+          },
+      "access_policy": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "rds-db:connect"
+                  ],
+                  "Resource": [
+                    "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_keycloak_db_username}"
+                  ]
+                }
+              ]
+            },
+    },
+    {
+      "role_name": ${local.camunda_identity_role_name},
+      "trust_policy":  {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Federated": "${module.eks_cluster.oidc_provider_arn}"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "${module.eks_cluster.oidc_provider_id}:sub": [
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_identity_service_account}"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+      "access_policy": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "rds-db:connect"
+                  ],
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_identity_db_username}"
+                }
+              ]
+            },
+    },
+    {
+      "role_name": ${local.camunda_webmodeler_role_name},
+      "trust_policy":  {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Principal": {
+                  "Federated": "${module.eks_cluster.oidc_provider_arn}"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                  "StringEquals": {
+                    "${module.eks_cluster.oidc_provider_id}:sub": [
+                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_webmodeler_service_account}"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+      "access_policy": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "rds-db:connect"
+                  ],
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_webmodeler_db_username}"
+                }
+              ]
+            },
+    },
+  ]
+
+EOF 
 
   depends_on = [module.eks_cluster]
 }
@@ -92,7 +160,7 @@ output "postgres_endpoint" {
   description = "The Postgres endpoint URL"
 }
 
-output "aurora_role_arn" {
-  value       = module.postgresql.aurora_role_arn
-  description = "The Aurora Role ARN used for IRSA"
+output "aurora_iam_role_arns" {
+  value       = module.postgresql.aurora_iam_role_arns
+  description = "Map of IAM role names to their ARNs"
 }

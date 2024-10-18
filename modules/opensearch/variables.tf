@@ -269,66 +269,67 @@ variable "iam_roles_with_policies" {
 
     # Access policy for Aurora allowing access as a json string
     # see https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+    # Example:
+    #   [
+    #     {
+    #     role_name      = "OpenSearchRole"
+    #     trust_policy   = <<EOF
+    # {
+    #   "Version": "2012-10-17",
+    #   "Statement": [
+    #     {
+    #       "Effect": "Allow",
+    #       "Principal": {
+    #         "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
+    #       },
+    #       "Action": "sts:AssumeRoleWithWebIdentity",
+    #       "Condition": {
+    #         "StringEquals": {
+    #           "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
+    #         }
+    #       }
+    #     }
+    #   ]
+    # }
+    # EOF
+    #     access_policy  = <<EOF
+    # {
+    #   "Version": "2012-10-17",
+    #   "Statement": [
+    #     {
+    #       "Effect": "Allow",
+    #       "Action": [
+    #         "es:DescribeElasticsearchDomains",
+    #         "es:DescribeElasticsearchInstanceTypeLimits",
+    #         "es:DescribeReservedElasticsearchInstanceOfferings",
+    #         "es:DescribeReservedElasticsearchInstances",
+    #         "es:GetCompatibleElasticsearchVersions",
+    #         "es:ListDomainNames",
+    #         "es:ListElasticsearchInstanceTypes",
+    #         "es:ListElasticsearchVersions",
+    #         "es:DescribeElasticsearchDomain",
+    #         "es:DescribeElasticsearchDomainConfig",
+    #         "es:ESHttpGet",
+    #         "es:ESHttpHead",
+    #         "es:GetUpgradeHistory",
+    #         "es:GetUpgradeStatus",
+    #         "es:ListTags",
+    #         "es:AddTags",
+    #         "es:RemoveTags",
+    #         "es:ESHttpDelete",
+    #         "es:ESHttpPost",
+    #         "es:ESHttpPut"
+    #       ],
+    #       "Resource": "arn:aws:es:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:domain/<YOUR-DOMAIN-NAME>/*"
+    #     }
+    #   ]
+    # }
+    # EOF
+    #   }
+    #   ]
     access_policy = string
   }))
 
-  # By default, don't create any role and associated policies, here's an example
-  #   [
-  #     {
-  #     role_name      = "OpenSearchRole"
-  #     trust_policy   = <<EOF
-  # {
-  #   "Version": "2012-10-17",
-  #   "Statement": [
-  #     {
-  #       "Effect": "Allow",
-  #       "Principal": {
-  #         "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
-  #       },
-  #       "Action": "sts:AssumeRoleWithWebIdentity",
-  #       "Condition": {
-  #         "StringEquals": {
-  #           "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
-  #         }
-  #       }
-  #     }
-  #   ]
-  # }
-  # EOF
-  #     access_policy  = <<EOF
-  # {
-  #   "Version": "2012-10-17",
-  #   "Statement": [
-  #     {
-  #       "Effect": "Allow",
-  #       "Action": [
-  #         "es:DescribeElasticsearchDomains",
-  #         "es:DescribeElasticsearchInstanceTypeLimits",
-  #         "es:DescribeReservedElasticsearchInstanceOfferings",
-  #         "es:DescribeReservedElasticsearchInstances",
-  #         "es:GetCompatibleElasticsearchVersions",
-  #         "es:ListDomainNames",
-  #         "es:ListElasticsearchInstanceTypes",
-  #         "es:ListElasticsearchVersions",
-  #         "es:DescribeElasticsearchDomain",
-  #         "es:DescribeElasticsearchDomainConfig",
-  #         "es:ESHttpGet",
-  #         "es:ESHttpHead",
-  #         "es:GetUpgradeHistory",
-  #         "es:GetUpgradeStatus",
-  #         "es:ListTags",
-  #         "es:AddTags",
-  #         "es:RemoveTags",
-  #         "es:ESHttpDelete",
-  #         "es:ESHttpPost",
-  #         "es:ESHttpPut"
-  #       ],
-  #       "Resource": "arn:aws:es:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:domain/<YOUR-DOMAIN-NAME>/*"
-  #     }
-  #   ]
-  # }
-  # EOF
-  #   }
-  #   ]
+  # By default, don't create any role and associated policies.
   default = []
 }
