@@ -102,8 +102,6 @@ The Aurora module uses the following outputs from the EKS cluster module to defi
 - `module.eks_cluster.oidc_provider_id`: The ID of the OIDC provider for the EKS cluster.
 - `var.account_id`: Your AWS account id
 - `var.aurora_region`: Your Aurora AWS Region
-- `var.aurora_cluster_name`: The name of the Aurora cluster to access
-Here is the corrected version:
 - `var.aurora_irsa_username`: The username used to access AuroraDB. This username is different from the superuser. The user must also be created manually in the database to enable the IRSA connection, as described in [the steps below](#create-irsa-user-on-the-database).
 - `var.aurora_namespace`: The kubernetes namespace to allow access
 - `var.aurora_service_account`: The kubernetes ServiceAccount to allow access
@@ -125,7 +123,7 @@ module "postgresql" {
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${var.aurora_region}:${var.account_id}:dbuser:${var.aurora_cluster_name}/${var.aurora_irsa_username}"
+                  "Resource": "arn:aws:rds-db:${var.aurora_region}:${var.account_id}:dbuser:*/${var.aurora_irsa_username}"
                 }
               ]
             }

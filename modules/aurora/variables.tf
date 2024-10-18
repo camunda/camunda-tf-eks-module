@@ -137,7 +137,7 @@ variable "iam_roles_with_policies" {
     #                   "Action": [
     #                     "rds-db:connect"
     #                   ],
-    #                   "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:<YOUR-CLUSTER-NAME>/<YOUR-DB-USER-NAME>"
+    #                   "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:<DbiResourceId>/<YOUR-DB-USER-NAME>"
     #                 }
     #               ]
     #             }

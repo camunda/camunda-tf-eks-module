@@ -66,6 +66,11 @@ module "postgresql" {
           }
 EOF
 
+      # Source: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+      # This policy allows a specific user to connect to all databases within the cluster region.
+      # You may want to restrict this permission further based on your security requirements.
+      # Refer to the documentation for more details.
+      # In this example, since the DbiResourceId is not known in advance, we use a wildcard.
       access_policy =  <<EOF
          {
               "Version": "2012-10-17",
@@ -75,7 +80,7 @@ EOF
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_keycloak_db_username}"
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:*/${local.camunda_keycloak_db_username}"
                 }
               ]
             }
@@ -104,6 +109,7 @@ EOF
           }
 EOF 
 
+      # Same rationale as the above for access policy
       access_policy =  <<EOF
            {
               "Version": "2012-10-17",
@@ -113,7 +119,7 @@ EOF
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_identity_db_username}"
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:*/${local.camunda_identity_db_username}"
                 }
               ]
             }
@@ -143,6 +149,7 @@ EOF
           }
 EOF
 
+      # Same rationale as the above for access policy
       access_policy = <<EOF
             {
               "Version": "2012-10-17",
@@ -152,7 +159,7 @@ EOF
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_webmodeler_db_username}"
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:*/${local.camunda_webmodeler_db_username}"
                 }
               ]
             }
