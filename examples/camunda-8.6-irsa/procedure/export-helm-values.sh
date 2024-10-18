@@ -17,16 +17,16 @@ export CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME="$(terraform console <<<local.cam
 
 export DB_HOST="$(terraform output -raw postgres_endpoint)"
 export DB_ROLE_KEYCLOAK_NAME="$(terraform console <<<local.camunda_keycloak_role_name | jq -r)"
-export DB_ROLE_KEYCLOAK_ARN="$(terraform output -raw aurora_iam_role_arns | jq -r ."$DB_ROLE_KEYCLOAK_NAME")"
+export DB_ROLE_KEYCLOAK_ARN=$(terraform output -json aurora_iam_role_arns | jq -r ".[\"$DB_ROLE_KEYCLOAK_NAME\"]")
 export DB_ROLE_IDENTITY_NAME="$(terraform console <<<local.camunda_identity_role_name | jq -r)"
-export DB_ROLE_IDENTITY_ARN="$(terraform output -raw aurora_iam_role_arns | jq -r ."$DB_ROLE_IDENTITY_NAME")"
+export DB_ROLE_IDENTITY_ARN=$(terraform output -json aurora_iam_role_arns | jq -r ".[\"$DB_ROLE_IDENTITY_NAME\"]")
 export DB_ROLE_WEBMODELER_NAME="$(terraform console <<<local.camunda_webmodeler_role_name | jq -r)"
-export DB_ROLE_WEBMODELER_ARN="$(terraform output -raw aurora_iam_role_arns | jq -r ."$DB_ROLE_WEBMODELER_NAME")"
+export DB_ROLE_WEBMODELER_ARN=$(terraform output -json aurora_iam_role_arns | jq -r ".[\"$DB_ROLE_WEBMODELER_NAME\"]")
 
 # OpenSearch
 export OPENSEARCH_HOST="$(terraform output -raw opensearch_endpoint)"
 export OPENSEARCH_ROLE_NAME="$(terraform console <<<local.opensearch_iam_role_name | jq -r)"
-export OPENSEARCH_ROLE_ARN="$(terraform output -raw opensearch_role_arns | jq -r ."$OPENSEARCH_ROLE_NAME")"
+export OPENSEARCH_ROLE_ARN=$(terraform output -json opensearch_iam_role_arns | jq -r ".[\"$OPENSEARCH_ROLE_NAME\"]")
 export CAMUNDA_ZEEBE_SERVICE_ACCOUNT_NAME="$(terraform console <<<local.camunda_zeebe_service_account | jq -r)"
 export CAMUNDA_OPERATE_SERVICE_ACCOUNT_NAME="$(terraform console <<<local.camunda_operate_service_account | jq -r)"
 export CAMUNDA_TASKLIST_SERVICE_ACCOUNT_NAME="$(terraform console <<<local.camunda_tasklist_service_account | jq -r)"

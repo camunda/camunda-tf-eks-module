@@ -42,6 +42,7 @@ module "postgresql" {
   instance_class = "db.t3.medium"
 
   # IAM IRSA
+  iam_auth_enabled          = true
   iam_roles_with_policies   = [
     {
       role_name = "${local.camunda_keycloak_role_name}"
@@ -57,9 +58,7 @@ module "postgresql" {
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                   "StringEquals": {
-                    "${module.eks_cluster.oidc_provider_id}:sub": [
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_keycloak_service_account}"
-                    ]
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_keycloak_service_account}"
                   }
                 }
               }
@@ -76,9 +75,7 @@ EOF
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": [
-                    "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_keycloak_db_username}"
-                  ]
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_keycloak_db_username}"
                 }
               ]
             }
@@ -99,9 +96,7 @@ EOF
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                   "StringEquals": {
-                    "${module.eks_cluster.oidc_provider_id}:sub": [
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_identity_service_account}"
-                    ]
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_identity_service_account}"
                   }
                 }
               }
@@ -140,9 +135,7 @@ EOF
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                   "StringEquals": {
-                    "${module.eks_cluster.oidc_provider_id}:sub": [
-                      "system:serviceaccount:${local.camunda_namespace}:${local.camunda_webmodeler_service_account}"
-                    ]
+                    "${module.eks_cluster.oidc_provider_id}:sub": "system:serviceaccount:${local.camunda_namespace}:${local.camunda_webmodeler_service_account}"
                   }
                 }
               }
