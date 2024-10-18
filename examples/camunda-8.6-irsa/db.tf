@@ -42,11 +42,11 @@ module "postgresql" {
   instance_class = "db.t3.medium"
 
   # IAM IRSA
-  iam_roles_with_policies   = <<EOF
-  [
+  iam_roles_with_policies   = [
     {
-      "role_name": ${local.camunda_keycloak_role_name},
-      "trust_policy":  {
+      role_name = "${local.camunda_keycloak_role_name}"
+      trust_policy = <<EOF
+          {
             "Version": "2012-10-17",
             "Statement": [
               {
@@ -64,8 +64,11 @@ module "postgresql" {
                 }
               }
             ]
-          },
-      "access_policy": {
+          }
+EOF
+
+      access_policy =  <<EOF
+         {
               "Version": "2012-10-17",
               "Statement": [
                 {
@@ -78,11 +81,14 @@ module "postgresql" {
                   ]
                 }
               ]
-            },
+            }
+EOF
     },
+   
     {
-      "role_name": ${local.camunda_identity_role_name},
-      "trust_policy":  {
+      role_name = "${local.camunda_identity_role_name}"
+      trust_policy = <<EOF
+          {
             "Version": "2012-10-17",
             "Statement": [
               {
@@ -100,8 +106,11 @@ module "postgresql" {
                 }
               }
             ]
-          },
-      "access_policy": {
+          }
+EOF 
+
+      access_policy =  <<EOF
+           {
               "Version": "2012-10-17",
               "Statement": [
                 {
@@ -112,11 +121,15 @@ module "postgresql" {
                   "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_identity_db_username}"
                 }
               ]
-            },
+            }
+EOF
+
     },
+    
     {
-      "role_name": ${local.camunda_webmodeler_role_name},
-      "trust_policy":  {
+      role_name = "${local.camunda_webmodeler_role_name}"
+      trust_policy =  <<EOF
+          {
             "Version": "2012-10-17",
             "Statement": [
               {
@@ -134,8 +147,11 @@ module "postgresql" {
                 }
               }
             ]
-          },
-      "access_policy": {
+          }
+EOF
+
+      access_policy = <<EOF
+            {
               "Version": "2012-10-17",
               "Statement": [
                 {
@@ -146,11 +162,11 @@ module "postgresql" {
                   "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:${local.aurora_cluster_name}/${local.camunda_webmodeler_db_username}"
                 }
               ]
-            },
-    },
-  ]
+            }
+EOF
 
-EOF 
+    }
+  ]
 
   depends_on = [module.eks_cluster]
 }

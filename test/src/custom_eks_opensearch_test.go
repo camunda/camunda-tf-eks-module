@@ -208,11 +208,11 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
-	iamRolesWithPolicies := fmt.Sprintf(`[
-		"role_name": %s,
-		"trust_policy": %s,
-		"access_policy": %s
-	]`, openSearchRole, iamRoleTrustPolicy, openSearchAccessPolicy)
+	iamRolesWithPolicies = map[string]interface{}{
+		"role_name":   		openSearchRole,
+		"trust_policy":   iamRoleTrustPolicy,
+		"access_policy":  openSearchAccessPolicy,
+	}
 
 	varsConfigOpenSearch := map[string]interface{}{
 		"domain_name":                  opensearchDomainName,

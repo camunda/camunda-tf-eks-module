@@ -1,19 +1,14 @@
-// Convert the list to a map by using the role_name as the key
-locals {
-  roles_map = { for role in var.iam_roles_with_policies : role.role_name => role }
-}
-
-// IAM Role for OpenSearch
+// IAM Role
 resource "aws_iam_role" "roles" {
-  for_each = local.roles_map
+  for_each = { for idx, role in var.iam_roles_with_policies : role.role_name => role }
 
   name               = each.key
   assume_role_policy = each.value.trust_policy
 }
 
-// IAM Policy for OpenSearch
+// IAM Policy for Access
 resource "aws_iam_policy" "access_policies" {
-  for_each = local.roles_map
+  for_each = { for idx, role in var.iam_roles_with_policies : role.role_name => role }
 
   name        = "${each.key}-access-policy"
   description = "Access policy for ${each.key}"
@@ -23,7 +18,7 @@ resource "aws_iam_policy" "access_policies" {
 
 // Attach the policy to the role
 resource "aws_iam_role_policy_attachment" "attach_policies" {
-  for_each = local.roles_map
+  for_each = { for idx, role in var.iam_roles_with_policies : role.role_name => role }
 
   role       = aws_iam_role.roles[each.key].name
   policy_arn = aws_iam_policy.access_policies[each.key].arn

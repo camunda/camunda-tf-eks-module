@@ -35,11 +35,11 @@ module "opensearch_domain" {
   advanced_security_master_user_password = local.opensearch_master_password
 
   # IAM IRSA
-  iam_roles_with_policies   = <<EOF
-  [
+  iam_roles_with_policies   = [
     {
-      "role_name": "${local.opensearch_iam_role_name}",
-      "trust_policy": {
+      role_name = "${local.opensearch_iam_role_name}"
+      trust_policy = <<EOF
+          {
             "Version": "2012-10-17",
             "Statement": [
               {
@@ -60,8 +60,11 @@ module "opensearch_domain" {
                 }
               }
             ]
-          },
-      "access_policy": {
+          }
+EOF
+
+      access_policy = <<EOF
+            {
               "Version": "2012-10-17",
               "Statement": [
                 {
@@ -91,11 +94,10 @@ module "opensearch_domain" {
                   "Resource": "arn:aws:es:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:domain/${local.opensearch_domain_name}/*"
                 }
               ]
-            },
-    },
-  ]
-
+            }
 EOF 
+    }
+  ]
 
 
   # rely on fine grained access control for this part

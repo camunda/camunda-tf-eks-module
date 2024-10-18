@@ -212,12 +212,11 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, auroraNamespace, auroraServiceAccount)
 
-	iamRolesWithPolicies := fmt.Sprintf(`[
-		"role_name": %s,
-		"trust_policy": %s,
-		"access_policy": %s
-	]`, auroraRole, iamRoleTrustPolicy, openSearchAccessPolicy)
-
+	iamRolesWithPolicies = map[string]interface{}{
+		"role_name":   		auroraRole,
+		"trust_policy":   iamRoleTrustPolicy,
+		"access_policy": 	auroraAccessPolicy,
+	}
 
 	varsConfigAurora := map[string]interface{}{
 		"username":                 auroraUsername,
