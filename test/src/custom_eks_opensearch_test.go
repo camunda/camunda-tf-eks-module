@@ -210,8 +210,8 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	iamRolesWithPolicies := map[string]interface{}{
 		"role_name":   		openSearchRole,
-		"trust_policy":   iamRoleTrustPolicy,
-		"access_policy":  openSearchAccessPolicy,
+		"trust_policy":   strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
+		"access_policy": 	strings.ReplaceAll(openSearchAccessPolicy, "\n", " "),
 	}
 
 	varsConfigOpenSearch := map[string]interface{}{

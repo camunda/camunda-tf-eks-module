@@ -214,8 +214,8 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 
 	iamRolesWithPolicies := map[string]interface{}{
 		"role_name":   		auroraRole,
-		"trust_policy":   iamRoleTrustPolicy,
-		"access_policy": 	auroraAccessPolicy,
+		"trust_policy":   strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
+		"access_policy": 	strings.ReplaceAll(auroraAccessPolicy, "\n", " "),
 	}
 
 	varsConfigAurora := map[string]interface{}{
