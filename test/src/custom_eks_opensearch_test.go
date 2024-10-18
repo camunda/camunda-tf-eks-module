@@ -208,7 +208,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
-	iamRolesWithPolicies = map[string]interface{}{
+	iamRolesWithPolicies := map[string]interface{}{
 		"role_name":   		openSearchRole,
 		"trust_policy":   iamRoleTrustPolicy,
 		"access_policy":  openSearchAccessPolicy,

@@ -212,7 +212,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, auroraNamespace, auroraServiceAccount)
 
-	iamRolesWithPolicies = map[string]interface{}{
+	iamRolesWithPolicies := map[string]interface{}{
 		"role_name":   		auroraRole,
 		"trust_policy":   iamRoleTrustPolicy,
 		"access_policy": 	auroraAccessPolicy,
