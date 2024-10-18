@@ -4,7 +4,7 @@ locals {
 }
 
 module "eks_cluster" {
-  # TODO: pin to v3
+  # TODO: pin to v3 after the release
   source = "git::https://github.com/camunda/camunda-tf-eks-module//modules/eks-cluster?ref=feature/opensearch-doc"
 
   name   = local.eks_cluster_name

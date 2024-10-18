@@ -23,7 +23,7 @@ locals {
 }
 
 module "postgresql" {
-  # TODO: pin to v3
+  # TODO: pin to v3 after the release
   source                     = "git::https://github.com/camunda/camunda-tf-eks-module//modules/aurora?ref=feature/opensearch-doc"
   engine_version             = "15.8"
   auto_minor_version_upgrade = false

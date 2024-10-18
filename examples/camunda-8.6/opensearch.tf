@@ -2,9 +2,8 @@ locals {
   opensearch_domain_name = "domain-name-os-std" # Replace "domain-name" with your domain name
 }
 
-# TODO: handle deletion
-
 module "opensearch_domain" {
+  # TODO: pin to v3 after the release
   source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=2.6.0"
   domain_name    = local.opensearch_domain_name
   engine_version = "2.15"

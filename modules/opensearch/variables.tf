@@ -273,7 +273,7 @@ variable "iam_roles_with_policies" {
     #   [
     #     {
     #     role_name      = "OpenSearchRole"
-    #     trust_policy   = <<EOF
+    #     trust_policy   =
     # {
     #   "Version": "2012-10-17",
     #   "Statement": [
@@ -291,8 +291,8 @@ variable "iam_roles_with_policies" {
     #     }
     #   ]
     # }
-    # EOF
-    #     access_policy  = <<EOF
+    # 
+    #     access_policy  =
     # {
     #   "Version": "2012-10-17",
     #   "Statement": [
@@ -324,7 +324,7 @@ variable "iam_roles_with_policies" {
     #     }
     #   ]
     # }
-    # EOF
+    #
     #   }
     #   ]
     access_policy = string

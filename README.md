@@ -28,10 +28,6 @@ module "eks_cluster" {
 
   cluster_service_ipv4_cidr = "10.190.0.0/16"
   cluster_node_ipv4_cidr    = "10.192.0.0/16"
-
-  output "cluster_region" {
-    value = "eu-central-1"
-  }
 }
 ```
 
@@ -105,6 +101,7 @@ The Aurora module uses the following outputs from the EKS cluster module to defi
 - `module.eks_cluster.oidc_provider_arn`: The ARN of the OIDC provider for the EKS cluster.
 - `module.eks_cluster.oidc_provider_id`: The ID of the OIDC provider for the EKS cluster.
 - `var.account_id`: Your AWS account id
+- `var.aurora_region`: Your Aurora AWS Region
 - `var.aurora_cluster_name`: The name of the Aurora cluster to access
 Here is the corrected version:
 - `var.aurora_irsa_username`: The username used to access AuroraDB. This username is different from the superuser. The user must also be created manually in the database to enable the IRSA connection, as described in [the steps below](#create-irsa-user-on-the-database).
@@ -128,7 +125,7 @@ module "postgresql" {
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${var.account_id}:dbuser:${var.aurora_cluster_name}/${var.aurora_irsa_username}"
+                  "Resource": "arn:aws:rds-db:${var.aurora_region}:${var.account_id}:dbuser:${var.aurora_cluster_name}/${var.aurora_irsa_username}"
                 }
               ]
             }
@@ -186,6 +183,7 @@ The OpenSearch module uses the following outputs from the EKS cluster module to 
 - `module.eks_cluster.oidc_provider_arn`: The ARN of the OIDC provider for the EKS cluster.
 - `module.eks_cluster.oidc_provider_id`: The ID of the OIDC provider for the EKS cluster.
 - `var.account_id`: Your AWS account id
+- `var.opensearch_region`: Your OpenSearch AWS Region
 - `var.opensearch_domain_name`: The name of the OpenSearch domain to access
 - `var.opensearch_namespace`: The kubernetes namespace to allow access
 - `var.opensearch_service_account`: The kubernetes ServiceAccount to allow access
@@ -207,7 +205,7 @@ module "opensearch_domain" {
                     "es:ESHttpPut",
                     "es:ESHttpPost"
                   ],
-                  "Resource": "arn:aws:es:${local.eks_cluster_region}:${var.account_id}:domain/${var.opensearch_domain_name}/*"
+                  "Resource": "arn:aws:es:${var.opensearch_region}:${var.account_id}:domain/${var.opensearch_domain_name}/*"
                 }
               ]
             }

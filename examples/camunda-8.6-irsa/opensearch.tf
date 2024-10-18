@@ -15,7 +15,7 @@ locals {
 }
 
 module "opensearch_domain" {
-  # TODO: pin to v3
+  # TODO: pin to v3 after the release
   source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=feature/opensearch-doc"
   domain_name    = local.opensearch_domain_name
   engine_version = "2.15"
