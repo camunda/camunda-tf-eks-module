@@ -3,7 +3,7 @@ identityKeycloak:
     serviceAccount:
         name: ${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}
         annotations:
-            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+            eks.amazonaws.com/role-arn: ${DB_ROLE_KEYCLOAK_ARN}
 
     postgresql:
         enabled: false
@@ -15,7 +15,7 @@ identityKeycloak:
 
     extraEnvVars:
         - name: KEYCLOAK_EXTRA_ARGS
-          value: --db-driver=software.amazon.jdbc.Driver --transaction-xa-enabled=false --log-level=INFO,software.amazon.jdbc:INFO
+          value: --db-driver=software.amazon.jdbc.Driver --transaction-xa-enabled=false --log-level=FINER,software.amazon.jdbc:FINER
         - name: KEYCLOAK_JDBC_PARAMS
           value: wrapperPlugins=iam&ssl=true&sslmode=require
         - name: KEYCLOAK_JDBC_DRIVER
@@ -64,7 +64,7 @@ webModeler:
     serviceAccount:
         name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
         annotations:
-            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+            eks.amazonaws.com/role-arn: ${DB_ROLE_WEBMODELER_ARN}
 
     restapi:
         externalDatabase:
@@ -79,7 +79,7 @@ identity:
     serviceAccount:
         name: ${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}
         annotations:
-            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+            eks.amazonaws.com/role-arn: ${DB_ROLE_IDENTITY_ARN}
 
     fullURL: http://localhost:8069 # replace this with a port of your choice when you will do port forwarding
 

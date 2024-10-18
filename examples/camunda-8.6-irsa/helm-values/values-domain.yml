@@ -3,7 +3,7 @@ identityKeycloak:
     serviceAccount:
         name: ${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}
         annotations:
-            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+            eks.amazonaws.com/role-arn: ${DB_ROLE_KEYCLOAK_ARN}
 
     postgresql:
         enabled: false
@@ -73,7 +73,7 @@ webModeler:
     serviceAccount:
         name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
         annotations:
-            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+            eks.amazonaws.com/role-arn: ${DB_ROLE_WEBMODELER_ARN}
 
     restapi:
         externalDatabase:
@@ -90,7 +90,7 @@ identity:
     serviceAccount:
         name: ${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}
         annotations:
-            eks.amazonaws.com/role-arn: ${DB_ROLE_ARN}
+            eks.amazonaws.com/role-arn: ${DB_ROLE_IDENTITY_ARN}
 
     externalDatabase:
         enabled: true
