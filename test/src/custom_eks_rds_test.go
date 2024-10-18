@@ -180,6 +180,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	})
 
 	// Define the Aurora access policy for IAM DB Auth
+	// note: we use a wildcard instead of the DbiResourceId as we don't know it yet
 	auroraAccessPolicy := fmt.Sprintf(`{
   "Version": "2012-10-17",
   "Statement": [
@@ -188,10 +189,10 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
       "Action": [
         "rds-db:connect"
       ],
-      "Resource": "arn:aws:rds-db:%s:%s:dbuser:%s/%s"
+      "Resource": "arn:aws:rds-db:%s:%s:dbuser:*/%s"
     }
   ]
-}`, suite.region, accountId, auroraClusterName, auroraIRSAUsername)
+}`, suite.region, accountId, auroraIRSAUsername)
 
 	// Define the trust policy for Aurora IAM role
 	iamRoleTrustPolicy := fmt.Sprintf(`{
@@ -212,6 +213,12 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, auroraNamespace, auroraServiceAccount)
 
+	iamRolesWithPolicies := map[string]interface{}{
+		"role_name":   		auroraRole,
+		"trust_policy":   strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
+		"access_policy": 	strings.ReplaceAll(auroraAccessPolicy, "\n", " "),
+	}
+
 	varsConfigAurora := map[string]interface{}{
 		"username":                 auroraUsername,
 		"password":                 auroraPassword,
@@ -221,11 +228,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"vpc_id":                   *result.Cluster.ResourcesVpcConfig.VpcId,
 		"availability_zones":       []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
 		"cidr_blocks":              append(publicBlocks, privateBlocks...),
-		"iam_auth_enabled":         true,
-		"iam_create_aurora_role":   true,
-		"iam_aurora_role_name":     auroraRole,
-		"iam_role_trust_policy":    iamRoleTrustPolicy,
-		"iam_aurora_access_policy": auroraAccessPolicy,
+		"iam_roles_with_policies":  iamRolesWithPolicies,
 	}
 
 	tfModuleAurora := "aurora/"
@@ -329,7 +332,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	suite.Require().NoError(err)
 
 	expectedRDSAZ := []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)}
-	suite.Assert().Equal(varsConfigAurora["iam_auth_enabled"].(bool), *describeDBClusterOutput.DBClusters[0].IAMDatabaseAuthenticationEnabled)
+	suite.Assert().Equal(true, *describeDBClusterOutput.DBClusters[0].IAMDatabaseAuthenticationEnabled)
 	suite.Assert().Equal(varsConfigAurora["username"].(string), *describeDBClusterOutput.DBClusters[0].MasterUsername)
 	suite.Assert().Equal(auroraDatabase, *describeDBClusterOutput.DBClusters[0].DatabaseName)
 	suite.Assert().Equal(int32(5432), *describeDBClusterOutput.DBClusters[0].Port)
