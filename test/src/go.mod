@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/iam v1.37.2
 	github.com/aws/aws-sdk-go-v2/service/kms v1.37.2
 	github.com/aws/aws-sdk-go-v2/service/opensearch v1.41.2
-	github.com/aws/aws-sdk-go-v2/service/rds v1.87.2
+	github.com/aws/aws-sdk-go-v2/service/rds v1.87.3
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.65.3
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.2
 	github.com/aws/smithy-go v1.22.0
