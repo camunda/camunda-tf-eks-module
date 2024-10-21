@@ -179,7 +179,6 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	})
 
 	// Define the Aurora access policy for IAM DB Auth
-	// note: we use a {DbiResourceId} as a template string
 	auroraAccessPolicy := fmt.Sprintf(`{
   "Version": "2012-10-17",
   "Statement": [
@@ -188,7 +187,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
       "Action": [
         "rds-db:connect"
       ],
-      "Resource": "arn:aws:rds-db:%s:%s:dbuser:{DbiResourceId}/%s"
+      "Resource": "arn:aws:rds-db:%s:%s:dbuser:*/%s"
     }
   ]
 }`, suite.region, accountId, auroraIRSAUsername)

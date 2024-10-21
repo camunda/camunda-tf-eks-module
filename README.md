@@ -115,8 +115,9 @@ module "postgresql" {
     {
       role_name = "AuroraRole-your-cluster" # ensure uniqueness of this one
 
-      # Since {DbiResourceId} may be unknown during the apply, it will be dynamically replaced with the database's resource ID
-      # at apply time. {DbiResourceId} should be treated as a string template, using the value of the database's identifier.
+      # Source: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+      # Since the DbiResourceId may be unknown during the apply process, and because each instance of the RDS cluster contains its own DbiResourceId,
+      # we use the wildcard `dbuser:*` to apply to all database instances.
 
       access_policy = <<EOF
             {
@@ -127,7 +128,7 @@ module "postgresql" {
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${var.aurora_region}:${var.account_id}:dbuser:{DbiResourceId}/${var.aurora_irsa_username}"
+                  "Resource": "arn:aws:rds-db:${var.aurora_region}:${var.account_id}:dbuser:*/${var.aurora_irsa_username}"
                 }
               ]
             }

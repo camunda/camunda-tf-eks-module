@@ -67,8 +67,8 @@ module "postgresql" {
 EOF
 
       # Source: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
-      # Since {DbiResourceId} may be unknown during the apply, it will be dynamically replaced with the database's resource ID
-      # at apply time. {DbiResourceId} should be treated as a string template, using the value of the database's identifier.
+      # Since the DbiResourceId may be unknown during the apply process, and because each instance of the RDS cluster contains its own DbiResourceId,
+      # we use the wildcard `dbuser:*` to apply to all database instances.
       access_policy = <<EOF
          {
               "Version": "2012-10-17",
@@ -78,7 +78,7 @@ EOF
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:{DbiResourceId}/${local.camunda_keycloak_db_username}"
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:*/${local.camunda_keycloak_db_username}"
                 }
               ]
             }
@@ -117,7 +117,7 @@ EOF
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:{DbiResourceId}/${local.camunda_identity_db_username}"
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:*/${local.camunda_identity_db_username}"
                 }
               ]
             }
@@ -157,7 +157,7 @@ EOF
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:{DbiResourceId}/${local.camunda_webmodeler_db_username}"
+                  "Resource": "arn:aws:rds-db:${local.eks_cluster_region}:${module.eks_cluster.aws_caller_identity_account_id}:dbuser:*/${local.camunda_webmodeler_db_username}"
                 }
               ]
             }
@@ -177,4 +177,16 @@ output "postgres_endpoint" {
 output "aurora_iam_role_arns" {
   value       = module.postgresql.aurora_iam_role_arns
   description = "Map of IAM role names to their ARNs"
+}
+
+output "aurora_id" {
+  value = module.postgresql.aurora_id
+}
+
+output "aurora_cluster_identifier" {
+  value = module.postgresql.aurora_cluster_identifier
+}
+
+output "aurora_cluster_resource_id" {
+  value = module.postgresql.aurora_cluster_resource_id
 }

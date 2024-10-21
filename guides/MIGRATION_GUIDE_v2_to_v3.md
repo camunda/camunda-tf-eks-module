@@ -74,7 +74,7 @@ iam_aurora_access_policy      = jsonencode({
   "Statement": [{
     "Effect": "Allow",
     "Action": [ "rds-db:connect" ],
-    "Resource": "arn:aws:rds-db:us-west-2:123456789012:dbuser:{DbiResourceId}/my-db-user"
+    "Resource": "arn:aws:rds-db:us-west-2:123456789012:dbuser:*/my-db-user"
   }]
 })
 ```
@@ -113,7 +113,7 @@ iam_roles_with_policies = [
         "Statement": [{
           "Effect": "Allow",
           "Action": [ "rds-db:connect" ],
-          "Resource": "arn:aws:rds-db:us-west-2:123456789012:dbuser:{DbiResourceId}/my-db-user"
+          "Resource": "arn:aws:rds-db:us-west-2:123456789012:dbuser:*/my-db-user"
         }]
       }
     EOF
