@@ -105,6 +105,8 @@ variable "iam_roles_with_policies" {
 
     # Access policy for Aurora allowing access as a json string
     # see https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+    # Since {DbiResourceId} may be unknown during the apply, it will be dynamically replaced with the database's resource ID
+    # at apply time. {DbiResourceId} should be treated as a string template, using the value of the database's identifier.
     # Example:
     #   [
     #     {
@@ -137,7 +139,7 @@ variable "iam_roles_with_policies" {
     #                   "Action": [
     #                     "rds-db:connect"
     #                   ],
-    #                   "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:<DbiResourceId>/<YOUR-DB-USER-NAME>"
+    #                   "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:{DbiResourceId}/<YOUR-DB-USER-NAME>"
     #                 }
     #               ]
     #             }

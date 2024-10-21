@@ -164,8 +164,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 
 	// Define the ARN for RDS IAM DB Auth
 	auroraIRSAUsername := "myirsauser"
-	auroraArn := fmt.Sprintf("arn:aws:rds-db:%s:%s:dbuser:%s/%s", suite.region, accountId, auroraClusterName, auroraIRSAUsername)
-	suite.sugaredLogger.Infow("Aurora RDS IAM infos", "accountId", accountId, "auroraArn", auroraArn)
+	suite.sugaredLogger.Infow("Aurora RDS IAM infos", "accountId", accountId)
 
 	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
 
@@ -180,7 +179,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	})
 
 	// Define the Aurora access policy for IAM DB Auth
-	// note: we use a wildcard instead of the DbiResourceId as we don't know it yet
+	// note: we use a {DbiResourceId} as a template string
 	auroraAccessPolicy := fmt.Sprintf(`{
   "Version": "2012-10-17",
   "Statement": [
@@ -189,7 +188,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
       "Action": [
         "rds-db:connect"
       ],
-      "Resource": "arn:aws:rds-db:%s:%s:dbuser:*/%s"
+      "Resource": "arn:aws:rds-db:%s:%s:dbuser:{DbiResourceId}/%s"
     }
   ]
 }`, suite.region, accountId, auroraIRSAUsername)

@@ -3,6 +3,26 @@ output "aurora_endpoint" {
   description = "The endpoint of the Aurora cluster"
 }
 
+output "aurora_id" {
+  value       = aws_rds_cluster.id
+  description = "RDS Cluster Identifier"
+}
+
+output "aurora_resource_id" {
+  value       = aws_rds_cluster.resource_id
+  description = "DB Resource Identifier"
+}
+
+output "aurora_cluster_identifier" {
+  value       = aws_rds_cluster.cluster_identifier
+  description = "RDS Cluster Identifier"
+}
+
+output "aurora_cluster_resource_id" {
+  value       = aws_rds_cluster.cluster_resource_id
+  description = "RDS Cluster Resource ID"
+}
+
 // Output for Role ARNs
 output "aurora_iam_role_arns" {
   description = "Map of IAM role names to their ARNs"

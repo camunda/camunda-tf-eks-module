@@ -114,6 +114,10 @@ module "postgresql" {
   iam_roles_with_policies = [
     {
       role_name = "AuroraRole-your-cluster" # ensure uniqueness of this one
+
+      # Since {DbiResourceId} may be unknown during the apply, it will be dynamically replaced with the database's resource ID
+      # at apply time. {DbiResourceId} should be treated as a string template, using the value of the database's identifier.
+
       access_policy = <<EOF
             {
               "Version": "2012-10-17",
@@ -123,7 +127,7 @@ module "postgresql" {
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${var.aurora_region}:${var.account_id}:dbuser:*/${var.aurora_irsa_username}"
+                  "Resource": "arn:aws:rds-db:${var.aurora_region}:${var.account_id}:dbuser:{DbiResourceId}/${var.aurora_irsa_username}"
                 }
               ]
             }
