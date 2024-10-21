@@ -208,10 +208,12 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
-	iamRolesWithPolicies := map[string]interface{}{
-		"role_name":     openSearchRole,
-		"trust_policy":  strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
-		"access_policy": strings.ReplaceAll(openSearchAccessPolicy, "\n", " "),
+	iamRolesWithPolicies := []map[string]interface{}{
+		{
+			"role_name":     openSearchRole,
+			"trust_policy":  strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
+			"access_policy": strings.ReplaceAll(openSearchAccessPolicy, "\n", " "),
+		},
 	}
 
 	varsConfigOpenSearch := map[string]interface{}{

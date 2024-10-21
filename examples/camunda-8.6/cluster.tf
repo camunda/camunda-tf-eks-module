@@ -13,6 +13,9 @@ module "eks_cluster" {
   # Set CIDR ranges or use the defaults
   cluster_service_ipv4_cidr = "10.190.0.0/16"
   cluster_node_ipv4_cidr    = "10.192.0.0/16"
+
+  # Default node type for the Kubernetes cluster
+  np_instance_types = ["m6i.xlarge"]
 }
 
 output "cert_manager_arn" {

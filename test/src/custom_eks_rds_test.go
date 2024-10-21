@@ -211,10 +211,12 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, auroraNamespace, auroraServiceAccount)
 
-	iamRolesWithPolicies := map[string]interface{}{
-		"role_name":     auroraRole,
-		"trust_policy":  strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
-		"access_policy": strings.ReplaceAll(auroraAccessPolicy, "\n", " "),
+	iamRolesWithPolicies := []map[string]interface{}{
+		{
+			"role_name":     auroraRole,
+			"trust_policy":  strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
+			"access_policy": strings.ReplaceAll(auroraAccessPolicy, "\n", " "),
+		},
 	}
 
 	varsConfigAurora := map[string]interface{}{
