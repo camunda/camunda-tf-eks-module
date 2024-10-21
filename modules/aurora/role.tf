@@ -14,7 +14,7 @@ resource "aws_iam_policy" "access_policies" {
   description = "Access policy for ${each.key}"
 
   # perform a templating of the DbiResourceId
-  policy = replace(each.value.access_policy, "{DbiResourceId}", aws_rds_cluster.aurora_cluster.aurora_cluster_resource_id)
+  policy = replace(each.value.access_policy, "{DbiResourceId}", aws_rds_cluster.aurora_cluster.cluster_resource_id)
 }
 
 // Attach the policy to the role
