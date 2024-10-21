@@ -271,6 +271,8 @@ github.com/aws/aws-sdk-go-v2/service/rds v1.87.0 h1:f7u5jzUHaIIn5F121ortA0g2yDDW
 github.com/aws/aws-sdk-go-v2/service/rds v1.87.0/go.mod h1:agnQGhYbHXxPM2+zZH4WZIpki6IDU6zFGzfOlnu+1Ow=
 github.com/aws/aws-sdk-go-v2/service/rds v1.87.2 h1:EUBCpvWYJRDV+baakcOlytZsEnjq21dBBw+di4q5TUE=
 github.com/aws/aws-sdk-go-v2/service/rds v1.87.2/go.mod h1:KziDa/w2AVz3dfANxwuBV0XqoQjxTKbVQyLNH5BRvO4=
+github.com/aws/aws-sdk-go-v2/service/rds v1.87.3 h1:IA338QOtCFeKTUvhuWkFg0yjjYwFFip4AzTSjcsTGuI=
+github.com/aws/aws-sdk-go-v2/service/rds v1.87.3/go.mod h1:KziDa/w2AVz3dfANxwuBV0XqoQjxTKbVQyLNH5BRvO4=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.65.0 h1:2dSm7frMrw2tdJ0QvyccQNJyPGaP24dyDgZ6h1QJMGU=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.65.0/go.mod h1:4XSVpw66upN8wND3JZA29eXl2NOZvfFVq7DIP6xvfuQ=
 github.com/aws/aws-sdk-go-v2/service/s3 v1.65.3 h1:xxHGZ+wUgZNACQmxtdvP5tgzfsxGS3vPpTP5Hy3iToE=
