@@ -178,15 +178,3 @@ output "aurora_iam_role_arns" {
   value       = module.postgresql.aurora_iam_role_arns
   description = "Map of IAM role names to their ARNs"
 }
-
-output "aurora_id" {
-  value = module.postgresql.aurora_id
-}
-
-output "aurora_cluster_identifier" {
-  value = module.postgresql.aurora_cluster_identifier
-}
-
-output "aurora_cluster_resource_id" {
-  value = module.postgresql.aurora_cluster_resource_id
-}
