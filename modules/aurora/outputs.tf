@@ -8,11 +8,6 @@ output "aurora_id" {
   description = "RDS Cluster Identifier"
 }
 
-output "aurora_resource_id" {
-  value       = aws_rds_cluster.aurora_cluster.resource_id
-  description = "DB Resource Identifier"
-}
-
 output "aurora_cluster_identifier" {
   value       = aws_rds_cluster.aurora_cluster.cluster_identifier
   description = "RDS Cluster Identifier"

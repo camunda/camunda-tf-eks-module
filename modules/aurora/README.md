@@ -77,5 +77,4 @@ No modules.
 | <a name="output_aurora_iam_role_access_policy_arns"></a> [aurora\_iam\_role\_access\_policy\_arns](#output\_aurora\_iam\_role\_access\_policy\_arns) | Map of IAM role names to their access policy ARNs |
 | <a name="output_aurora_iam_role_arns"></a> [aurora\_iam\_role\_arns](#output\_aurora\_iam\_role\_arns) | Map of IAM role names to their ARNs |
 | <a name="output_aurora_id"></a> [aurora\_id](#output\_aurora\_id) | RDS Cluster Identifier |
-| <a name="output_aurora_resource_id"></a> [aurora\_resource\_id](#output\_aurora\_resource\_id) | DB Resource Identifier |
 <!-- END_TF_DOCS -->
