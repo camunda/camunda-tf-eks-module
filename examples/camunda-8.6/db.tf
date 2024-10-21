@@ -26,7 +26,8 @@ module "postgresql" {
   cluster_name               = local.aurora_cluster_name
   default_database_name      = local.camunda_database_keycloak
 
-  availability_zones = ["${local.eks_cluster_region}a", "${local.eks_cluster_region}b", "${local.eks_cluster_region}c"]
+  # create each AZs
+  availability_zones = [concat([local.eks_cluster_region, "a"]), concat([local.eks_cluster_region, "b"]), concat([local.eks_cluster_region, "c"])]
 
   username = local.aurora_master_username
   password = local.aurora_master_password

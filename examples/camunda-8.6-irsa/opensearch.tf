@@ -4,7 +4,7 @@ locals {
   opensearch_master_username = "secret_user"    # Replace with your opensearch username
   opensearch_master_password = "Secretvalue$23" # Replace with your opensearch password
 
-  opensearch_iam_role_name = "OpenSearchRole-${local.opensearch_domain_name}" # Ensure uniqueness
+  opensearch_iam_role_name = concat("OpenSearchRole-", local.opensearch_domain_name) # Ensure uniqueness
 
   # IRSA configuration
   camunda_namespace                = "camunda"     # Replace with your Kubernetes namespace that will host C8 Platform
@@ -35,9 +35,9 @@ module "opensearch_domain" {
   advanced_security_master_user_password = local.opensearch_master_password
 
   # IAM IRSA
-  iam_roles_with_policies   = [
+  iam_roles_with_policies = [
     {
-      role_name = "${local.opensearch_iam_role_name}"
+      role_name    = local.opensearch_iam_role_name
       trust_policy = <<EOF
           {
             "Version": "2012-10-17",
@@ -95,7 +95,7 @@ EOF
                 }
               ]
             }
-EOF 
+EOF
     }
   ]
 

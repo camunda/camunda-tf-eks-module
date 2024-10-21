@@ -209,17 +209,17 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 }`, accountId, oidcProviderID, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
 	iamRolesWithPolicies := map[string]interface{}{
-		"role_name":   		openSearchRole,
-		"trust_policy":   strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
-		"access_policy": 	strings.ReplaceAll(openSearchAccessPolicy, "\n", " "),
+		"role_name":     openSearchRole,
+		"trust_policy":  strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
+		"access_policy": strings.ReplaceAll(openSearchAccessPolicy, "\n", " "),
 	}
 
 	varsConfigOpenSearch := map[string]interface{}{
-		"domain_name":                  opensearchDomainName,
-		"subnet_ids":                   result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"cidr_blocks":                  append(publicBlocks, privateBlocks...),
-		"vpc_id":                       *result.Cluster.ResourcesVpcConfig.VpcId,
-		"iam_roles_with_policies":   		iamRolesWithPolicies,
+		"domain_name":             opensearchDomainName,
+		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"cidr_blocks":             append(publicBlocks, privateBlocks...),
+		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
+		"iam_roles_with_policies": iamRolesWithPolicies,
 	}
 
 	tfModuleOpenSearch := "opensearch/"

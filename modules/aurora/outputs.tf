@@ -7,8 +7,8 @@ output "aurora_endpoint" {
 output "aurora_iam_role_arns" {
   description = "Map of IAM role names to their ARNs"
 
-  value = { for role_name, role in aws_iam_role.roles : role_name => role.arn }
-  sensitive   = false
+  value     = { for role_name, role in aws_iam_role.roles : role_name => role.arn }
+  sensitive = false
 }
 
 // Output for Policy ARNs
@@ -17,5 +17,5 @@ output "aurora_iam_role_access_policy_arns" {
 
   value = { for role_name, policy in aws_iam_policy.access_policies : role_name => policy.arn }
 
-  sensitive   = false
+  sensitive = false
 }

@@ -41,7 +41,7 @@ variable "iam_roles_with_policies" {
     # Access policy allowing specific actions as a JSON string
     access_policy = string
   }))
-  
+
   # By default, don't create any role and associated policies.
   default = []
 }
@@ -51,7 +51,7 @@ For **v3**, there is a separate `iam_roles_with_policies` variable for both **Au
 
 ### Migration Example
 
-To migrate from **v2** to **v3**, you need to refactor your configuration by consolidating the removed variables into the new `iam_roles_with_policies` array. 
+To migrate from **v2** to **v3**, you need to refactor your configuration by consolidating the removed variables into the new `iam_roles_with_policies` array.
 
 Here’s an example of how you can migrate the variables:
 

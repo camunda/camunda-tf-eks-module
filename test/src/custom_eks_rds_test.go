@@ -214,21 +214,21 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 }`, accountId, oidcProviderID, oidcProviderID, auroraNamespace, auroraServiceAccount)
 
 	iamRolesWithPolicies := map[string]interface{}{
-		"role_name":   		auroraRole,
-		"trust_policy":   strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
-		"access_policy": 	strings.ReplaceAll(auroraAccessPolicy, "\n", " "),
+		"role_name":     auroraRole,
+		"trust_policy":  strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "),
+		"access_policy": strings.ReplaceAll(auroraAccessPolicy, "\n", " "),
 	}
 
 	varsConfigAurora := map[string]interface{}{
-		"username":                 auroraUsername,
-		"password":                 auroraPassword,
-		"default_database_name":    auroraDatabase,
-		"cluster_name":             auroraClusterName,
-		"subnet_ids":               result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"vpc_id":                   *result.Cluster.ResourcesVpcConfig.VpcId,
-		"availability_zones":       []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
-		"cidr_blocks":              append(publicBlocks, privateBlocks...),
-		"iam_roles_with_policies":  iamRolesWithPolicies,
+		"username":                auroraUsername,
+		"password":                auroraPassword,
+		"default_database_name":   auroraDatabase,
+		"cluster_name":            auroraClusterName,
+		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
+		"availability_zones":      []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
+		"cidr_blocks":             append(publicBlocks, privateBlocks...),
+		"iam_roles_with_policies": iamRolesWithPolicies,
 	}
 
 	tfModuleAurora := "aurora/"

@@ -17,9 +17,9 @@ locals {
   camunda_identity_service_account   = "identity-sa"   # Replace with your Kubernetes ServiceAcccount that will be created for Identity
   camunda_webmodeler_service_account = "webmodeler-sa" # Replace with your Kubernetes ServiceAcccount that will be created for WebModeler
 
-  camunda_keycloak_role_name   = "AuroraRole-Keycloak-${local.aurora_cluster_name}"   # IAM Role name use to allow access to the keycloak db
-  camunda_identity_role_name   = "AuroraRole-Identity-${local.aurora_cluster_name}"   # IAM Role name use to allow access to the identity db
-  camunda_webmodeler_role_name = "AuroraRole-Webmodeler-${local.aurora_cluster_name}"   # IAM Role name use to allow access to the webmodeler db
+  camunda_keycloak_role_name   = concat(["AuroraRole-Keycloak-", local.aurora_cluster_name])  # IAM Role name use to allow access to the keycloak db
+  camunda_identity_role_name   = concat(["AuroraRole-Identity", local.aurora_cluster_name])   # IAM Role name use to allow access to the identity db
+  camunda_webmodeler_role_name = concat(["AuroraRole-Webmodeler", local.aurora_cluster_name]) # IAM Role name use to allow access to the webmodeler db
 }
 
 module "postgresql" {
@@ -30,7 +30,7 @@ module "postgresql" {
   cluster_name               = local.aurora_cluster_name
   default_database_name      = local.camunda_database_keycloak
 
-  availability_zones = ["${local.eks_cluster_region}a", "${local.eks_cluster_region}b", "${local.eks_cluster_region}c"]
+  availability_zones = [concat(local.eks_cluster_region, "a"), concat(local.eks_cluster_region, "b"), concat(local.eks_cluster_region, "c")]
 
   username = local.aurora_master_username
   password = local.aurora_master_password
@@ -42,10 +42,10 @@ module "postgresql" {
   instance_class = "db.t3.medium"
 
   # IAM IRSA
-  iam_auth_enabled          = true
-  iam_roles_with_policies   = [
+  iam_auth_enabled = true
+  iam_roles_with_policies = [
     {
-      role_name = "${local.camunda_keycloak_role_name}"
+      role_name    = local.camunda_keycloak_role_name
       trust_policy = <<EOF
           {
             "Version": "2012-10-17",
@@ -71,7 +71,7 @@ EOF
       # You may want to restrict this permission further based on your security requirements.
       # Refer to the documentation for more details.
       # In this example, since the DbiResourceId is not known in advance, we use a wildcard.
-      access_policy =  <<EOF
+      access_policy = <<EOF
          {
               "Version": "2012-10-17",
               "Statement": [
@@ -86,9 +86,9 @@ EOF
             }
 EOF
     },
-   
+
     {
-      role_name = "${local.camunda_identity_role_name}"
+      role_name    = local.camunda_identity_role_name
       trust_policy = <<EOF
           {
             "Version": "2012-10-17",
@@ -107,10 +107,10 @@ EOF
               }
             ]
           }
-EOF 
+EOF
 
       # Same rationale as the above for access policy
-      access_policy =  <<EOF
+      access_policy = <<EOF
            {
               "Version": "2012-10-17",
               "Statement": [
@@ -126,10 +126,10 @@ EOF
 EOF
 
     },
-    
+
     {
-      role_name = "${local.camunda_webmodeler_role_name}"
-      trust_policy =  <<EOF
+      role_name    = local.camunda_webmodeler_role_name
+      trust_policy = <<EOF
           {
             "Version": "2012-10-17",
             "Statement": [
