@@ -19,8 +19,7 @@ locals {
 }
 
 module "postgresql" {
-  # TODO: pin to v3 after the release
-  source                     = "git::https://github.com/camunda/camunda-tf-eks-module//modules/aurora?ref=2.6.0"
+  source                     = "git::https://github.com/camunda/camunda-tf-eks-module//modules/aurora?ref=3.0.0"
   engine_version             = "15.8"
   auto_minor_version_upgrade = false
   cluster_name               = local.aurora_cluster_name
