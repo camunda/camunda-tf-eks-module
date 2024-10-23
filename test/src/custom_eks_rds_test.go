@@ -229,6 +229,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
 		"availability_zones":      []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
 		"cidr_blocks":             append(publicBlocks, privateBlocks...),
+		"iam_auth_enabled":        true,
 		"iam_roles_with_policies": iamRolesWithPolicies,
 	}
 
