@@ -14,7 +14,8 @@ module "eks_cluster" {
   cluster_node_ipv4_cidr    = "10.192.0.0/16"
 
   # Default node type for the Kubernetes cluster
-  np_instance_types = ["m6i.xlarge"]
+  np_instance_types     = ["m6i.xlarge"]
+  np_desired_node_count = 4
 }
 
 output "cert_manager_arn" {

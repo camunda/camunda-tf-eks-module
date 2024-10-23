@@ -20,7 +20,7 @@ module "opensearch_domain" {
   engine_version = "2.15"
 
   instance_type   = "t3.medium.search"
-  instance_count  = 3
+  instance_count  = 3 # one instance per AZ
   ebs_volume_size = 50
 
   subnet_ids  = module.eks_cluster.private_subnet_ids
