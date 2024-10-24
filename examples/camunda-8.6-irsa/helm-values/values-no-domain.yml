@@ -1,0 +1,130 @@
+---
+identityKeycloak:
+    serviceAccount:
+        name: ${CAMUNDA_KEYCLOAK_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_KEYCLOAK_ARN}
+
+    postgresql:
+        enabled: false
+    externalDatabase:
+        host: ${DB_HOST}
+        user: ${DB_KEYCLOAK_USERNAME}
+        port: 5432
+        database: ${DB_KEYCLOAK_NAME}
+
+    extraEnvVars:
+        - name: KEYCLOAK_EXTRA_ARGS
+          value: --db-driver=software.amazon.jdbc.Driver --transaction-xa-enabled=false --log-level=INFO,software.amazon.jdbc:INFO
+        - name: KEYCLOAK_JDBC_PARAMS
+          value: wrapperPlugins=iam&ssl=true&sslmode=require
+        - name: KEYCLOAK_JDBC_DRIVER
+          value: aws-wrapper:postgresql
+    auth:
+        existingSecret: identity-secret-for-components
+
+global:
+    elasticsearch:
+        enabled: false
+    opensearch:
+        enabled: true
+        aws:
+            enabled: true # enable IRSA auth
+        url:
+            protocol: https
+            host: ${OPENSEARCH_HOST}
+            # Amazon OpenSearch Service listens on port 443 opposed to the usual port 9200.
+            port: 443
+
+    identity:
+
+        auth:
+            publicIssuerUrl: http://localhost:8070/auth/realms/camunda-platform  # replace this with a port of your choice when you will do port forwarding
+
+            zeebe:
+                existingSecret:
+                    name: identity-secret-for-components
+            connectors:
+                existingSecret:
+                    name: identity-secret-for-components
+            operate:
+                redirectUrl: http://localhost:8071  # replace this with a port of your choice when you will do port forwarding
+                existingSecret:
+                    name: identity-secret-for-components
+            tasklist:
+                redirectUrl: http://localhost:8072  # replace this with a port of your choice when you will do port forwarding
+                existingSecret:
+                    name: identity-secret-for-components
+            optimize:
+                redirectUrl: http://localhost:8073  # replace this with a port of your choice when you will do port forwarding
+                existingSecret:
+                    name: identity-secret-for-components
+
+webModeler:
+    serviceAccount:
+        name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_WEBMODELER_ARN}
+
+    restapi:
+        externalDatabase:
+            url: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DB_WEBMODELER_NAME}?wrapperPlugins=iam
+            user: ${DB_WEBMODELER_USERNAME}
+        env:
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              value: software.amazon.jdbc.Driver
+
+
+identity:
+    serviceAccount:
+        name: ${CAMUNDA_IDENTITY_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${DB_ROLE_IDENTITY_ARN}
+
+    fullURL: http://localhost:8069 # replace this with a port of your choice when you will do port forwarding
+
+    externalDatabase:
+        enabled: true
+        host: ${DB_HOST}
+        port: 5432
+        username: ${DB_IDENTITY_USERNAME}
+        database: ${DB_IDENTITY_NAME}
+
+    env:
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DB_IDENTITY_NAME}?wrapperPlugins=iam
+        - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+          value: software.amazon.jdbc.Driver
+        - name: SPRING_DATASOURCE_USERNAME
+          value: ${DB_IDENTITY_USERNAME}
+
+zeebe:
+    serviceAccount:
+        name: ${CAMUNDA_ZEEBE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+operate:
+    serviceAccount:
+        name: ${CAMUNDA_OPERATE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+tasklist:
+    serviceAccount:
+        name: ${CAMUNDA_TASKLIST_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+optimize:
+    serviceAccount:
+        name: ${CAMUNDA_OPTIMIZE_SERVICE_ACCOUNT_NAME}
+        annotations:
+            eks.amazonaws.com/role-arn: ${OPENSEARCH_ROLE_ARN}
+
+    # OpenSearch prevents migration
+    migration:
+        enabled: false
+
+elasticsearch:
+    enabled: false

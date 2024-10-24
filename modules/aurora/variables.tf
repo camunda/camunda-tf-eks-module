@@ -94,60 +94,61 @@ variable "default_database_name" {
   description = "The name for the automatically created database on cluster creation."
 }
 
-variable "iam_create_aurora_role" {
-  description = "Flag to determine if the Aurora IAM role should be created, if true, this module will create a role. Please ensure that iam_auth_enabled is set to `true`"
-  type        = bool
-  default     = false
-}
+variable "iam_roles_with_policies" {
+  description = "List of roles with their trust and access policies"
+  type = list(object({
+    # Name of the Role to create
+    role_name = string
 
-variable "iam_aurora_role_name" {
-  description = "Name of the AuroraRole IAM role"
-  type        = string
-  default     = "AuroraRole"
-}
+    # Assume role trust policy for this Aurora role as a json string
+    trust_policy = string
 
-variable "iam_role_trust_policy" {
-  description = "Assume role trust policy for Aurora role"
-  type        = string
-  default     = <<EOF
-          {
-            "Version": "2012-10-17",
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Principal": {
-                  "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
-                },
-                "Action": "sts:AssumeRoleWithWebIdentity",
-                "Condition": {
-                  "StringEquals": {
-                    "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
-                  }
-                }
-              }
-            ]
-          }
+    # Access policy for Aurora allowing access as a json string
+    # see https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+    # Since the DbiResourceId may be unknown during the apply process, and because each instance of the RDS cluster contains its own DbiResourceId,
+    # we use the wildcard `dbuser:*` to apply to all database instances.
+    # Example:
+    #   [
+    #     {
+    #     role_name      = "AuroraRole"
+    #     trust_policy   =
+    #           {
+    #             "Version": "2012-10-17",
+    #             "Statement": [
+    #               {
+    #                 "Effect": "Allow",
+    #                 "Principal": {
+    #                   "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
+    #                 },
+    #                 "Action": "sts:AssumeRoleWithWebIdentity",
+    #                 "Condition": {
+    #                   "StringEquals": {
+    #                     "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
+    #                   }
+    #                 }
+    #               }
+    #             ]
+    #           }
+    #
+    #     access_policy  =
+    #             {
+    #               "Version": "2012-10-17",
+    #               "Statement": [
+    #                 {
+    #                   "Effect": "Allow",
+    #                   "Action": [
+    #                     "rds-db:connect"
+    #                   ],
+    #                   "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:*/<YOUR-DB-USER-NAME>"
+    #                 }
+    #               ]
+    #             }
+    #
+    #   }
+    #   ]
+    access_policy = string
+  }))
 
-EOF
-}
-
-variable "iam_aurora_access_policy" {
-  # see https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
-  description = "Access policy for Aurora allowing access"
-  type        = string
-  default     = <<EOF
-            {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "rds-db:connect"
-                  ],
-                  "Resource": "arn:aws:rds-db:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:dbuser:<YOUR-CLUSTER-NAME>/<YOUR-DB-USER-NAME>"
-                }
-              ]
-            }
-
-EOF
+  # By default, don't create any role and associated policies.
+  default = []
 }
