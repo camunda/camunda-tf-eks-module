@@ -11,7 +11,7 @@ module "vpc" {
   # AWS supports between /16 and 28
   cidr = var.cluster_node_ipv4_cidr
 
-  azs = ["${var.region}a", "${var.region}b", "${var.region}c"]
+  azs = ["${var.region}a", "${var.region}b", "${var.region}d"]
 
   # private subnets for nodes
   private_subnets = [cidrsubnet(var.cluster_node_ipv4_cidr, 3, 0), cidrsubnet(var.cluster_node_ipv4_cidr, 3, 1), cidrsubnet(var.cluster_node_ipv4_cidr, 3, 2)]
