@@ -66,9 +66,17 @@ global:
                 redirectUrl: https://${DOMAIN_NAME}/optimize
                 existingSecret:
                     name: identity-secret-for-components
+            webModeler:
+                redirectUrl: https://${DOMAIN_NAME}/modeler
+            console:
+                redirectUrl: https://${DOMAIN_NAME}/console
+                existingSecret:
+                    name: identity-secret-for-components
 
 webModeler:
     enabled: false # by default, webModeler is not enabled
+
+    contextPath: /modeler
 
     serviceAccount:
         name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
@@ -158,6 +166,10 @@ zeebeGateway:
             annotations:
                 kubernetes.io/tls-acme: 'true'
     contextPath: /zeebe
+
+console:
+    enabled: false # by default, console is not enabled
+    contextPath: /console
 
 elasticsearch:
     enabled: false
