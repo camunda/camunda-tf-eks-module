@@ -89,7 +89,6 @@ tasklist:
 
 webModeler:
     enabled: false # by default, webModeler is not enabled
-
     contextPath: /modeler
 
     restapi:

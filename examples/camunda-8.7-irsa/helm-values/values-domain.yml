@@ -75,13 +75,12 @@ global:
 
 webModeler:
     enabled: false # by default, webModeler is not enabled
+    contextPath: /modeler
 
     serviceAccount:
         name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
         annotations:
             eks.amazonaws.com/role-arn: ${DB_ROLE_WEBMODELER_ARN}
-
-    contextPath: /modeler
 
     restapi:
         externalDatabase:

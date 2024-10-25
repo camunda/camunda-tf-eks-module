@@ -39,7 +39,6 @@ global:
     identity:
 
         auth:
-            # TODO: check why redirects to localhost:8080 instead of keycloak
             publicIssuerUrl: http://localhost:18080/auth/realms/camunda-platform  # replace this with a port of your choice when you will do port forwarding
 
             zeebe:
