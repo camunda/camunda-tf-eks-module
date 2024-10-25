@@ -61,7 +61,7 @@ global:
                     name: identity-secret-for-components
 
 identity:
-    fullURL: http://localhost:8069 # replace this with a port of your choice when you will do port forwarding
+    fullURL: http://localhost:8080 # replace this with a port of your choice when you will do port forwarding
 
     externalDatabase:
         enabled: true

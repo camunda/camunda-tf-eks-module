@@ -94,7 +94,7 @@ identity:
         annotations:
             eks.amazonaws.com/role-arn: ${DB_ROLE_IDENTITY_ARN}
 
-    fullURL: http://localhost:8069 # replace this with a port of your choice when you will do port forwarding
+    fullURL: http://localhost:8080 # replace this with a port of your choice when you will do port forwarding
 
     externalDatabase:
         enabled: true
