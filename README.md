@@ -73,6 +73,34 @@ module "opensearch_domain" {
 }
 ```
 
+#### Deletion Known Issues
+
+During the deletion process (`terraform destroy`) of the EKS Cluster, you may encounter an error message related to the `kubernetes_storage_class`:
+
+````
+Error: Get "http://localhost/apis/storage.k8s.io/v1/storageclasses/ebs-sc": dial tcp [::1]:80: connect: connection refused
+│
+│   with module.eks_cluster.kubernetes_storage_class_v1.ebs_sc,
+│   on .terraform/modules/eks_cluster/modules/eks-cluster/cluster.tf line 156, in resource "kubernetes_storage_class_v1" "ebs_sc":
+│  156: resource "kubernetes_storage_class_v1" "ebs_sc" {
+│
+╵
+````
+
+To resolve this issue, you can set the variable `create_ebs_gp3_default_storage_class` to `false`, which skips the creation of the `kubernetes_storage_class` resource. This helps to avoid dependency issues during deletion. Run the following command:
+
+```bash
+terraform destroy -var="create_ebs_gp3_default_storage_class=false"
+```
+
+If you still encounter the issue, you may need to manually remove the state for the storage class:
+
+```bash
+terraform state rm module.eks_cluster.kubernetes_storage_class_v1.ebs_sc
+```
+
+After performing these steps, re-run `terraform destroy` to complete the deletion process without further interruptions.
+
 #### GitHub Actions
 
 You can automate the deployment and deletion of the EKS cluster and Aurora database using GitHub Actions.

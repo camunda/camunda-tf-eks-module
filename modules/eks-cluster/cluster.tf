@@ -154,6 +154,8 @@ provider "kubernetes" {
 
 # gp3 storage class
 resource "kubernetes_storage_class_v1" "ebs_sc" {
+  count = var.create_ebs_gp3_default_storage_class ? 1 : 0
+
   metadata {
     name = "ebs-sc"
     annotations = {
