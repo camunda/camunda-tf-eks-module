@@ -39,7 +39,7 @@ global:
     identity:
 
         auth:
-            publicIssuerUrl: http://localhost:8070/auth/realms/camunda-platform  # replace this with a port of your choice when you will do port forwarding
+            publicIssuerUrl: http://localhost:18080/auth/realms/camunda-platform  # replace this with a port of your choice when you will do port forwarding
 
             zeebe:
                 existingSecret:
