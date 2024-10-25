@@ -75,6 +75,9 @@ webModeler:
             user: ${DB_WEBMODELER_USERNAME}
             existingSecret: webmodeler-postgres-secret
             existingSecretPasswordKey: password
+        mail:
+            existingSecret: identity-secret-for-components # reference the smtp password
+            fromAddress: changeme@example.com   # change this required value
 
 optimize:
     migration:

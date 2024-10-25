@@ -61,6 +61,8 @@ global:
                     name: identity-secret-for-components
 
 webModeler:
+    enabled: false # by default, webModeler is not enabled
+
     serviceAccount:
         name: ${CAMUNDA_WEBMODELER_SERVICE_ACCOUNT_NAME}
         annotations:
@@ -70,10 +72,14 @@ webModeler:
         externalDatabase:
             url: jdbc:aws-wrapper:postgresql://${DB_HOST}:5432/${DB_WEBMODELER_NAME}?wrapperPlugins=iam
             user: ${DB_WEBMODELER_USERNAME}
+            existingSecret: identity-secret-for-components # this fake password reference is needed to let the chart deploy webmodeler
+            existingSecretPasswordKey: password
         env:
             - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
               value: software.amazon.jdbc.Driver
-
+        mail:
+            existingSecret: identity-secret-for-components # reference the smtp password
+            fromAddress: changeme@example.com   # change this required value
 
 identity:
     serviceAccount:
