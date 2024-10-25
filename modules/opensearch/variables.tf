@@ -149,6 +149,11 @@ variable "advanced_security_internal_user_database_enabled" {
   description = "Whether the internal user database is enabled."
 }
 
+variable "advanced_security_master_user_arn" {
+  type        = string
+  description = "ARN for the main user. Only specify if `advanced_security_internal_user_database_enabled` is set to false."
+}
+
 variable "advanced_security_master_user_name" {
   type        = string
   default     = "opensearch-admin"

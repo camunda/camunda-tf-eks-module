@@ -51,6 +51,9 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
     master_user_options {
       master_user_name     = var.advanced_security_master_user_name
       master_user_password = var.advanced_security_master_user_password
+
+      # Only use master_user_arn if internal_user_database_enabled is false
+      master_user_arn = var.advanced_security_internal_user_database_enabled ? null : var.advanced_security_master_user_arn
     }
 
     anonymous_auth_enabled = var.advanced_security_anonymous_auth_enabled
