@@ -3,8 +3,6 @@ terraform {
 
   # You can override the backend configuration; this is  given as an example.
   backend "s3" {
-    bucket  = "my-eks-tf-state"
-    key     = "camunda-terraform/terraform-irsa.tfstate"
     encrypt = true
   }
 
