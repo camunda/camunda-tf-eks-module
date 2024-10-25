@@ -25,6 +25,7 @@ spec:
                         yum install -y postgresql15
 
                         echo "Create keycloak user and associated database"
+                        echo "Note: Any message indicating that the user or the database already exists is informational and can be safely ignored."
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=postgres user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
                           -c "CREATE DATABASE \"${DB_KEYCLOAK_NAME}\";"
 
@@ -37,6 +38,7 @@ spec:
 
 
                         echo "Create identity user and associated database"
+                        echo "Note: Any message indicating that the user or the database already exists is informational and can be safely ignored."
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=postgres user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
                           -c "CREATE DATABASE \"${DB_IDENTITY_NAME}\";"
 
@@ -47,6 +49,7 @@ spec:
                           -c "GRANT rds_iam TO \"${DB_IDENTITY_USERNAME}\";"
 
                         echo "Create webmodeler user and associated database"
+                        echo "Note: Any message indicating that the user or the database already exists is informational and can be safely ignored."
                         psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=postgres user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
                           -c "CREATE DATABASE \"${DB_WEBMODELER_NAME}\";"
 
