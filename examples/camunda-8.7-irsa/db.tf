@@ -2,7 +2,7 @@ locals {
   aurora_cluster_name = "cluster-name-pg-irsa" # Replace "cluster-name" with your cluster's name
 
   aurora_master_username = "secret_user"    # Replace with your Aurora username
-  aurora_master_password = "secretvalue%23" # Replace with your Aurora password
+  aurora_master_password = "secretvalue%23" # Replace with your Aurora password, password must contain at least one letter, one number, and one special character.
 
   camunda_database_keycloak   = "camunda_keycloak"   # Name of your camunda database for Keycloak
   camunda_database_identity   = "camunda_identity"   # Name of your camunda database for Identity
