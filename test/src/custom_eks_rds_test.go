@@ -164,8 +164,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 
 	// Define the ARN for RDS IAM DB Auth
 	auroraIRSAUsername := "myirsauser"
-	auroraArn := fmt.Sprintf("arn:aws:rds-db:%s:%s:dbuser:%s/%s", suite.region, accountId, auroraClusterName, auroraIRSAUsername)
-	suite.sugaredLogger.Infow("Aurora RDS IAM infos", "accountId", accountId, "auroraArn", auroraArn)
+	suite.sugaredLogger.Infow("Aurora RDS IAM infos", "accountId", accountId)
 
 	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
 
@@ -188,10 +187,10 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
       "Action": [
         "rds-db:connect"
       ],
-      "Resource": "arn:aws:rds-db:%s:%s:dbuser:%s/%s"
+      "Resource": "arn:aws:rds-db:%s:%s:dbuser:*/%s"
     }
   ]
-}`, suite.region, accountId, auroraClusterName, auroraIRSAUsername)
+}`, suite.region, accountId, auroraIRSAUsername)
 
 	// Define the trust policy for Aurora IAM role
 	iamRoleTrustPolicy := fmt.Sprintf(`{
@@ -212,20 +211,26 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, auroraNamespace, auroraServiceAccount)
 
+	iamRolesWithPolicies := []interface{}{
+		map[string]interface{}{
+			"role_name": auroraRole,
+			// escape and put everything on a single line
+			"trust_policy":  strings.ReplaceAll(strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "), `"`, `\"`),
+			"access_policy": strings.ReplaceAll(strings.ReplaceAll(auroraAccessPolicy, "\n", " "), `"`, `\"`),
+		},
+	}
+
 	varsConfigAurora := map[string]interface{}{
-		"username":                 auroraUsername,
-		"password":                 auroraPassword,
-		"default_database_name":    auroraDatabase,
-		"cluster_name":             auroraClusterName,
-		"subnet_ids":               result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"vpc_id":                   *result.Cluster.ResourcesVpcConfig.VpcId,
-		"availability_zones":       []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
-		"cidr_blocks":              append(publicBlocks, privateBlocks...),
-		"iam_auth_enabled":         true,
-		"iam_create_aurora_role":   true,
-		"iam_aurora_role_name":     auroraRole,
-		"iam_role_trust_policy":    iamRoleTrustPolicy,
-		"iam_aurora_access_policy": auroraAccessPolicy,
+		"username":                auroraUsername,
+		"password":                auroraPassword,
+		"default_database_name":   auroraDatabase,
+		"cluster_name":            auroraClusterName,
+		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
+		"availability_zones":      []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
+		"cidr_blocks":             append(publicBlocks, privateBlocks...),
+		"iam_auth_enabled":        true,
+		"iam_roles_with_policies": iamRolesWithPolicies,
 	}
 
 	tfModuleAurora := "aurora/"
@@ -329,7 +334,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	suite.Require().NoError(err)
 
 	expectedRDSAZ := []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)}
-	suite.Assert().Equal(varsConfigAurora["iam_auth_enabled"].(bool), *describeDBClusterOutput.DBClusters[0].IAMDatabaseAuthenticationEnabled)
+	suite.Assert().Equal(true, *describeDBClusterOutput.DBClusters[0].IAMDatabaseAuthenticationEnabled)
 	suite.Assert().Equal(varsConfigAurora["username"].(string), *describeDBClusterOutput.DBClusters[0].MasterUsername)
 	suite.Assert().Equal(auroraDatabase, *describeDBClusterOutput.DBClusters[0].DatabaseName)
 	suite.Assert().Equal(int32(5432), *describeDBClusterOutput.DBClusters[0].Port)

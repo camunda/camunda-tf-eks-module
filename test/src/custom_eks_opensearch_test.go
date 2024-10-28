@@ -208,15 +208,21 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
   ]
 }`, accountId, oidcProviderID, oidcProviderID, openSearchNamespace, openSearchServiceAccount)
 
+	iamRolesWithPolicies := []interface{}{
+		map[string]interface{}{
+			"role_name": openSearchRole,
+			// escape and put everything on a single line
+			"trust_policy":  strings.ReplaceAll(strings.ReplaceAll(iamRoleTrustPolicy, "\n", " "), `"`, `\"`),
+			"access_policy": strings.ReplaceAll(strings.ReplaceAll(openSearchAccessPolicy, "\n", " "), `"`, `\"`),
+		},
+	}
+
 	varsConfigOpenSearch := map[string]interface{}{
-		"domain_name":                  opensearchDomainName,
-		"subnet_ids":                   result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"cidr_blocks":                  append(publicBlocks, privateBlocks...),
-		"vpc_id":                       *result.Cluster.ResourcesVpcConfig.VpcId,
-		"iam_create_opensearch_role":   true,
-		"iam_opensearch_role_name":     openSearchRole,
-		"iam_role_trust_policy":        iamRoleTrustPolicy,
-		"iam_opensearch_access_policy": openSearchAccessPolicy,
+		"domain_name":             opensearchDomainName,
+		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"cidr_blocks":             append(publicBlocks, privateBlocks...),
+		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
+		"iam_roles_with_policies": iamRolesWithPolicies,
 	}
 
 	tfModuleOpenSearch := "opensearch/"
@@ -273,14 +279,14 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	// Retrieve the IAM Role associated with OpenSearch
 	describeOpenSearchRoleInput := &iam.GetRoleInput{
-		RoleName: aws.String(varsConfigOpenSearch["iam_opensearch_role_name"].(string)),
+		RoleName: aws.String(openSearchRole),
 	}
 	_, err = iamSvc.GetRole(context.Background(), describeOpenSearchRoleInput)
 	suite.Require().NoError(err)
 
 	// Verify IAM Policy Attachment
 	listAttachedPoliciesInput := &iam.ListAttachedRolePoliciesInput{
-		RoleName: aws.String(varsConfigOpenSearch["iam_opensearch_role_name"].(string)),
+		RoleName: aws.String(openSearchRole),
 	}
 	_, err = iamSvc.ListAttachedRolePolicies(context.Background(), listAttachedPoliciesInput)
 	suite.Require().NoError(err)

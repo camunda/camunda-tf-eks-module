@@ -53,20 +53,19 @@ output "security_group_rule_egress" {
   sensitive   = false
 }
 
-output "opensearch_role_name" {
-  description = "The name of the OpenSearch IAM role"
-  value       = var.iam_create_opensearch_role ? aws_iam_role.opensearch[0].name : ""
-  sensitive   = false
+// Output for Role ARNs
+output "opensearch_iam_role_arns" {
+  description = "Map of IAM role names to their ARNs"
+
+  value     = { for role_name, role in aws_iam_role.roles : role_name => role.arn }
+  sensitive = false
 }
 
-output "opensearch_role_arn" {
-  description = "The ARN of the OpenSearch IAM role"
-  value       = var.iam_create_opensearch_role ? aws_iam_role.opensearch[0].arn : ""
-  sensitive   = false
-}
+// Output for Policy ARNs
+output "opensearch_iam_role_access_policy_arns" {
+  description = "Map of IAM role names to their access policy ARNs"
 
-output "opensearch_policy_arn" {
-  description = "The ARN of the OpenSearch access policy"
-  value       = var.iam_create_opensearch_role ? aws_iam_role.opensearch[0].arn : ""
-  sensitive   = false
+  value = { for role_name, policy in aws_iam_policy.access_policies : role_name => policy.arn }
+
+  sensitive = false
 }

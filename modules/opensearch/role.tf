@@ -1,25 +1,25 @@
-// IAM Role for OpenSearch
-resource "aws_iam_role" "opensearch" {
-  count = var.iam_create_opensearch_role ? 1 : 0
+// IAM Role
+resource "aws_iam_role" "roles" {
+  for_each = { for idx, role in var.iam_roles_with_policies : role.role_name => role }
 
-  name               = var.iam_opensearch_role_name
-  assume_role_policy = var.iam_role_trust_policy
+  name               = each.key
+  assume_role_policy = each.value.trust_policy
 }
 
-// IAM Policy for OpenSearch Access
-resource "aws_iam_policy" "opensearch_access_policy" {
-  count = var.iam_create_opensearch_role ? 1 : 0
+// IAM Policy for Access
+resource "aws_iam_policy" "access_policies" {
+  for_each = { for idx, role in var.iam_roles_with_policies : role.role_name => role }
 
-  name        = "${var.iam_opensearch_role_name}-access-policy"
-  description = "Access policy for OpenSearch"
+  name        = "${each.key}-access-policy"
+  description = "Access policy for ${each.key}"
 
-  policy = var.iam_opensearch_access_policy
+  policy = each.value.access_policy
 }
 
 // Attach the policy to the role
-resource "aws_iam_role_policy_attachment" "attach_opensearch_policy" {
-  count = var.iam_create_opensearch_role ? 1 : 0
+resource "aws_iam_role_policy_attachment" "attach_policies" {
+  for_each = { for idx, role in var.iam_roles_with_policies : role.role_name => role }
 
-  role       = aws_iam_role.opensearch[0].name
-  policy_arn = aws_iam_policy.opensearch_access_policy[0].arn
+  role       = aws_iam_role.roles[each.key].name
+  policy_arn = aws_iam_policy.access_policies[each.key].arn
 }

@@ -13,7 +13,7 @@ variable "name" {
 variable "kubernetes_version" {
   type        = string
   description = "Kubernetes version to be used by EKS"
-  # renovate: datasource=endoflife-date depName=amazon-eks versioning=semver
+  # renovate: datasource=endoflife-date depName=amazon-eks versioning=loose
   default = "1.30"
 }
 
@@ -98,4 +98,10 @@ variable "enable_cluster_creator_admin_permissions" {
   description = "Indicates whether or not to add the cluster creator (the identity used by Terraform) as an administrator via access entry."
   type        = bool
   default     = true
+}
+
+variable "create_ebs_gp3_default_storage_class" {
+  type        = bool
+  default     = true
+  description = "Flag to determine if the kubernetes_storage_class should be created using EBS-CSI and set on GP3 by default. Set to 'false' to skip creating the storage class, useful for avoiding dependency issues during EKS cluster deletion."
 }

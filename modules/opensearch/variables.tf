@@ -149,6 +149,12 @@ variable "advanced_security_internal_user_database_enabled" {
   description = "Whether the internal user database is enabled."
 }
 
+variable "advanced_security_master_user_arn" {
+  type        = string
+  default     = ""
+  description = "ARN for the main user. Only specify if `advanced_security_internal_user_database_enabled` is set to false."
+}
+
 variable "advanced_security_master_user_name" {
   type        = string
   default     = "opensearch-admin"
@@ -257,61 +263,79 @@ variable "kms_key_tags" {
   default     = {}
 }
 
-variable "iam_create_opensearch_role" {
-  description = "Flag to determine if the OpenSearch role should be created"
-  type        = bool
-  default     = false
-}
+variable "iam_roles_with_policies" {
+  description = "List of roles with their trust and access policies"
 
-variable "iam_opensearch_role_name" {
-  description = "Name of the OpenSearch IAM role"
-  type        = string
-  default     = "OpenSearchRole"
-}
+  type = list(object({
+    # Name of the Role to create
+    role_name = string
 
-variable "iam_role_trust_policy" {
-  description = "Assume role trust policy for OpenSearch role"
-  type        = string
-  default     = <<EOF
-          {
-            "Version": "2012-10-17",
-            "Statement": [
-              {
-                "Effect": "Allow",
-                "Principal": {
-                  "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
-                },
-                "Action": "sts:AssumeRoleWithWebIdentity",
-                "Condition": {
-                  "StringEquals": {
-                    "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
-                  }
-                }
-              }
-            ]
-          }
+    # Assume role trust policy for this Aurora role as a json string
+    trust_policy = string
 
-EOF
-}
+    # Access policy for Aurora allowing access as a json string
+    # see https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+    # Example:
+    #   [
+    #     {
+    #     role_name      = "OpenSearchRole"
+    #     trust_policy   =
+    # {
+    #   "Version": "2012-10-17",
+    #   "Statement": [
+    #     {
+    #       "Effect": "Allow",
+    #       "Principal": {
+    #         "Federated": "arn:aws:iam::<YOUR-ACCOUNT-ID>:oidc-provider/oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-ID>"
+    #       },
+    #       "Action": "sts:AssumeRoleWithWebIdentity",
+    #       "Condition": {
+    #         "StringEquals": {
+    #           "oidc.eks.<YOUR-REGION>.amazonaws.com/id/<YOUR-OIDC-PROVIDER-ID>:sub": "system:serviceaccount:<YOUR-NAMESPACE>:<YOUR-SA-NAME>"
+    #         }
+    #       }
+    #     }
+    #   ]
+    # }
+    #
+    #     access_policy  =
+    # {
+    #   "Version": "2012-10-17",
+    #   "Statement": [
+    #     {
+    #       "Effect": "Allow",
+    #       "Action": [
+    #         "es:DescribeElasticsearchDomains",
+    #         "es:DescribeElasticsearchInstanceTypeLimits",
+    #         "es:DescribeReservedElasticsearchInstanceOfferings",
+    #         "es:DescribeReservedElasticsearchInstances",
+    #         "es:GetCompatibleElasticsearchVersions",
+    #         "es:ListDomainNames",
+    #         "es:ListElasticsearchInstanceTypes",
+    #         "es:ListElasticsearchVersions",
+    #         "es:DescribeElasticsearchDomain",
+    #         "es:DescribeElasticsearchDomainConfig",
+    #         "es:ESHttpGet",
+    #         "es:ESHttpHead",
+    #         "es:GetUpgradeHistory",
+    #         "es:GetUpgradeStatus",
+    #         "es:ListTags",
+    #         "es:AddTags",
+    #         "es:RemoveTags",
+    #         "es:ESHttpDelete",
+    #         "es:ESHttpPost",
+    #         "es:ESHttpPut"
+    #       ],
+    #       "Resource": "arn:aws:es:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:domain/<YOUR-DOMAIN-NAME>/*"
+    #     }
+    #   ]
+    # }
+    #
+    #   }
+    #   ]
+    access_policy = string
+  }))
 
-variable "iam_opensearch_access_policy" {
-  description = "Access policy for OpenSearch allowing access"
-  type        = string
-  default     = <<EOF
-            {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "es:ESHttpGet",
-                    "es:ESHttpPut",
-                    "es:ESHttpPost"
-                  ],
-                  "Resource": "arn:aws:es:<YOUR-REGION>:<YOUR-ACCOUNT-ID>:domain/<YOUR-DOMAIN-NAME>/*"
-                }
-              ]
-            }
-
-EOF
+  # By default, don't create any role and associated policies.
+  default = []
 }

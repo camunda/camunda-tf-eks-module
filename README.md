@@ -57,7 +57,6 @@ module "opensearch_domain" {
 
   domain_name     = "my-opensearch-domain"
   subnet_ids      = module.eks_cluster.private_subnet_ids
-  security_group_ids = module.eks_cluster.security_group_ids
   vpc_id          = module.eks_cluster.vpc_id
   cidr_blocks      = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
@@ -73,6 +72,34 @@ module "opensearch_domain" {
   depends_on = [module.eks_cluster]
 }
 ```
+
+#### Deletion Known Issues
+
+During the deletion process (`terraform destroy`) of the EKS Cluster, you may encounter an error message related to the `kubernetes_storage_class`:
+
+````
+Error: Get "http://localhost/apis/storage.k8s.io/v1/storageclasses/ebs-sc": dial tcp [::1]:80: connect: connection refused
+│
+│   with module.eks_cluster.kubernetes_storage_class_v1.ebs_sc,
+│   on .terraform/modules/eks_cluster/modules/eks-cluster/cluster.tf line 156, in resource "kubernetes_storage_class_v1" "ebs_sc":
+│  156: resource "kubernetes_storage_class_v1" "ebs_sc" {
+│
+╵
+````
+
+To resolve this issue, you can set the variable `create_ebs_gp3_default_storage_class` to `false`, which skips the creation of the `kubernetes_storage_class` resource. This helps to avoid dependency issues during deletion. Run the following command:
+
+```bash
+terraform destroy -var="create_ebs_gp3_default_storage_class=false"
+```
+
+If you still encounter the issue, you may need to manually remove the state for the storage class:
+
+```bash
+terraform state rm module.eks_cluster.kubernetes_storage_class_v1.ebs_sc
+```
+
+After performing these steps, re-run `terraform destroy` to complete the deletion process without further interruptions.
 
 #### GitHub Actions
 
@@ -102,8 +129,7 @@ The Aurora module uses the following outputs from the EKS cluster module to defi
 - `module.eks_cluster.oidc_provider_arn`: The ARN of the OIDC provider for the EKS cluster.
 - `module.eks_cluster.oidc_provider_id`: The ID of the OIDC provider for the EKS cluster.
 - `var.account_id`: Your AWS account id
-- `var.aurora_cluster_name`: The name of the Aurora cluster to access
-Here is the corrected version:
+- `var.aurora_region`: Your Aurora AWS Region
 - `var.aurora_irsa_username`: The username used to access AuroraDB. This username is different from the superuser. The user must also be created manually in the database to enable the IRSA connection, as described in [the steps below](#create-irsa-user-on-the-database).
 - `var.aurora_namespace`: The kubernetes namespace to allow access
 - `var.aurora_service_account`: The kubernetes ServiceAccount to allow access
@@ -113,7 +139,15 @@ You need to define the IAM role trust policy and access policy for Aurora. Here'
 ```hcl
 module "postgresql" {
   # ...
-  iam_aurora_access_policy = <<EOF
+  iam_roles_with_policies = [
+    {
+      role_name = "AuroraRole-your-cluster" # ensure uniqueness of this one
+
+      # Source: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.IAMPolicy.html
+      # Since the DbiResourceId may be unknown during the apply process, and because each instance of the RDS cluster contains its own DbiResourceId,
+      # we use the wildcard `dbuser:*` to apply to all database instances.
+
+      access_policy = <<EOF
             {
               "Version": "2012-10-17",
               "Statement": [
@@ -122,13 +156,13 @@ module "postgresql" {
                   "Action": [
                     "rds-db:connect"
                   ],
-                  "Resource": "arn:aws:rds-db:${module.eks_cluster.region}:${var.account_id}:dbuser:${var.aurora_cluster_name}/${var.aurora_irsa_username}"
+                  "Resource": "arn:aws:rds-db:${var.aurora_region}:${var.account_id}:dbuser:*/${var.aurora_irsa_username}"
                 }
               ]
             }
 EOF
 
-  iam_role_trust_policy = <<EOF
+      trust_policy = <<EOF
           {
             "Version": "2012-10-17",
             "Statement": [
@@ -147,9 +181,9 @@ EOF
             ]
           }
 EOF
+    }
+  ]
 
-  iam_aurora_role_name = "AuroraRole-your-cluster" # ensure uniqueness of this one
-  iam_create_aurora_role = true
   iam_auth_enabled = true
   # ...
 }
@@ -164,7 +198,6 @@ echo "Creating IRSA DB user using admin user"
 psql -h $AURORA_ENDPOINT -p $AURORA_PORT "sslmode=require dbname=$AURORA_DB_NAME user=$AURORA_USERNAME password=$AURORA_PASSWORD" \
   -c "CREATE USER \"${AURORA_USERNAME_IRSA}\" WITH LOGIN;" \
   -c "GRANT rds_iam TO \"${AURORA_USERNAME_IRSA}\";" \
-  -c "GRANT rds_superuser TO \"${AURORA_USERNAME_IRSA}\";" \
   -c "GRANT ALL PRIVILEGES ON DATABASE \"${AURORA_DB_NAME}\" TO \"${AURORA_USERNAME_IRSA}\";" \
   -c "SELECT aurora_version();" \
   -c "SELECT version();" -c "\du"
@@ -181,6 +214,7 @@ The OpenSearch module uses the following outputs from the EKS cluster module to 
 - `module.eks_cluster.oidc_provider_arn`: The ARN of the OIDC provider for the EKS cluster.
 - `module.eks_cluster.oidc_provider_id`: The ID of the OIDC provider for the EKS cluster.
 - `var.account_id`: Your AWS account id
+- `var.opensearch_region`: Your OpenSearch AWS Region
 - `var.opensearch_domain_name`: The name of the OpenSearch domain to access
 - `var.opensearch_namespace`: The kubernetes namespace to allow access
 - `var.opensearch_service_account`: The kubernetes ServiceAccount to allow access
@@ -188,9 +222,10 @@ The OpenSearch module uses the following outputs from the EKS cluster module to 
 ```hcl
 module "opensearch_domain" {
   # ...
-  iam_create_opensearch_role = true
-  iam_opensearch_role_name = "OpenSearchRole-your-cluster" # ensure uniqueness of this one
-  iam_opensearch_access_policy = <<EOF
+  iam_roles_with_policies = [
+    {
+      role_name = "OpenSearchRole-your-cluster" # ensure uniqueness of this one
+      access_policy =<<EOF
             {
               "Version": "2012-10-17",
               "Statement": [
@@ -201,13 +236,13 @@ module "opensearch_domain" {
                     "es:ESHttpPut",
                     "es:ESHttpPost"
                   ],
-                  "Resource": "arn:aws:es:${module.eks_cluster.region}:${var.account_id}:domain/${var.opensearch_domain_name}/*"
+                  "Resource": "arn:aws:es:${var.opensearch_region}:${var.account_id}:domain/${var.opensearch_domain_name}/*"
                 }
               ]
             }
 EOF
 
-  iam_role_trust_policy = <<EOF
+      trust_policy =  <<EOF
           {
             "Version": "2012-10-17",
             "Statement": [
@@ -226,6 +261,9 @@ EOF
             ]
           }
 EOF
+    }
+  ]
+
   # ...
 }
 ```
@@ -245,7 +283,7 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/AuroraRole>
 ```
-You can retrieve the role ARN from the module output: `aurora_role_arn`.
+You can retrieve the role ARN from the module output: `aurora_iam_role_arns['Aurora-your-cluster']`.
 
 **OpenSearch Service Account**
 
@@ -258,7 +296,7 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: <arn:aws:iam:<YOUR-ACCOUNT-ID>:role/OpenSearchRole>
 ```
-You can retrieve the role ARN from the module output: `opensearch_role_arn`.
+You can retrieve the role ARN from the module output: `opensearch_iam_role_arns['OpenSearch-your-cluster']`.
 
 ## Support
 
