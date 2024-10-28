@@ -151,6 +151,7 @@ variable "advanced_security_internal_user_database_enabled" {
 
 variable "advanced_security_master_user_arn" {
   type        = string
+  default     = ""
   description = "ARN for the main user. Only specify if `advanced_security_internal_user_database_enabled` is set to false."
 }
 
