@@ -25,7 +25,6 @@ module "opensearch_domain" {
   advanced_security_master_user_name = "admin"
   advanced_security_master_user_password = "password"
 
-  encrypt_at_rest_kms_key_id = "kms-key-id"
   access_policies = <<EOF
 {
   "Version": "2012-10-17",
