@@ -339,3 +339,9 @@ variable "iam_roles_with_policies" {
   # By default, don't create any role and associated policies.
   default = []
 }
+
+variable "log_types" {
+  type        = list(string)
+  default     = []
+  description = "The types of logs to publish to CloudWatch Logs. Example: [SEARCH_SLOW_LOGS, INDEX_SLOW_LOGS, ES_APPLICATION_LOGS]"
+}

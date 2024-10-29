@@ -89,6 +89,16 @@ resource "aws_opensearch_domain" "opensearch_cluster" {
 
   access_policies = var.enable_access_policy ? var.access_policies : null
 
+  dynamic "log_publishing_options" {
+    for_each = var.log_types
+
+    content {
+      enabled                  = true
+      cloudwatch_log_group_arn = join("", aws_cloudwatch_log_group.log_group[*].arn)
+      log_type                 = log_publishing_options.value
+    }
+  }
+
   domain_endpoint_options {
     enforce_https       = var.domain_endpoint_options.enforce_https
     tls_security_policy = var.domain_endpoint_options.tls_security_policy
