@@ -83,7 +83,7 @@ jobs:
               with:
                   tf-bucket: ${{ env.TF_STATE_BUCKET }}
                   tf-bucket-region: ${{ env.TF_STATE_BUCKET_REGION }}
-                  max-age-hours: ${{ env.MAX_AGE_HOURS }}
+                  max-age-hours: 0 # the previous step alters the age and resets it to 0
                   target: all
 
             - name: Notify in Slack in case of failure
