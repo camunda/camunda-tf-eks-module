@@ -5,12 +5,12 @@ go 1.23.0
 require (
 	github.com/aws/aws-sdk-go-v2 v1.32.3
 	github.com/aws/aws-sdk-go-v2/config v1.28.1
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.186.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.187.0
 	github.com/aws/aws-sdk-go-v2/service/eks v1.51.1
 	github.com/aws/aws-sdk-go-v2/service/iam v1.37.3
 	github.com/aws/aws-sdk-go-v2/service/kms v1.37.3
-	github.com/aws/aws-sdk-go-v2/service/opensearch v1.41.2
-	github.com/aws/aws-sdk-go-v2/service/rds v1.88.0
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.43.0
+	github.com/aws/aws-sdk-go-v2/service/rds v1.89.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.66.2
 	github.com/aws/aws-sdk-go-v2/service/sts v1.32.3
 	github.com/aws/smithy-go v1.22.0
