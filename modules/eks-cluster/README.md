@@ -92,6 +92,7 @@ module "eks_cluster" {
 | <a name="output_private_subnet_ids"></a> [private\_subnet\_ids](#output\_private\_subnet\_ids) | Private subnet IDs |
 | <a name="output_private_vpc_cidr_blocks"></a> [private\_vpc\_cidr\_blocks](#output\_private\_vpc\_cidr\_blocks) | Private VPC CIDR blocks |
 | <a name="output_public_vpc_cidr_blocks"></a> [public\_vpc\_cidr\_blocks](#output\_public\_vpc\_cidr\_blocks) | Public VPC CIDR blocks |
+| <a name="output_vpc_azs"></a> [vpc\_azs](#output\_vpc\_azs) | VPC AZs of the cluster |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | VPC id of the cluster |
 | <a name="output_vpc_main_route_table_id"></a> [vpc\_main\_route\_table\_id](#output\_vpc\_main\_route\_table\_id) | The ID of the main route table associated with this VPC |
 <!-- END_TF_DOCS -->

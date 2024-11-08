@@ -84,6 +84,8 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"name":                  suite.clusterName,
 		"region":                suite.region,
 		"np_desired_node_count": suite.expectedNodes,
+		// we test the definition of specific AZs
+		"availability_zones": string{fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
 	}
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
@@ -124,6 +126,10 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	// due to output of the creation changing tags from null to {}, we can't pass the
 	// idempotency test
 	terraform.InitAndApply(suite.T(), terraformOptions)
+
+	// basic tests after terraform apply
+	expectedVpcAZs := fmt.Sprintf("[%sb %sc]", suite.varTf["region"], suite.varTf["region"])
+	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")

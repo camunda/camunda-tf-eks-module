@@ -141,6 +141,7 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "ebs_cs_arn"))
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "external_dns_arn"))
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "vpc_id"))
+	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "private_vpc_cidr_blocks"))
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "private_subnet_ids"))
 	suite.Assert().NotEmpty(terraform.Output(suite.T(), terraformOptions, "default_security_group_id"))
@@ -158,6 +159,9 @@ func (suite *DefaultEKSTestSuite) baseChecksEKS(terraformOptions *terraform.Opti
 	// this is a split(6)[3..5] of the base cluster_node_ipv4_cidr    = "10.192.0.0/16"
 	expectedPublicVpcCidrBlocks := "[10.192.96.0/19 10.192.128.0/19 10.192.160.0/19]"
 	suite.Assert().Equal(expectedPublicVpcCidrBlocks, terraform.Output(suite.T(), terraformOptions, "public_vpc_cidr_blocks"))
+
+	expectedVpcAZs := fmt.Sprintf("[%sa %sb %sc]", suite.varTf["region"], suite.varTf["region"], suite.varTf["region"])
+	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
