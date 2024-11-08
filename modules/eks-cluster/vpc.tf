@@ -2,6 +2,23 @@ locals {
   vpc_name = "${var.name}-vpc"
 }
 
+locals {
+  # Generate the list of availability zones
+  azs = var.availability_zones != null ? var.availability_zones : [
+    for index in range(var.availability_zones_count) : "${var.region}${["a", "b", "c", "d", "e", "f"][index]}"
+  ]
+
+  # Private subnets for nodes
+  private_subnets = [
+    for index in range(length(local.azs)) : cidrsubnet(var.cluster_node_ipv4_cidr, 3, index)
+  ]
+
+  public_subnets = [
+    for index in range(length(local.azs)) : cidrsubnet(var.cluster_node_ipv4_cidr, 3, index + length(local.azs))
+  ]
+}
+
+
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.15.0"
@@ -11,16 +28,17 @@ module "vpc" {
   # AWS supports between /16 and 28
   cidr = var.cluster_node_ipv4_cidr
 
-  azs = ["${var.region}a", "${var.region}b", "${var.region}c"]
+  azs = local.azs
 
-  # private subnets for nodes
-  private_subnets = [cidrsubnet(var.cluster_node_ipv4_cidr, 3, 0), cidrsubnet(var.cluster_node_ipv4_cidr, 3, 1), cidrsubnet(var.cluster_node_ipv4_cidr, 3, 2)]
+  # Private subnets for nodes
+  private_subnets = local.private_subnets
+
+  # Public subnets for Load Balancers
+  public_subnets = local.public_subnets
+
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = 1
   }
-
-  # public subnet for loadbalancers
-  public_subnets = [cidrsubnet(var.cluster_node_ipv4_cidr, 3, 3), cidrsubnet(var.cluster_node_ipv4_cidr, 3, 4), cidrsubnet(var.cluster_node_ipv4_cidr, 3, 5)]
   public_subnet_tags = {
     "kubernetes.io/role/elb" = 1
   }
