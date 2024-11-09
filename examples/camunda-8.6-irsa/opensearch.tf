@@ -15,7 +15,7 @@ locals {
 }
 
 module "opensearch_domain" {
-  source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=3.0.0"
+  source         = "git::https://github.com/camunda/camunda-tf-eks-module//modules/opensearch?ref=3.0.1"
   domain_name    = local.opensearch_domain_name
   engine_version = "2.15"
 
