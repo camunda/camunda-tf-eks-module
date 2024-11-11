@@ -56,7 +56,7 @@ We follow Semantic Versioning (SemVer) guidelines for versioning. Follow these s
 
 ## Adding new GH actions
 
-Please pin GitHub action, if you need you can use [pin-github-action](https://github.com/mheap/pin-github-action) cli tool.
+Please pin GitHub actions, if you need you can use [pin-github-action](https://github.com/mheap/pin-github-action) cli tool.
 
 ---
 
