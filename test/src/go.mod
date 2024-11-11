@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.32.4
 	github.com/aws/aws-sdk-go-v2/config v1.28.3
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.187.1
-	github.com/aws/aws-sdk-go-v2/service/eks v1.51.1
+	github.com/aws/aws-sdk-go-v2/service/eks v1.52.0
 	github.com/aws/aws-sdk-go-v2/service/iam v1.37.4
 	github.com/aws/aws-sdk-go-v2/service/kms v1.37.5
 	github.com/aws/aws-sdk-go-v2/service/opensearch v1.43.2
