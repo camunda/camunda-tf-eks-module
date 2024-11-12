@@ -114,6 +114,6 @@ variable "availability_zones_count" {
 
 variable "availability_zones" {
   type        = list(string)
-  description = "A list of availability zones names in the region. This value should not be updated, please create a new resource instead"
+  description = "A list of availability zones names in the region. This value should never be updated after resource creation, please create a new resource instead"
   default     = null
 }

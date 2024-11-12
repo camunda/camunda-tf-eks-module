@@ -85,7 +85,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"region":                suite.region,
 		"np_desired_node_count": suite.expectedNodes,
 		// we test the definition of specific AZs
-		"availability_zones": string{fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
+		"availability_zones": []string{fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
 	}
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
