@@ -233,7 +233,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"cluster_name":            auroraClusterName,
 		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
 		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
-		"availability_zones":      []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
+		"availability_zones":      suite.varTf["availability_zones"], // we must match the zones of the EKS cluster
 		"cidr_blocks":             append(publicBlocks, privateBlocks...),
 		"iam_auth_enabled":        true,
 		"iam_roles_with_policies": iamRolesWithPolicies,

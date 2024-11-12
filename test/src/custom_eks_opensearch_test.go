@@ -223,11 +223,12 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	}
 
 	varsConfigOpenSearch := map[string]interface{}{
-		"domain_name":             opensearchDomainName,
-		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"cidr_blocks":             append(publicBlocks, privateBlocks...),
-		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
-		"iam_roles_with_policies": iamRolesWithPolicies,
+		"domain_name":                            opensearchDomainName,
+		"subnet_ids":                             result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"cidr_blocks":                            append(publicBlocks, privateBlocks...),
+		"vpc_id":                                 *result.Cluster.ResourcesVpcConfig.VpcId,
+		"iam_roles_with_policies":                iamRolesWithPolicies,
+		"zone_awareness_availability_zone_count": suite.varTf["availability_zones_count"], // must match VPC AZs of EKS
 	}
 
 	tfModuleOpenSearch := "opensearch/"
