@@ -233,7 +233,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"cluster_name":            auroraClusterName,
 		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
 		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
-		"availability_zones":      suite.varTf["availability_zones"], // we must match the zones of the EKS cluster
+		"availability_zones":      []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)}, // we must match the zones of the EKS cluster but RDS requires at least 3AZs, otherwise AWS will populate the AZs to match the 3AZs
 		"cidr_blocks":             append(publicBlocks, privateBlocks...),
 		"iam_auth_enabled":        true,
 		"iam_roles_with_policies": iamRolesWithPolicies,
