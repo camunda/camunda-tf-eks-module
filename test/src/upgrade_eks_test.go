@@ -231,7 +231,7 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	suite.Assert().Equal(suite.varTf["kubernetes_version"], *result.Cluster.Version)
 
 	// test the custom AZs definition is not changed
-	expectedVpcAZs := fmt.Sprintf("[%sb %sc]", suite.varTf["region"], suite.varTf["region"])
+	expectedVpcAZs = fmt.Sprintf("[%sb %sc]", suite.varTf["region"], suite.varTf["region"])
 	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
 	// check everything works as expected
