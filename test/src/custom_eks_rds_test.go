@@ -84,8 +84,8 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"name":                  suite.clusterName,
 		"region":                suite.region,
 		"np_desired_node_count": suite.expectedNodes,
-		// we test the definition of specific AZs
-		"availability_zones": []string{fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
+		// we test the definition of specific AZs, also RDS requires exactly 3AZs
+		"availability_zones": []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
 	}
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
@@ -128,7 +128,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 	terraform.InitAndApply(suite.T(), terraformOptions)
 
 	// basic tests after terraform apply
-	expectedVpcAZs := fmt.Sprintf("[%sb %sc]", suite.varTf["region"], suite.varTf["region"])
+	expectedVpcAZs := fmt.Sprintf("[%sa %sb %sc]", suite.varTf["region"], suite.varTf["region"], suite.varTf["region"])
 	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
 	sess, err := utils.GetAwsClient()
@@ -233,7 +233,7 @@ func (suite *CustomEKSRDSTestSuite) TestCustomEKSAndRDS() {
 		"cluster_name":            auroraClusterName,
 		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
 		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
-		"availability_zones":      []string{fmt.Sprintf("%sa", suite.region), fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)}, // we must match the zones of the EKS cluster but RDS requires at least 3AZs, otherwise AWS will populate the AZs to match the 3AZs
+		"availability_zones":      suite.varTf["availability_zones"], // we must match the zones of the EKS cluster
 		"cidr_blocks":             append(publicBlocks, privateBlocks...),
 		"iam_auth_enabled":        true,
 		"iam_roles_with_policies": iamRolesWithPolicies,
