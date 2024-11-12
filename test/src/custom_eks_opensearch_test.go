@@ -85,8 +85,8 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 		"name":                  suite.clusterName,
 		"region":                suite.region,
 		"np_desired_node_count": suite.expectedNodes,
-		// we test the usage of a single zone
-		"availability_zones_count": 1,
+		// we test the usage of a two zones (minimum)
+		"availability_zones_count": 2,
 	}
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
@@ -128,7 +128,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	// idempotency test
 	terraform.InitAndApply(suite.T(), terraformOptions)
 
-	expectedVpcAZs := fmt.Sprintf("[%sa]", suite.varTf["region"]) // must match availability_zones_count, by default it's the first zone
+	expectedVpcAZs := fmt.Sprintf("[%sa %sb]", suite.varTf["region"], suite.varTf["region"]) // must match availability_zones_count
 	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
 	sess, err := utils.GetAwsClient()
