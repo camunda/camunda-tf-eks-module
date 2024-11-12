@@ -229,6 +229,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 		"vpc_id":                                 *result.Cluster.ResourcesVpcConfig.VpcId,
 		"iam_roles_with_policies":                iamRolesWithPolicies,
 		"zone_awareness_availability_zone_count": suite.varTf["availability_zones_count"], // must match VPC AZs of EKS
+		"instance_count":                         2,                                       // we must choose an even number of data nodes for a two Availability Zone deployment
 	}
 
 	tfModuleOpenSearch := "opensearch/"
@@ -276,7 +277,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	// Perform assertions on the OpenSearch domain configuration
 	suite.Assert().Equal(varsConfigOpenSearch["domain_name"].(string), *describeOpenSearchDomainOutput.DomainStatus.DomainName)
-	suite.Assert().Equal(int32(3), *describeOpenSearchDomainOutput.DomainStatus.ClusterConfig.InstanceCount)
+	suite.Assert().Equal(int32(2), *describeOpenSearchDomainOutput.DomainStatus.ClusterConfig.InstanceCount)
 	suite.Assert().Equal(types.OpenSearchPartitionInstanceType("t3.small.search"), describeOpenSearchDomainOutput.DomainStatus.ClusterConfig.InstanceType)
 	suite.Assert().Equal(varsConfigOpenSearch["vpc_id"].(string), *describeOpenSearchDomainOutput.DomainStatus.VPCOptions.VPCId)
 
