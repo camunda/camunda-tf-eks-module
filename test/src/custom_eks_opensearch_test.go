@@ -85,6 +85,8 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 		"name":                  suite.clusterName,
 		"region":                suite.region,
 		"np_desired_node_count": suite.expectedNodes,
+		// we test the usage of a two zones (minimum)
+		"availability_zones_count": 2,
 	}
 
 	suite.sugaredLogger.Infow("Creating EKS cluster...", "extraVars", suite.varTf)
@@ -125,6 +127,9 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	// due to output of the creation changing tags from null to {}, we can't pass the
 	// idempotency test
 	terraform.InitAndApply(suite.T(), terraformOptions)
+
+	expectedVpcAZs := fmt.Sprintf("[%sa %sb]", suite.varTf["region"], suite.varTf["region"]) // must match availability_zones_count
+	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
@@ -218,11 +223,13 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	}
 
 	varsConfigOpenSearch := map[string]interface{}{
-		"domain_name":             opensearchDomainName,
-		"subnet_ids":              result.Cluster.ResourcesVpcConfig.SubnetIds,
-		"cidr_blocks":             append(publicBlocks, privateBlocks...),
-		"vpc_id":                  *result.Cluster.ResourcesVpcConfig.VpcId,
-		"iam_roles_with_policies": iamRolesWithPolicies,
+		"domain_name":                            opensearchDomainName,
+		"subnet_ids":                             result.Cluster.ResourcesVpcConfig.SubnetIds,
+		"cidr_blocks":                            append(publicBlocks, privateBlocks...),
+		"vpc_id":                                 *result.Cluster.ResourcesVpcConfig.VpcId,
+		"iam_roles_with_policies":                iamRolesWithPolicies,
+		"zone_awareness_availability_zone_count": suite.varTf["availability_zones_count"], // must match VPC AZs of EKS
+		"instance_count":                         2,                                       // we must choose an even number of data nodes for a two Availability Zone deployment
 	}
 
 	tfModuleOpenSearch := "opensearch/"
@@ -270,7 +277,7 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 
 	// Perform assertions on the OpenSearch domain configuration
 	suite.Assert().Equal(varsConfigOpenSearch["domain_name"].(string), *describeOpenSearchDomainOutput.DomainStatus.DomainName)
-	suite.Assert().Equal(int32(3), *describeOpenSearchDomainOutput.DomainStatus.ClusterConfig.InstanceCount)
+	suite.Assert().Equal(int32(2), *describeOpenSearchDomainOutput.DomainStatus.ClusterConfig.InstanceCount)
 	suite.Assert().Equal(types.OpenSearchPartitionInstanceType("t3.small.search"), describeOpenSearchDomainOutput.DomainStatus.ClusterConfig.InstanceType)
 	suite.Assert().Equal(varsConfigOpenSearch["vpc_id"].(string), *describeOpenSearchDomainOutput.DomainStatus.VPCOptions.VPCId)
 

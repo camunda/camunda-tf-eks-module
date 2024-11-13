@@ -105,3 +105,15 @@ variable "create_ebs_gp3_default_storage_class" {
   default     = true
   description = "Flag to determine if the kubernetes_storage_class should be created using EBS-CSI and set on GP3 by default. Set to 'false' to skip creating the storage class, useful for avoiding dependency issues during EKS cluster deletion."
 }
+
+variable "availability_zones_count" {
+  type        = number
+  description = "The count of availability zones to utilize within the specified AWS Region, where pairs of public and private subnets will be generated (minimum is `2`). Valid only when availability_zones variable is not provided."
+  default     = 3
+}
+
+variable "availability_zones" {
+  type        = list(string)
+  description = "A list of availability zone names in the region. By default, this is set to `null` and is not used; instead, `availability_zones_count` manages the number of availability zones. This value should not be updated directly. To make changes, please create a new resource."
+  default     = null
+}

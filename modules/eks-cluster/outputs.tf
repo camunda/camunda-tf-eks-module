@@ -96,6 +96,11 @@ output "vpc_id" {
   value       = module.vpc.vpc_id
 }
 
+output "vpc_azs" {
+  description = "VPC AZs of the cluster"
+  value       = module.vpc.azs
+}
+
 output "private_vpc_cidr_blocks" {
   value       = module.vpc.private_subnets_cidr_blocks
   description = "Private VPC CIDR blocks"

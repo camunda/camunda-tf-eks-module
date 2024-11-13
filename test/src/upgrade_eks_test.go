@@ -80,6 +80,8 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	suite.varTf = map[string]interface{}{
 		"name":   suite.clusterName,
 		"region": suite.region,
+		// we test the definition of specific AZs, 2 in this case
+		"availability_zones": []string{fmt.Sprintf("%sb", suite.region), fmt.Sprintf("%sc", suite.region)},
 
 		"np_desired_node_count": suite.expectedNodes,
 
@@ -144,6 +146,10 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	suite.Require().NoError(errClusterReady)
 
 	suite.Assert().Equal(suite.kubeVersion, *result.Cluster.Version)
+
+	// test the custom AZs definition
+	expectedVpcAZs := fmt.Sprintf("[%sb %sc]", suite.varTf["region"], suite.varTf["region"])
+	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
 	utils.GenerateKubeConfigFromAWS(suite.T(), suite.region, suite.clusterName, utils.GetAwsProfile(), suite.kubeConfigPath)
 
@@ -223,6 +229,10 @@ func (suite *UpgradeEKSTestSuite) TestUpgradeEKS() {
 	result, err = eksSvc.DescribeCluster(context.Background(), inputEKS)
 	suite.Assert().NoError(err)
 	suite.Assert().Equal(suite.varTf["kubernetes_version"], *result.Cluster.Version)
+
+	// test the custom AZs definition is not changed
+	expectedVpcAZs = fmt.Sprintf("[%sb %sc]", suite.varTf["region"], suite.varTf["region"])
+	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
 	// check everything works as expected
 	k8s.WaitUntilServiceAvailable(suite.T(), kubeCtlOptions, "whoami-service", 60, 1*time.Second)
