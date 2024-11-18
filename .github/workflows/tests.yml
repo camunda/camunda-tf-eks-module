@@ -142,6 +142,8 @@ jobs:
 
             - name: Launch test
               timeout-minutes: 125
+              # Do not interrupt tests; otherwise, the Terraform state may become inconsistent.
+              if: always() && success()
               run: |
                   export TESTS_CLUSTER_ID="${{ needs.configure-tests.outputs.cluster_id }}"
                   export TESTS_CLUSTER_REGION="${{ env.AWS_REGION }}"
