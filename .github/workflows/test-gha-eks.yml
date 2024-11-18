@@ -145,6 +145,8 @@ jobs:
               timeout-minutes: 45
               uses: ./.github/actions/eks-manage-cluster
               id: create_eks_cluster
+              # Do not interrupt tests; otherwise, the Terraform state may become inconsistent.
+              if: always() && success()
               with:
                   cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
                   aws-region: ${{ env.AWS_REGION }}
@@ -174,7 +176,8 @@ jobs:
               timeout-minutes: 20
               uses: ./.github/actions/aurora-manage-cluster
               id: create_aurora_cluster
-              if: env.CREATE_DB == 'true'
+              # Do not interrupt tests; otherwise, the Terraform state may become inconsistent.
+              if: env.CREATE_DB == 'true' && always() && success()
               with:
                   cluster-name: ${{ steps.commit_info.outputs.cluster_name }}
                   username: ${{ steps.commit_info.outputs.db_username }}
@@ -194,7 +197,8 @@ jobs:
             - name: Deploy OpenSearch Domain
               uses: ./.github/actions/opensearch-manage-cluster
               id: deploy_opensearch_domain
-              if: env.CREATE_OPENSEARCH == 'true'
+              # Do not interrupt tests; otherwise, the Terraform state may become inconsistent.
+              if: env.CREATE_OPENSEARCH == 'true' && always() && success()
               with:
                   domain-name: ${{ steps.commit_info.outputs.cluster_name }}-opensearch
                   aws-region: ${{ env.AWS_REGION }}
