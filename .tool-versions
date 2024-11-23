@@ -22,7 +22,7 @@ golang 1.23.3
 
 just 1.36.0
 
-opentofu 1.8.5
+opentofu 1.8.6
 
 pre-commit 4.0.1
 
