@@ -131,6 +131,14 @@ func (suite *CustomEKSOpenSearchTestSuite) TestCustomEKSAndOpenSearch() {
 	expectedVpcAZs := fmt.Sprintf("[%sa %sb]", suite.varTf["region"], suite.varTf["region"]) // must match availability_zones_count
 	suite.Assert().Equal(expectedVpcAZs, terraform.Output(suite.T(), terraformOptions, "vpc_azs"))
 
+	// this is a split(4)[0..1] of the base cluster_node_ipv4_cidr    = "10.192.0.0/16"
+	expectedPrivateVpcCidrBlocks := "[10.192.0.0/17 10.192.0.8/17]"
+	suite.Assert().Equal(expectedPrivateVpcCidrBlocks, terraform.Output(suite.T(), terraformOptions, "private_vpc_cidr_blocks"))
+
+	// this is a split(4)[2..1] of the base cluster_node_ipv4_cidr    = "10.192.0.0/16"
+	expectedPublicVpcCidrBlocks := "[10.192.1.0/17 10.192.1.8/17]"
+	suite.Assert().Equal(expectedPublicVpcCidrBlocks, terraform.Output(suite.T(), terraformOptions, "public_vpc_cidr_blocks"))
+
 	sess, err := utils.GetAwsClient()
 	suite.Require().NoErrorf(err, "Failed to get aws client")
 
