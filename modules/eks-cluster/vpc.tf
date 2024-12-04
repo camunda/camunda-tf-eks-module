@@ -10,11 +10,11 @@ locals {
 
   # Private subnets for nodes
   private_subnets = [
-    for index in range(length(local.azs)) : cidrsubnet(var.cluster_node_ipv4_cidr, 3, index)
+    for index in range(length(local.azs)) : cidrsubnet(var.cluster_node_ipv4_cidr, length(local.azs), index)
   ]
 
   public_subnets = [
-    for index in range(length(local.azs)) : cidrsubnet(var.cluster_node_ipv4_cidr, 3, index + length(local.azs))
+    for index in range(length(local.azs)) : cidrsubnet(var.cluster_node_ipv4_cidr, length(local.azs), index + length(local.azs))
   ]
 }
 
