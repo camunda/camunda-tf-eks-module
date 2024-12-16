@@ -16,17 +16,17 @@
 awscli 2.22.17
 
 # renovate: datasource=github-tags depName=eksctl-io/eksctl
-eksctl 0.194.0
+eksctl 0.199.0
 
 golang 1.23.4
 
-just 1.37.0
+just 1.38.0
 
 opentofu 1.8.7
 
 pre-commit 4.0.1
 
-terraform 1.9.8
+terraform 1.10.2
 
 terraform-docs 0.19.0
 
