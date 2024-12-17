@@ -19,7 +19,7 @@ module "opensearch_domain" {
   domain_name    = local.opensearch_domain_name
   engine_version = "2.15"
 
-  instance_type   = "t3.medium.search"
+  instance_type   = "m7i.large.search"
   instance_count  = 3 # one instance per AZ
   ebs_volume_size = 50
 
