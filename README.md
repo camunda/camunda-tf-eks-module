@@ -60,7 +60,7 @@ module "opensearch_domain" {
   vpc_id          = module.eks_cluster.vpc_id
   cidr_blocks      = concat(module.eks_cluster.private_vpc_cidr_blocks, module.eks_cluster.public_vpc_cidr_blocks)
 
-  instance_type   = "t3.small.search"
+  instance_type   = "m7i.large.search"
   instance_count  = 3
   ebs_volume_size = 100
 
