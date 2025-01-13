@@ -20,7 +20,7 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Trivy Scan
-              uses: aquasecurity/trivy-action@v0.29.0
+              uses: aquasecurity/trivy-action@0.29.0
               with:
                   hide-progress: true
                   scan-type: config
