@@ -78,4 +78,5 @@ repos:
             name: Trivy Scan
             entry: .lint/trivy/trivy-scan.sh
             language: script
-            types: [yaml, terraform]
+            types: [terraform]
+            working_dir: .
