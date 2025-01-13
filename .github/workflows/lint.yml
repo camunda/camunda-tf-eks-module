@@ -14,8 +14,14 @@ jobs:
 
     trivy:
         name: Trivy Terraform Vulnerability Scanning
-        uses: aquasecurity/trivy-action/.github/workflows/trivy.yaml@0.29.0
-        with:
-            hide-progress: true
-            scan-type: config
-            trivy-config: .lint/trivy/trivy.yaml
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Trivy Scan
+              uses: aquasecurity/trivy-action@v0.29.0
+              with:
+                  hide-progress: true
+                  scan-type: config
+                  trivy-config: .lint/trivy/trivy.yaml
