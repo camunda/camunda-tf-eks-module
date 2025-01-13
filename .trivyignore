@@ -5,9 +5,13 @@
 # See https://avd.aquasec.com/misconfig/avd-aws-0343
 # MEDIUM
 # Attention: It is somehow not possible to ignore this error inline. Trivy will fail with an unlocated error (error without locatable origin)
-- AVD-AWS-0343
+AVD-AWS-0343
 
 # Vulnerabilities introduced with trivy 0.57.0
 # They will be addressed in camunda/team-infrastructure#645
-- AVD-AWS-0104
-- AVD-AWS-0017
+AVD-AWS-0104
+AVD-AWS-0017
+
+# Disable checks for public cluster access
+AVD-AWS-0040
+AVD-AWS-0041
