@@ -1,17 +1,10 @@
----
-# HINT: Error Codes are case sensitive. AFAIK you need upper-case on all of them
+AVD-AWS-0040 #(CRITICAL): Public cluster access is enabled.
+AVD-AWS-0041 #(CRITICAL): Cluster allows access from a public CIDR: 0.0.0.0/0
+AVD-AWS-0104 #(CRITICAL): Security group rule allows egress to multiple public internet addresses.
 
-# Ensure deletion protection is enabled for RDS clusters.
-# See https://avd.aquasec.com/misconfig/avd-aws-0343
-# MEDIUM
-# Attention: It is somehow not possible to ignore this error inline. Trivy will fail with an unlocated error (error without locatable origin)
-AVD-AWS-0343
+AVD-AWS-0343 #(MEDIUM): Cluster does not have Deletion Protection enabled
+AVD-AWS-0178 #(MEDIUM): VPC does not have VPC Flow Logs enabled.
+AVD-AWS-0038 #(MEDIUM): Control plane scheduler logging is not enabled.
+AVD-AWS-0077 #(MEDIUM): Cluster instance has very low backup retention period.
 
-# Vulnerabilities introduced with trivy 0.57.0
-# They will be addressed in camunda/team-infrastructure#645
-AVD-AWS-0104
-AVD-AWS-0017
-
-# Disable checks for public cluster access
-AVD-AWS-0040
-AVD-AWS-0041
+AVD-AWS-0133 #(LOW): Instance does not have performance insights enabled.
