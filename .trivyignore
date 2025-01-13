@@ -1,0 +1,13 @@
+---
+# HINT: Error Codes are case sensitive. AFAIK you need upper-case on all of them
+
+# Ensure deletion protection is enabled for RDS clusters.
+# See https://avd.aquasec.com/misconfig/avd-aws-0343
+# MEDIUM
+# Attention: It is somehow not possible to ignore this error inline. Trivy will fail with an unlocated error (error without locatable origin)
+- AVD-AWS-0343
+
+# Vulnerabilities introduced with trivy 0.57.0
+# They will be addressed in camunda/team-infrastructure#645
+- AVD-AWS-0104
+- AVD-AWS-0017
