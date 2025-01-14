@@ -6,7 +6,7 @@
 
 Terraform module which creates AWS EKS (Kubernetes) resources with an opinionated configuration targeting Camunda 8, an AWS Aurora RDS cluster and an OpenSearch domain.
 
-**⚠️ Warning:** This project is not intended for production use but rather for demonstration purposes only. There are no guarantees or warranties provided.
+**⚠️ Warning:** This project is not intended for production use but rather for demonstration purposes only. There are no guarantees or warranties provided. As such certain Terraform configuration warnings from Trivy have deliberately been ignored. For more details, see the [.trivyignore](./.trivyignore) file in the repository root.
 
 ## Documentation
 
