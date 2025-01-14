@@ -5,7 +5,7 @@ on:
     workflow_dispatch:
     pull_request:
     push:
-        branches: [main, tfsec-testing]
+        branches: [main]
 
 jobs:
     lint:
