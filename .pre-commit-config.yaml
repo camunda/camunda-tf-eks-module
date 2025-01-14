@@ -79,4 +79,3 @@ repos:
             entry: .lint/trivy/trivy-scan.sh
             language: script
             types: [terraform]
-            working_dir: .
