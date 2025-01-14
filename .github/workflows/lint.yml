@@ -11,17 +11,3 @@ jobs:
     lint:
         uses: camunda/infraex-common-config/.github/workflows/lint-global.yml@08c796604f9b08614df763b333833dd1bdc037c0 # 1.2.11
         secrets: inherit
-
-    trivy:
-        name: Trivy Terraform Vulnerability Scanning
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-
-            - name: Trivy Scan
-              uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # 0.29.0
-              with:
-                  hide-progress: true
-                  scan-type: config
-                  trivy-config: .lint/trivy/trivy.yaml
