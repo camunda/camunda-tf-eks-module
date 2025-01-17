@@ -49,8 +49,6 @@ check "elastic_ip_quota_check" {
 
 
 module "vpc" {
-  depends_on = [check.elastic_ip_quota_check]
-
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.17.0"
 
