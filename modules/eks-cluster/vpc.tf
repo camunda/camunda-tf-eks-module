@@ -29,7 +29,7 @@ data "external" "elastic_ips_count" {
 
 # Data source to check if the VPC exists
 data "external" "vpc_data" {
-  program = ["bash", "./get_vpc_data.sh", var.region, local.vpc_name]
+  program = ["bash", "./get_vpc_count.sh", var.region, local.vpc_name]
 }
 
 

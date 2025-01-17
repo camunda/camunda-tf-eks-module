@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+# Count the number of VPCs matching a query name
+
 # Check if a region argument is provided
 if [ -z "$1" ]; then
   echo "Error: No region specified."
@@ -29,4 +31,4 @@ fi
 vpc_count=$(echo "$vpcs" | jq length)
 
 # Return the VPC data in a format Terraform's external data source expects
-echo "{\"vpc_count\": \"$vpc_count\", \"vpcs\": $vpcs}"
+echo "{\"vpc_count\": \"$vpc_count\"}"
