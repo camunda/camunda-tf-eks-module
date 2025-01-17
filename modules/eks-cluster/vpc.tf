@@ -18,11 +18,6 @@ locals {
   ]
 }
 
-data "aws_servicequotas_service_quota" "elastic_ip_quota" {
-  service_code = "ec2"
-  quota_code   = "L-0263D0A3" # Quota for Elastic IPs
-}
-
 data "external" "elastic_ip_quota" {
   program = ["bash", "./get_elastic_ips_quota.sh", var.region]
 }
