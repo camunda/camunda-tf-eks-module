@@ -18,6 +18,25 @@ locals {
   ]
 }
 
+data "aws_servicequotas_service_quota" "elastic_ip_quota" {
+  service_code = "ec2"
+  quota_code   = "L-0263D0A3" # Quota for Elastic IPs
+}
+
+data "aws_ec2_available_ips" "elastic_ips" {}
+
+check "elastic_ip_quota_check" {
+  assert {
+    condition     = data.aws_servicequotas_service_quota.elastic_ip_quota.quota_value >= length(local.azs)
+    error_message = "The Elastic IP quota is insufficient to cover all local availability zones (need: ${length(local.azs)}, have: ${data.aws_servicequotas_service_quota.elastic_ip_quota.quota_value})."
+  }
+
+  assert {
+    condition     = data.aws_ec2_available_ips.elastic_ips.available_ips >= length(local.azs)
+    error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${data.aws_ec2_available_ips.elastic_ips.available_ips})."
+  }
+}
+
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
