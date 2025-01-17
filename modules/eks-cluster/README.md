@@ -47,7 +47,7 @@ module "eks_cluster" {
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 | [aws_servicequotas_service_quota.elastic_ip_quota](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/servicequotas_service_quota) | data source |
 | [external_external.elastic_ip_quota](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
-| [external_external.elastic_ips](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
+| [external_external.elastic_ips_count](https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external) | data source |
 ## Inputs
 
 | Name | Description | Type | Default | Required |

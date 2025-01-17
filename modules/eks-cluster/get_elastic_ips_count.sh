@@ -20,5 +20,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Return the result in a format Terraform's external data source expects
-echo "{\"elastic_ips\": $eips}"
+eips_count=$(echo "$eips" | jq length)
+
+# Return the quota value in a format Terraform's external data source expects (string: string)
+echo "{\"elastic_ips_count\": \"$eips_count\"}"

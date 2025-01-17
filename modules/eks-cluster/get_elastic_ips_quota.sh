@@ -20,5 +20,5 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Return the quota value in a format Terraform's external data source expects
-echo "{\"quota\": $quota}"
+# Return the quota value in a format Terraform's external data source expects (string: string)
+echo "{\"quota\": \"$quota\"}"
