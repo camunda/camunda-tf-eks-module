@@ -86,6 +86,4 @@ module "vpc" {
   enable_flow_log                      = false
   create_flow_log_cloudwatch_iam_role  = false
   create_flow_log_cloudwatch_log_group = false
-
-  depends_on = [check.elastic_ip_quota_check]
 }
