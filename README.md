@@ -15,6 +15,16 @@ Consider installing Camunda 8 via [this guide](https://docs.camunda.io/docs/next
 
 ## Usage
 
+### Prerequisites
+
+- **AWS CLI**: Command-line interface for interacting with AWS.
+- **jq**: A lightweight and flexible command-line JSON processor.
+- **bash**: A command-line interpreter required for executing the verification scripts.
+
+These tools are required because **verification scripts** are used to ensure that resources can be deployed within AWS quotas. These scripts rely on `jq` to parse the JSON data returned by the AWS CLI and `bash` for executing conditional commands.
+
+### Example
+
 Below is a simple example configuration for deploying both an EKS cluster, an Aurora PostgreSQL database and an OpenSearch domain.
 
 See [AWS EKS Cluster inputs](./modules/eks-cluster/README.md#inputs), [AWS Aurora RDS inputs](./modules/aurora/README.md#inputs) and [AWS OpenSearch inputs](./modules/opensearch/README.md#inputs) for further configuration options and how they affect the cluster and database creation.
