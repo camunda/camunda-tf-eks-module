@@ -28,29 +28,29 @@ data "external" "elastic_ips_count" {
 }
 
 # Data source to check if the VPC exists
-data "aws_vpc" "existing" {
-  filter {
-    name   = "tag:Name"
-    values = [local.vpc_name]
-  }
+data "external" "vpc_data" {
+  program = ["bash", "./get_vpc_data.sh", var.region, local.vpc_name]
 }
+
 
 check "elastic_ip_quota_check" {
 
   # Only check the condition when no existing vpc is there
   assert {
-    condition     = length(data.aws_vpc.existing.ids) > 0 || tonumber(data.external.elastic_ip_quota.result.quota) >= length(local.azs)
+    condition     = tonumber(data.external.vpc_data.result.vpc_count) > 0 || tonumber(data.external.elastic_ip_quota.result.quota) >= length(local.azs)
     error_message = "The Elastic IP quota is insufficient to cover all local availability zones (need: ${length(local.azs)}, have: ${tonumber(data.external.elastic_ip_quota.result.quota)})."
   }
 
   assert {
-    condition     = length(data.aws_vpc.existing.ids) > 0 || (tonumber(data.external.elastic_ip_quota.result.quota) - tonumber(data.external.elastic_ips_count.result.elastic_ips_count)) >= length(local.azs)
+    condition     = tonumber(data.external.vpc_data.result.vpc_count) > 0 || (tonumber(data.external.elastic_ip_quota.result.quota) - tonumber(data.external.elastic_ips_count.result.elastic_ips_count)) >= length(local.azs)
     error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${(tonumber(data.external.elastic_ip_quota.result.quota) - tonumber(data.external.elastic_ips_count.result.elastic_ips_count))})."
   }
 }
 
 
 module "vpc" {
+  depends_on = [check.elastic_ip_quota_check]
+
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.17.0"
 
