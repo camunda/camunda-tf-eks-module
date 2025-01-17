@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # Check if a region argument is provided
 if [ -z "$1" ]; then
   echo "Error: No region specified."

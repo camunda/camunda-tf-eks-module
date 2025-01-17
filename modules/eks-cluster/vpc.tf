@@ -35,13 +35,13 @@ data "external" "elastic_ips" {
 
 check "elastic_ip_quota_check" {
   assert {
-    condition     = data.external.elastic_ip_quota.quota >= length(local.azs)
-    error_message = "The Elastic IP quota is insufficient to cover all local availability zones (need: ${length(local.azs)}, have: ${data.external.elastic_ip_quota.quota})."
+    condition     = data.external.elastic_ip_quota.result.quota >= length(local.azs)
+    error_message = "The Elastic IP quota is insufficient to cover all local availability zones (need: ${length(local.azs)}, have: ${data.external.elastic_ip_quota.result.quota})."
   }
 
   assert {
-    condition     = (data.external.elastic_ip_quota.quota - length(data.external.elastic_ips.elastic_ips)) >= length(local.azs)
-    error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${(data.external.elastic_ip_quota.quota - length(data.external.elastic_ips.elastic_ips))})."
+    condition     = (data.external.elastic_ip_quota.result.quota - length(data.external.elastic_ips.result.elastic_ips)) >= length(local.azs)
+    error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${(data.external.elastic_ip_quota.result.quota - length(data.external.elastic_ips.result.elastic_ips))})."
   }
 }
 
