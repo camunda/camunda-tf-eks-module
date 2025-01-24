@@ -13,12 +13,12 @@
 # check it with
 # diff <(sed '/^#/d; /^$/d' .tool-versions | sort) <(sed '/^#/d; /^$/d' .tool-versions) && echo ".tool-versions is sorted correctly" || echo ".tool-versions is not sorted correctly"
 
-awscli 2.22.33
+awscli 2.23.2
 
 # renovate: datasource=github-tags depName=eksctl-io/eksctl
-eksctl 0.200.0
+eksctl 0.201.0
 
-golang 1.23.4
+golang 1.23.5
 
 jq 1.7.1
 
@@ -36,4 +36,4 @@ tflint 0.55.0
 
 tfsec 1.28.13
 
-trivy 0.58.1
+trivy 0.58.2
