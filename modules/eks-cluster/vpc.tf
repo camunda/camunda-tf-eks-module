@@ -18,32 +18,32 @@ locals {
   ]
 }
 
-data "external" "elastic_ip_quota" {
-  program = ["bash", "./get_elastic_ips_quota.sh", var.region]
+data "aws_servicequotas_service_quota" "elastic_ip_quota" {
+  service_code = "ec2"
+  quota_code   = "L-0263D0A3" # Quota code for Elastic IP addresses per region
 }
 
 
-data "external" "elastic_ips_count" {
-  program = ["bash", "./get_elastic_ips_count.sh", var.region]
-}
+data "aws_eips" "current_usage" {}
 
 # Data source to check if the VPC exists
-data "external" "vpc_data" {
-  program = ["bash", "./get_vpc_count.sh", var.region, local.vpc_name]
+data "aws_vpcs" "current_vpcs" {
+  tags = {
+    Name = local.vpc_name
+  }
 }
-
 
 check "elastic_ip_quota_check" {
 
   # Only check the condition when no existing vpc is there
   assert {
-    condition     = tonumber(data.external.vpc_data.result.vpc_count) > 0 || tonumber(data.external.elastic_ip_quota.result.quota) >= length(local.azs)
-    error_message = "The Elastic IP quota is insufficient to cover all local availability zones (need: ${length(local.azs)}, have: ${tonumber(data.external.elastic_ip_quota.result.quota)})."
+    condition     = length(data.aws_vpcs.current_vpcs.ids) > 0 || data.aws_servicequotas_service_quota.elastic_ip_quota.value >= length(local.azs)
+    error_message = "The Elastic IP quota is insufficient to cover all local availability zones (need: ${length(local.azs)}, have: ${data.aws_servicequotas_service_quota.elastic_ip_quota.value})."
   }
 
   assert {
-    condition     = tonumber(data.external.vpc_data.result.vpc_count) > 0 || (tonumber(data.external.elastic_ip_quota.result.quota) - tonumber(data.external.elastic_ips_count.result.elastic_ips_count)) >= length(local.azs)
-    error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${(tonumber(data.external.elastic_ip_quota.result.quota) - tonumber(data.external.elastic_ips_count.result.elastic_ips_count))})."
+    condition     = length(data.aws_vpcs.current_vpcs.ids) > 0 || (data.aws_servicequotas_service_quota.elastic_ip_quota.value - data.aws_eips.current_usage) >= length(local.azs)
+    error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${(data.aws_servicequotas_service_quota.elastic_ip_quota.value - data.aws_eips.current_usage)})."
   }
 }
 
