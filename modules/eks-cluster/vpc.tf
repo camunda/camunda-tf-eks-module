@@ -42,8 +42,8 @@ check "elastic_ip_quota_check" {
   }
 
   assert {
-    condition     = length(data.aws_vpcs.current_vpcs.ids) > 0 || (data.aws_servicequotas_service_quota.elastic_ip_quota.value - data.aws_eips.current_usage) >= length(local.azs)
-    error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${(data.aws_servicequotas_service_quota.elastic_ip_quota.value - data.aws_eips.current_usage)})."
+    condition     = length(data.aws_vpcs.current_vpcs.ids) > 0 || (data.aws_servicequotas_service_quota.elastic_ip_quota.value - length(data.aws_eips.current_usage.public_ips)) >= length(local.azs)
+    error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${(data.aws_servicequotas_service_quota.elastic_ip_quota.value - length(data.aws_eips.current_usage.public_ips))})."
   }
 }
 
