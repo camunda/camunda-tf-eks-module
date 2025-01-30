@@ -18,10 +18,6 @@ Consider installing Camunda 8 via [this guide](https://docs.camunda.io/docs/next
 ### Prerequisites
 
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html): Command-line interface for interacting with AWS.
-- [jq](https://jqlang.github.io/jq/download/): A lightweight and flexible command-line JSON processor.
-- bash: A command-line interpreter required for executing the verification scripts.
-
-These tools are required because **verification scripts** are used to ensure that resources can be deployed within AWS quotas. These scripts rely on `jq` to parse the JSON data returned by the AWS CLI and `bash` for executing conditional commands.
 
 ### Example
 
