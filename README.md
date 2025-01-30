@@ -15,10 +15,6 @@ Consider installing Camunda 8 via [this guide](https://docs.camunda.io/docs/next
 
 ## Usage
 
-### Prerequisites
-
-- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html): Command-line interface for interacting with AWS.
-
 ### Example
 
 Below is a simple example configuration for deploying both an EKS cluster, an Aurora PostgreSQL database and an OpenSearch domain.
