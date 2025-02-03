@@ -89,6 +89,8 @@ jobs:
 
             - name: Install tooling using asdf
               uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
+              with:
+                  asdf_branch: v0.15.0
 
             - name: Get Cluster Info
               id: commit_info
