@@ -123,6 +123,8 @@ jobs:
 
             - name: Install tooling using asdf
               uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
+              with:
+                  asdf_branch: v0.15.0
 
             - name: Import Secrets
               id: secrets
@@ -225,6 +227,8 @@ jobs:
 
             - name: Install tooling using asdf
               uses: asdf-vm/actions/install@05e0d2ed97b598bfce82fd30daf324ae0c4570e6 # v3
+              with:
+                  asdf_branch: v0.15.0
 
             - name: Import Secrets
               id: secrets
@@ -268,7 +272,7 @@ jobs:
             - name: Notify in Slack in case of failure
               id: slack-notification
               if: github.event_name == 'schedule'
-              uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@506a1e6eedf7d806d42bf5fdad8b0bd110841406 # 1.2.13
+              uses: camunda/infraex-common-config/.github/actions/report-failure-on-slack@ca5f4c53e82d4787cec72d6f3a177abaa59423b0 # 1.2.15
               with:
                   vault_addr: ${{ secrets.VAULT_ADDR }}
                   vault_role_id: ${{ secrets.VAULT_ROLE_ID }}
