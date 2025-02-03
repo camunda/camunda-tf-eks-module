@@ -4,15 +4,15 @@ go 1.23.4
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.0
-	github.com/aws/aws-sdk-go-v2/config v1.29.2
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.202.2
-	github.com/aws/aws-sdk-go-v2/service/eks v1.57.0
-	github.com/aws/aws-sdk-go-v2/service/iam v1.38.8
-	github.com/aws/aws-sdk-go-v2/service/kms v1.37.14
-	github.com/aws/aws-sdk-go-v2/service/opensearch v1.45.7
-	github.com/aws/aws-sdk-go-v2/service/rds v1.93.8
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.75.2
-	github.com/aws/aws-sdk-go-v2/service/sts v1.33.10
+	github.com/aws/aws-sdk-go-v2/config v1.29.4
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.201.1
+	github.com/aws/aws-sdk-go-v2/service/eks v1.57.2
+	github.com/aws/aws-sdk-go-v2/service/iam v1.38.10
+	github.com/aws/aws-sdk-go-v2/service/kms v1.37.16
+	github.com/aws/aws-sdk-go-v2/service/opensearch v1.45.9
+	github.com/aws/aws-sdk-go-v2/service/rds v1.93.10
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.74.1
+	github.com/aws/aws-sdk-go-v2/service/sts v1.33.12
 	github.com/aws/smithy-go v1.22.2
 	github.com/gruntwork-io/terratest v0.48.1
 	github.com/sethvargo/go-password v0.3.1
@@ -35,8 +35,8 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aws/aws-sdk-go v1.54.6 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.8 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.55 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.25 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.57 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.27 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.41 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.31 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.31 // indirect
@@ -59,8 +59,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sns v1.33.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.37.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.56.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.24.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.24.14 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.13 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
