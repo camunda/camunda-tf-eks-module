@@ -18,6 +18,30 @@ locals {
   ]
 }
 
+data "aws_servicequotas_service_quota" "elastic_ip_quota" {
+  service_code = "ec2"
+  quota_code   = "L-0263D0A3" # Quota code for Elastic IP addresses per region
+}
+
+
+data "aws_eips" "current_usage" {}
+
+# Data source to check if the VPC exists
+data "aws_vpcs" "current_vpcs" {
+  tags = {
+    Name = local.vpc_name
+  }
+}
+
+check "elastic_ip_quota_check" {
+
+  # Only check the condition when no existing vpc is there
+  assert {
+    condition     = length(data.aws_vpcs.current_vpcs.ids) > 0 || (data.aws_servicequotas_service_quota.elastic_ip_quota.value - length(data.aws_eips.current_usage.public_ips)) >= length(local.azs)
+    error_message = "Not enough available Elastic IPs to cover all local availability zones (need: ${length(local.azs)}, have: ${(data.aws_servicequotas_service_quota.elastic_ip_quota.value - length(data.aws_eips.current_usage.public_ips))})."
+  }
+}
+
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -59,5 +83,4 @@ module "vpc" {
   enable_flow_log                      = false
   create_flow_log_cloudwatch_iam_role  = false
   create_flow_log_cloudwatch_log_group = false
-
 }

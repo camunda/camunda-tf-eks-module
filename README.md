@@ -15,6 +15,8 @@ Consider installing Camunda 8 via [this guide](https://docs.camunda.io/docs/next
 
 ## Usage
 
+### Example
+
 Below is a simple example configuration for deploying both an EKS cluster, an Aurora PostgreSQL database and an OpenSearch domain.
 
 See [AWS EKS Cluster inputs](./modules/eks-cluster/README.md#inputs), [AWS Aurora RDS inputs](./modules/aurora/README.md#inputs) and [AWS OpenSearch inputs](./modules/opensearch/README.md#inputs) for further configuration options and how they affect the cluster and database creation.
