@@ -18,7 +18,7 @@ awscli 2.23.11
 # renovate: datasource=github-tags depName=eksctl-io/eksctl
 eksctl 0.203.0
 
-golang 1.23.5
+golang 1.23.6
 
 jq 1.7.1
 
@@ -36,4 +36,4 @@ tflint 0.55.1
 
 tfsec 1.28.13
 
-trivy 0.59.0
+trivy 0.59.1
