@@ -142,7 +142,24 @@ destroy_resource() {
       -var="region=$AWS_REGION" \
       -var="name=$cluster_name" \
       -var="cluster_service_ipv4_cidr=10.190.0.0/16" \
-      -var="cluster_node_ipv4_cidr=10.192.0.0/16"; then return 1; fi
+      -var="cluster_node_ipv4_cidr=10.192.0.0/16"; then
+        echo "Error destroying EKS cluster $cluster_name"
+        VPC_ID=$(terraform output -raw vpc_id)
+
+        export AWS_PAGER=""
+        echo "Checking subnetes for $VPC_ID"
+        aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID"
+        echo "Checking route tables for $VPC_ID"
+        aws ec2 describe-route-tables --filters "Name=vpc-id,Values=$VPC_ID"
+        echo "Checking internet gateways for $VPC_ID"
+        aws ec2 describe-internet-gateways --filters "Name=attachment.vpc-id,Values=$VPC_ID"
+        echo "Checking NAT gateways for $VPC_ID"
+        aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=$VPC_ID"
+        echo "Dumping elastic ips"
+        aws ec2 describe-addresses
+
+        return 1
+      fi
 
   elif [ "$terraform_module" == "aurora" ]; then
     if ! terraform destroy -auto-approve \
