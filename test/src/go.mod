@@ -5,13 +5,13 @@ go 1.23.4
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.1
 	github.com/aws/aws-sdk-go-v2/config v1.29.6
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.201.1
-	github.com/aws/aws-sdk-go-v2/service/eks v1.57.2
-	github.com/aws/aws-sdk-go-v2/service/iam v1.38.10
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.202.4
+	github.com/aws/aws-sdk-go-v2/service/eks v1.58.0
+	github.com/aws/aws-sdk-go-v2/service/iam v1.39.1
 	github.com/aws/aws-sdk-go-v2/service/kms v1.37.18
 	github.com/aws/aws-sdk-go-v2/service/opensearch v1.45.11
 	github.com/aws/aws-sdk-go-v2/service/rds v1.93.12
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.74.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.76.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.14
 	github.com/aws/smithy-go v1.22.2
 	github.com/gruntwork-io/terratest v0.48.2
@@ -41,7 +41,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.32 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.32 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.31 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.32 // indirect
 	github.com/aws/aws-sdk-go-v2/service/acm v1.30.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.51.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.44.0 // indirect
@@ -49,10 +49,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.36.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ecs v1.52.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.5.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.5.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.10.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.69.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.46.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.34.6 // indirect

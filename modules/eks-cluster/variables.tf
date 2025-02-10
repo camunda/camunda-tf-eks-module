@@ -14,7 +14,7 @@ variable "kubernetes_version" {
   type        = string
   description = "Kubernetes version to be used by EKS"
   # renovate: datasource=endoflife-date depName=amazon-eks versioning=loose
-  default = "1.31"
+  default = "1.32"
 }
 
 variable "np_min_node_count" {
