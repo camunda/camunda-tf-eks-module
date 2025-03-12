@@ -1,5 +1,19 @@
 # Camunda Terraform EKS Modules
 
+> [!CAUTION]
+> ⚠️ **Repository Not Maintained Anymore**
+> This repository is no longer actively maintained. All related files have been moved to
+> [**camunda-deployment-references**](https://github.com/camunda/camunda-deployment-references).
+>
+> The decision behind this change is to consolidate all reference implementations into a single repository.
+> This makes it easier for us to maintain and for you as a user to find implementations for different cloud providers.
+>
+> We have not archived this repository yet in case backport changes are needed. However, all active maintenance will
+> be done in the new repository.
+>
+> **Important:** Please do not directly consume the Terraform module sources. Instead, maintain your own copy.
+
+
 [![Camunda](https://img.shields.io/badge/Camunda-FC5D0D)](https://www.camunda.com/)
 [![tests](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/camunda/camunda-tf-eks-module/actions/workflows/tests.yml)
 [![License](https://img.shields.io/github/license/camunda/camunda-tf-eks-module)](LICENSE)
