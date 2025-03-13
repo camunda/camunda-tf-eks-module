@@ -105,6 +105,10 @@ outputs:
 runs:
     using: composite
     steps:
+        - name: Show deprecation warning
+          shell: bash
+          run: echo "::warning::The action is not maintained anymore through this repository. Please use https://github.com/camunda/camunda-deployment-references
+              instead."
         - name: Use Utility Actions
           id: utility
           # see https://github.com/orgs/community/discussions/41927 it's not possible to optimize this yet

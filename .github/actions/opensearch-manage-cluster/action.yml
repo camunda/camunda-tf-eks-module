@@ -103,6 +103,10 @@ outputs:
 runs:
     using: composite
     steps:
+        - name: Show deprecation warning
+          shell: bash
+          run: echo "::warning::The action is not maintained anymore through this repository. Please use https://github.com/camunda/camunda-deployment-references
+              instead."
         - name: Use Utility Actions
           id: utility
           uses: camunda/camunda-tf-eks-module/.github/actions/utility-action@3d6b87546fe8ad01cd0cfd916dcc2326d04bae6c # 3.1.3

@@ -14,9 +14,6 @@ on:
             - .github/workflows/daily-cleanup.yml
             - .github/actions/eks-cleanup-resources/**
 
-    schedule:
-        - cron: 0 1 * * * # At 01:00 everyday.
-
 env:
     MAX_AGE_HOURS: ${{ github.event.inputs.max_age_hours || '20' }}
     AWS_PROFILE: infex
