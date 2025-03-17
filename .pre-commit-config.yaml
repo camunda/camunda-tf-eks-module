@@ -3,7 +3,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
     - repo: https://github.com/camunda/infraex-common-config
-      rev: 1.3.0 # use tags until renovate supports sha: https://github.com/renovatebot/renovate/issues/22567
+      rev: 1.3.1 # use tags until renovate supports sha: https://github.com/renovatebot/renovate/issues/22567
       hooks:
           - id: update-action-readmes-docker
 
@@ -62,7 +62,7 @@ repos:
           - id: go-mod-tidy
 
     - repo: https://github.com/adrienverge/yamllint
-      rev: v1.36.0
+      rev: v1.36.2
       hooks:
           - id: yamllint
             args: [-c, .yamllint.yaml]
