@@ -4,8 +4,6 @@ name: Check external links
 on:
     push:
     workflow_dispatch:
-    schedule:
-        - cron: 0 3 1 * *
     pull_request:
         paths:
             - .github/workflows/links.yml
